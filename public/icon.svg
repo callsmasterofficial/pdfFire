@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E05D38"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+    <linearGradient id="sheetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F3EAD8"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <!-- Document Sheet -->
+  <path d="M156 104 C142 104 132 114 132 128 L132 384 C132 398 142 408 156 408 L356 408 C370 408 380 398 380 384 L380 184 L300 104 Z" fill="url(#sheetGrad)" filter="drop-shadow(0 12px 24px rgba(0,0,0,0.25))"/>
+  <!-- Folded Corner -->
+  <path d="M300 104 L300 184 L380 184 Z" fill="#EADBC0"/>
+  <!-- Anvil / Hammer / Forge Mark -->
+  <path d="M216 232 L296 232 C304 232 312 238 312 246 C312 254 306 260 298 262 L274 266 L294 332 L254 332 L242 278 L216 278 L216 332 L188 332 L188 246 C188 238 196 232 204 232 Z" fill="#C2410C"/>
+</svg>

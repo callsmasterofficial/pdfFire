@@ -1,0 +1,46 @@
+{
+  "name": "PDFForge — Privacy-First Local PDF Toolkit",
+  "short_name": "PDFForge",
+  "description": "100% Client-Side PDF Toolkit. Merge, Split, Compress, OCR, and Edit PDFs with zero server uploads.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#E05D38",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDF",
+      "url": "/tool/merge",
+      "description": "Combine multiple documents"
+    },
+    {
+      "name": "Compress PDF",
+      "url": "/tool/compress",
+      "description": "Optimize document size"
+    },
+    {
+      "name": "OCR PDF",
+      "url": "/tool/ocr",
+      "description": "Recognize text from scans"
+    },
+    {
+      "name": "Edit PDF",
+      "url": "/tool/edit",
+      "description": "Annotate and draw on pages"
+    }
+  ]
+}
