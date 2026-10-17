@@ -16,24 +16,51 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#E05D38",
+  themeColor: "#FF7047",
   width: "device-width",
   initialScale: 1,
 };
 
 export const metadata: Metadata = {
-  title: "PDFForge — 100% Client-Side PDF Toolkit",
+  title: "PDFfire — PDF Tools That Just Work",
   description:
-    "Fast, private in-browser PDF manipulation. Merge, split, compress, OCR, and edit documents with zero server uploads.",
+    "Fast, private in-browser PDF manipulation. Merge, split, compress, convert, edit, and protect documents with zero server uploads.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg",
+    icon: [
+      {
+        url: "/brand/pdffire-mark-light.svg",
+        media: "(prefers-color-scheme: light)",
+        type: "image/svg+xml",
+      },
+      {
+        url: "/brand/pdffire-mark-dark.svg",
+        media: "(prefers-color-scheme: dark)",
+        type: "image/svg+xml",
+      },
+      { url: "/icons/favicon.ico" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PDFForge",
+    title: "PDFfire",
+  },
+  openGraph: {
+    title: "PDFfire — PDF Tools That Just Work",
+    description: "Fast, private in-browser PDF manipulation with zero server uploads.",
+    siteName: "PDFfire",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "PDFfire — PDF Tools That Just Work",
+    description: "Fast, private in-browser PDF manipulation with zero server uploads.",
   },
 };
 
@@ -51,7 +78,10 @@ export default function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-background text-foreground"
+      >
         <PwaProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </PwaProvider>

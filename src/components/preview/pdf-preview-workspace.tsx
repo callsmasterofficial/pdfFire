@@ -117,7 +117,7 @@ export function PDFPreviewWorkspace({ file, onClose }: PDFPreviewWorkspaceProps)
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onClose={onClose}
       />
-      <div className="flex flex-1 min-h-[500px]">
+      <div className="flex flex-1 min-h-125">
         {sidebarOpen && (
           <PDFThumbnailSidebar
             pdfDoc={pdfDoc}

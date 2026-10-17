@@ -27,7 +27,7 @@ export function CompareTextView({
         {/* Document A pane (Original) */}
         <div className="flex flex-col rounded-xl border border-border bg-background overflow-hidden">
           <div className="px-4 py-2.5 bg-surface-elevated/70 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground truncate max-w-[200px]">
+            <span className="text-xs font-semibold text-foreground truncate max-w-50">
               {docAName}
             </span>
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
@@ -35,7 +35,7 @@ export function CompareTextView({
             </span>
           </div>
 
-          <div className="p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-[460px] overflow-y-auto">
+          <div className="p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-115 overflow-y-auto">
             {tokens.length === 0 ? (
               <span className="text-muted-foreground italic">No text on this page.</span>
             ) : (
@@ -62,7 +62,7 @@ export function CompareTextView({
         {/* Document B pane (Revised) */}
         <div className="flex flex-col rounded-xl border border-border bg-background overflow-hidden">
           <div className="px-4 py-2.5 bg-surface-elevated/70 border-b border-border flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground truncate max-w-[200px]">
+            <span className="text-xs font-semibold text-foreground truncate max-w-50">
               {docBName}
             </span>
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
@@ -70,7 +70,7 @@ export function CompareTextView({
             </span>
           </div>
 
-          <div className="p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-[460px] overflow-y-auto">
+          <div className="p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap max-h-115 overflow-y-auto">
             {tokens.length === 0 ? (
               <span className="text-muted-foreground italic">No text on this page.</span>
             ) : (

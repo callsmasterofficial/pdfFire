@@ -28,7 +28,7 @@ stream
 BT
 /F1 22 Tf
 50 700 Td
-(PDFForge: Local Page 1 Preview) Tj
+(PDFfire:  Local Page 1 Preview) Tj
 ET
 endstream
 endobj
@@ -38,7 +38,7 @@ stream
 BT
 /F1 22 Tf
 50 700 Td
-(PDFForge: Local Page 2 Preview) Tj
+(PDFfire:  Local Page 2 Preview) Tj
 ET
 endstream
 endobj
@@ -48,7 +48,7 @@ stream
 BT
 /F1 22 Tf
 50 700 Td
-(PDFForge: Local Page 3 Preview) Tj
+(PDFfire:  Local Page 3 Preview) Tj
 ET
 endstream
 endobj

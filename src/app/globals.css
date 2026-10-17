@@ -31,6 +31,12 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface-elevated: var(--brand-surface-elevated);
+  --color-brand-bg: var(--brand-bg);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,9 +52,9 @@
   --card-foreground: #26231F;
   --popover: #FFFFFF;
   --popover-foreground: #26231F;
-  --primary: #C65332;
+  --primary: #FF7047;
   --primary-foreground: #FFFFFF;
-  --primary-hover: #A94328;
+  --primary-hover: #E65332;
   --secondary: #F1EBE3;
   --secondary-foreground: #26231F;
   --muted: #F1EBE3;
@@ -59,11 +65,17 @@
   --destructive-foreground: #FFFFFF;
   --border: #E6DED4;
   --input: #E6DED4;
-  --ring: #C65332;
+  --ring: #FF7047;
   --success: #467A50;
   --success-foreground: #FFFFFF;
   --warning: #A96B19;
   --warning-foreground: #FFFFFF;
+  --brand-primary: #FF7047;
+  --brand-primary-hover: #E65332;
+  --brand-accent: #E66A3C;
+  --brand-surface: #FFFFFF;
+  --brand-surface-elevated: #F1EBE3;
+  --brand-bg: #FAF7F2;
   --radius: 0.5rem;
 }
 
@@ -78,22 +90,28 @@
   --popover-foreground: #F5F0E8;
   --primary: #FF7047;
   --primary-foreground: #171614;
-  --primary-hover: #FF865F;
+  --primary-hover: #E65332;
   --secondary: #292622;
   --secondary-foreground: #F5F0E8;
   --muted: #292622;
   --muted-foreground: #B0A79C;
   --accent: #E66A3C;
   --accent-foreground: #FFFFFF;
-  --destructive: #F07878;
+  --destructive: #C44242;
   --destructive-foreground: #171614;
   --border: #39342F;
   --input: #39342F;
   --ring: #FF7047;
-  --success: #8DBA91;
+  --success: #467A50;
   --success-foreground: #171614;
   --warning: #E6B65C;
   --warning-foreground: #171614;
+  --brand-primary: #FF7047;
+  --brand-primary-hover: #E65332;
+  --brand-accent: #E66A3C;
+  --brand-surface: #201E1B;
+  --brand-surface-elevated: #292622;
+  --brand-bg: #171614;
 }
 
 @layer base {

@@ -3,19 +3,27 @@ import { Cpu, Sparkles } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border bg-surface-secondary/50 py-10 transition-colors mt-auto">
+    <footer className="w-full border-t border-border bg-surface-secondary/50 py-12 sm:py-16 transition-colors mt-auto">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex flex-col items-center md:items-start gap-1.5 text-center md:text-left">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/icon.svg"
-              alt="PDFForge Logo"
+              src="/brand/pdffire-mark-light.svg"
+              alt="PDFfire Logo"
               width={20}
               height={20}
-              className="size-5 rounded-md shadow-xs shrink-0"
+              className="size-5 shrink-0 dark:hidden"
             />
-            <span className="font-bold">PDFForge</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icon.svg"
+              alt="PDFfire Logo"
+              width={20}
+              height={20}
+              className="size-5 rounded-md shadow-xs shrink-0 hidden dark:block"
+            />
+            <span className="font-bold">PDFfire</span>
             <span className="text-muted-foreground font-normal text-xs">• Privacy by Architecture</span>
           </div>
           <p className="text-xs text-muted-foreground max-w-md">
@@ -33,7 +41,7 @@ export function Footer() {
             <Sparkles className="size-3.5 text-accent" />
             <span>Open & Transparent</span>
           </span>
-          <span>© 2026 PDFForge</span>
+          <span>© 2026 PDFfire</span>
         </div>
       </div>
     </footer>

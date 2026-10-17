@@ -8,18 +8,18 @@ export function HeroSection() {
       <div className="inline-flex items-center gap-2 mb-4">
         <Badge variant="secondary" className="px-3 py-1 text-xs font-medium border-border/80 text-foreground">
           <span className="size-2 rounded-full bg-primary inline-block mr-1.5 animate-pulse" />
-          Paper & Terracotta / Charcoal & Ember Edition
+          PDFfire • Privacy-First Client Toolkit
         </Badge>
       </div>
 
-      <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground max-w-3xl leading-tight sm:leading-tight">
-        Fast, Private PDF Toolkit.
-        <br />
-        <span className="text-primary font-bold">100% In Your Browser.</span>
+      <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground max-w-3xl leading-[1.15] sm:leading-[1.12]">
+        PDF tools that{" "}
+        <span className="text-primary">just work.</span>
       </h1>
 
-      <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-        Merge, split, extract, rotate, and manage documents with precision. No file uploads, no cloud storage, and zero data leakage.
+      <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+        Merge, split, convert, edit, and protect your PDFs with a simple, privacy-focused toolkit.
+        Everything executes strictly on your device with zero server uploads.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-medium text-foreground">
@@ -29,11 +29,11 @@ export function HeroSection() {
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-secondary/70 border border-border">
           <Zap className="size-3.5 text-accent" />
-          <span>Instant Client Execution</span>
+          <span>Instant Local Execution</span>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-secondary/70 border border-border">
           <HardDrive className="size-3.5 text-primary" />
-          <span>Local Memory Only</span>
+          <span>100% In-Memory Privacy</span>
         </div>
       </div>
     </section>

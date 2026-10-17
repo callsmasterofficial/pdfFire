@@ -52,10 +52,10 @@ describe("Phase 8: Offline / PWA & Performance", () => {
     const raw = fs.readFileSync(manifestPath, "utf-8");
     const manifest = JSON.parse(raw);
 
-    expect(manifest.name).toContain("PDFForge");
+    expect(manifest.name).toContain("PDFfire");
     expect(manifest.display).toBe("standalone");
     expect(manifest.start_url).toBe("/");
-    expect(manifest.theme_color).toBe("#E05D38");
+    expect(manifest.theme_color).toBe("#FF7047");
     expect(manifest.icons.length).toBeGreaterThanOrEqual(1);
     expect(manifest.shortcuts.length).toBeGreaterThanOrEqual(2);
   });
@@ -65,7 +65,7 @@ describe("Phase 8: Offline / PWA & Performance", () => {
     expect(fs.existsSync(swPath)).toBe(true);
 
     const swContent = fs.readFileSync(swPath, "utf-8");
-    expect(swContent).toContain("pdfforge-cache-");
+    expect(swContent).toContain("pdffire-cache-");
     expect(swContent).toContain("addEventListener(\"install\"");
     expect(swContent).toContain("addEventListener(\"fetch\"");
   });

@@ -1,7 +1,5 @@
 import React, { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { MergeToolView } from "@/components/tools/merge-tool-view";
 import { RotateToolView } from "@/components/tools/rotate-tool-view";
 import { ExtractToolView } from "@/components/tools/extract-tool-view";
@@ -25,6 +23,14 @@ import { AiSummaryToolView } from "@/components/tools/ai-summary-tool-view";
 import { AiChatToolView } from "@/components/tools/ai-chat-tool-view";
 import { CompareToolView } from "@/components/tools/compare-tool-view";
 import { RepairToolView } from "@/components/tools/repair-tool-view";
+import { SignToolView } from "@/components/tools/sign-tool-view";
+import { NUpToolView } from "@/components/tools/n-up-tool-view";
+import { CropToolView } from "@/components/tools/crop-tool-view";
+import { AlternateMixToolView } from "@/components/tools/alternate-mix-tool-view";
+import { FlipToolView } from "@/components/tools/flip-tool-view";
+import { RedactToolView } from "@/components/tools/redact-tool-view";
+import { ProtectToolView } from "@/components/tools/protect-tool-view";
+import { ExtractImagesToolView } from "@/components/tools/extract-images-tool-view";
 
 const SUPPORTED_TOOLS = [
   "merge", "rotate", "extract", "split", "reorder",
@@ -33,6 +39,8 @@ const SUPPORTED_TOOLS = [
   "metadata", "hash", "flatten", "unlock",
   "ocr", "pdf-to-text", "text-to-pdf",
   "summary", "chat", "compare", "repair",
+  "sign", "n-up", "crop", "alternate-mix", "flip",
+  "redact", "protect", "extract-images",
 ] as const;
 
 export function generateStaticParams() {
@@ -70,6 +78,14 @@ async function ToolContent({ params }: ToolPageProps) {
     case "chat": return <AiChatToolView />;
     case "compare": return <CompareToolView />;
     case "repair": return <RepairToolView />;
+    case "sign": return <SignToolView />;
+    case "n-up": return <NUpToolView />;
+    case "crop": return <CropToolView />;
+    case "alternate-mix": return <AlternateMixToolView />;
+    case "flip": return <FlipToolView />;
+    case "redact": return <RedactToolView />;
+    case "protect": return <ProtectToolView />;
+    case "extract-images": return <ExtractImagesToolView />;
     default:
       notFound();
   }
@@ -86,14 +102,10 @@ function ToolLoadingFallback() {
 
 export default function ToolPage({ params }: ToolPageProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="flex-1 flex flex-col items-center">
-        <Suspense fallback={<ToolLoadingFallback />}>
-          <ToolContent params={params} />
-        </Suspense>
-      </main>
-      <Footer />
+    <div className="w-full flex-1 flex flex-col items-center py-4 sm:py-6 px-3 sm:px-6">
+      <Suspense fallback={<ToolLoadingFallback />}>
+        <ToolContent params={params} />
+      </Suspense>
     </div>
   );
 }

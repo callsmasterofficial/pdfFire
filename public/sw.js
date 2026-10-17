@@ -1,8 +1,10 @@
-const CACHE_NAME = "pdfforge-cache-v1";
+const CACHE_NAME = "pdffire-cache-v1";
 const STATIC_PRECACHE = [
   "/",
   "/manifest.json",
   "/icon.svg",
+  "/icons/favicon.svg",
+  "/icons/favicon-32x32.png",
   "/pdf.worker.min.mjs",
 ];
 

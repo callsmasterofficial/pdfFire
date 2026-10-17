@@ -1,9 +1,9 @@
-# PDFForge — Project Overview
+# PDFfire — Project Overview
 
-> **Project status:** Planning  
+> **Project status:** Active Development  
 > **Product type:** Browser-based PDF productivity toolkit  
 > **Architecture:** Client-side processing; no application backend for PDF operations  
-> **Working name:** PDFForge (can be renamed later)
+> **Official name:** PDFfire (formerly PDFForge)
 
 ## 1. Project Vision
 

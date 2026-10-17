@@ -100,7 +100,7 @@ export async function convertTextToPdf(
   }
 
   pdfDoc.setTitle(title);
-  pdfDoc.setCreator("PDFForge Client");
+  pdfDoc.setCreator("PDFfire Client");
   pdfDoc.setModificationDate(new Date());
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });

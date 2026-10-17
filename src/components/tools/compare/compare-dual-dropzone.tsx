@@ -57,7 +57,7 @@ export function CompareDualDropzone({
             {fileA ? (
               <>
                 <CheckCircle2 className="size-8 text-primary mb-2" />
-                <span className="text-xs font-semibold text-foreground truncate max-w-[220px]">
+                <span className="text-xs font-semibold text-foreground truncate max-w-55">
                   {fileA.name}
                 </span>
                 <span className="text-[11px] text-muted-foreground mt-0.5">
@@ -101,7 +101,7 @@ export function CompareDualDropzone({
             {fileB ? (
               <>
                 <CheckCircle2 className="size-8 text-primary mb-2" />
-                <span className="text-xs font-semibold text-foreground truncate max-w-[220px]">
+                <span className="text-xs font-semibold text-foreground truncate max-w-55">
                   {fileB.name}
                 </span>
                 <span className="text-[11px] text-muted-foreground mt-0.5">

@@ -18,14 +18,22 @@ export function Header() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/icon.svg"
-              alt="PDFForge Logo"
+              src="/brand/pdffire-mark-light.svg"
+              alt="PDFfire Logo"
               width={32}
               height={32}
-              className="size-8 rounded-lg shadow-xs shrink-0"
+              className="size-8 rounded-lg shrink-0 dark:hidden"
             />
-            <span className="tracking-tight text-foreground font-bold">
-              PDF<span className="text-primary">Forge</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icon.svg"
+              alt="PDFfire Logo"
+              width={32}
+              height={32}
+              className="size-8 rounded-lg shadow-xs shrink-0 hidden dark:block"
+            />
+            <span className="tracking-tight text-foreground font-extrabold text-xl">
+              PDF<span className="text-primary">fire</span>
             </span>
           </Link>
 
@@ -38,6 +46,12 @@ export function Header() {
 
           <div className="flex items-center gap-3">
             <nav className="flex items-center gap-4 text-sm font-medium text-muted-foreground mr-1">
+              <Link
+                href="/tool"
+                className="hover:text-foreground transition-colors hidden sm:inline-block"
+              >
+                Studio
+              </Link>
               <Link
                 href="/#tools"
                 className="hover:text-foreground transition-colors hidden sm:inline-block"

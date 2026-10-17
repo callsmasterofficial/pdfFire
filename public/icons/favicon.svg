@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#E65332"/>
+      <stop offset="100%" stop-color="#FF7047"/>
+    </linearGradient>
+    <linearGradient id="emberCore" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF8A65"/>
+      <stop offset="100%" stop-color="#FFE0B2"/>
+    </linearGradient>
+    <linearGradient id="docGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FAF4EB"/>
+    </linearGradient>
+    <linearGradient id="docGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#24211D"/>
+      <stop offset="100%" stop-color="#1B1917"/>
+    </linearGradient>
+    <linearGradient id="foldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAE0D2"/>
+      <stop offset="100%" stop-color="#D9C9B4"/>
+    </linearGradient>
+    <linearGradient id="foldGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#39342F"/>
+      <stop offset="100%" stop-color="#2D2824"/>
+    </linearGradient>
+    <style>
+      .doc-sheet {
+        fill: url(#docGrad);
+        stroke: #E6DED4;
+        stroke-width: 12px;
+      }
+      .doc-fold {
+        fill: url(#foldGrad);
+      }
+      @media (prefers-color-scheme: dark) {
+        .doc-sheet {
+          fill: url(#docGradDark);
+          stroke: #39342F;
+          stroke-width: 14px;
+        }
+        .doc-fold {
+          fill: url(#foldGradDark);
+        }
+      }
+    </style>
+  </defs>
+
+  <!-- Document Sheet -->
+  <path class="doc-sheet" d="M128 56 C101.5 56 80 77.5 80 104 L80 408 C80 434.5 101.5 456 128 456 L384 456 C410.5 456 432 434.5 432 408 L432 184 L304 56 Z"/>
+  
+  <!-- Fold Flap -->
+  <path class="doc-fold" d="M304 56 L304 160 C304 173.2 314.8 184 328 184 L432 184 Z"/>
+
+  <!-- Outer Flame Body -->
+  <path d="M256 384 C202 384 172 342 172 288 C172 242 198 212 220 184 C224 178.5 231.2 181.7 230 188 C224.8 209 230.5 226 243.2 239 C248.8 203 267.2 172 294 144 C298.4 139.6 304.8 142.8 304 148.8 C300 184 320 202 335.2 226 C350 250 354 275 354 296 C354 346 310 384 256 384 Z"
+        fill="url(#fireGrad)"/>
+
+  <!-- Inner Ember Core -->
+  <path d="M256 352 C230 352 214 330 214 300 C214 272.8 232.8 252 252 225 C254.4 221.8 258.8 223 258 226.5 C255.2 242 262.4 252 271.2 262 C284.8 279 292 292.5 292 308 C292 334 277 352 256 352 Z"
+        fill="url(#emberCore)"/>
+</svg>

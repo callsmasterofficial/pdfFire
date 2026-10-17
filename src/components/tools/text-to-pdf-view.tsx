@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { convertTextToPdf, TextToPdfResult } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
 
-const DEFAULT_SAMPLE_TEXT = `PDFForge Local Document Creator
+const DEFAULT_SAMPLE_TEXT = `PDFfire Local Document Creator
 
 This document was created and paginated 100% inside your web browser using pdf-lib. No document contents were transmitted over any network or processed by any external cloud server.
 

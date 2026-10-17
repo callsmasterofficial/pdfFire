@@ -2,9 +2,11 @@ import {
   Combine, Scissors, RotateCw, Layers, FileImage, Image as ImageIcon,
   Files, Zap, Stamp, Hash, PenTool, Lock, ShieldAlert, Fingerprint,
   FileText, CheckSquare, Unlock, ScanText, FileUp, Sparkles, MessageSquareText,
-  GitCompare, Wrench,
+  GitCompare, Wrench, LayoutGrid, Crop, Shuffle, FlipHorizontal,
 } from "lucide-react";
 import { ToolCardProps } from "@/components/home/tool-card";
+
+export type ToolItem = ToolCardProps;
 
 export const TOOL_ITEMS: ToolCardProps[] = [
   {
@@ -64,6 +66,10 @@ export const TOOL_ITEMS: ToolCardProps[] = [
     description: "Export high-resolution PNG or JPEG images from any document pages.",
   },
   {
+    id: "extract-images", title: "Extract Images", category: "Convert", icon: ImageIcon, badge: "Phase 14", isAvailable: true,
+    description: "Extract embedded photos and graphics from PDF pages into original PNG/JPEG or ZIP.",
+  },
+  {
     id: "ocr", title: "OCR Scanned PDF", category: "Convert", icon: ScanText, badge: "Phase 7", isAvailable: true,
     description: "Extract text from scanned PDFs & images and generate searchable PDFs 100% locally.",
   },
@@ -100,12 +106,32 @@ export const TOOL_ITEMS: ToolCardProps[] = [
     description: "Rebuild corrupted xref tables, repair broken headers, and salvage readable pages.",
   },
   {
-    id: "protect", title: "Protect PDF", category: "Security", icon: Lock, badge: "Phase 6", isAvailable: false,
-    description: "Apply standard password encryption without transmitting files anywhere.",
+    id: "sign", title: "Sign PDF", category: "Edit & Optimize", icon: PenTool, badge: "Phase 12", isAvailable: true,
+    description: "Draw, type, or upload your transparent signature and stamp it onto document pages.",
   },
   {
-    id: "redact", title: "Secure Redaction", category: "Security", icon: ShieldAlert, badge: "Phase 6", isAvailable: false,
-    description: "Sanitize and strip underlying text vectors safely inside browser memory.",
+    id: "n-up", title: "Pages per Sheet", category: "Organize", icon: LayoutGrid, badge: "Phase 12", isAvailable: true,
+    description: "Arrange 2, 4, 6, 9, or 16 pages onto a single sheet grid for compact printing and handouts.",
+  },
+  {
+    id: "crop", title: "Crop & Resize PDF", category: "Edit & Optimize", icon: Crop, badge: "Phase 12", isAvailable: true,
+    description: "Trim outer margins, remove printer bleed marks, or scale pages to standard paper formats.",
+  },
+  {
+    id: "alternate-mix", title: "Alternate & Mix PDF", category: "Organize", icon: Shuffle, badge: "Phase 12", isAvailable: true,
+    description: "Interleave pages from two PDFs in alternating sequence — perfect for combining odd & even scanner pages.",
+  },
+  {
+    id: "flip", title: "Flip & Mirror PDF", category: "Organize", icon: FlipHorizontal, badge: "Phase 12", isAvailable: true,
+    description: "Mirror pages horizontally for T-shirt transfer printing or flip upside-down vertically.",
+  },
+  {
+    id: "protect", title: "Protect PDF", category: "Security", icon: Lock, badge: "Phase 13", isAvailable: true,
+    description: "Apply AES-256 password encryption and granular restrictions without transmitting files.",
+  },
+  {
+    id: "redact", title: "Redact PDF", category: "Security", icon: ShieldAlert, badge: "Phase 13", isAvailable: true,
+    description: "Permanently redact sensitive PII patterns, black out confidential text, and strip metadata.",
   },
 ];
 

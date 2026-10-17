@@ -66,7 +66,7 @@ export function PDFCanvasView({
   }, [pdfDoc, pageNumber, scale, rotation]);
 
   return (
-    <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-8 bg-surface-secondary/20 relative min-h-[420px]">
+    <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-8 bg-surface-secondary/20 relative min-h-105">
       {isLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/40 backdrop-blur-2xs z-10">
           <Loader2 className="size-8 animate-spin text-primary mb-2" />
