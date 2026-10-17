@@ -31,6 +31,7 @@ import { FlipToolView } from "@/components/tools/flip-tool-view";
 import { RedactToolView } from "@/components/tools/redact-tool-view";
 import { ProtectToolView } from "@/components/tools/protect-tool-view";
 import { ExtractImagesToolView } from "@/components/tools/extract-images-tool-view";
+import { MarkdownToPdfToolView } from "@/components/tools/markdown-to-pdf-tool-view";
 
 const SUPPORTED_TOOLS = [
   "merge", "rotate", "extract", "split", "reorder",
@@ -40,7 +41,7 @@ const SUPPORTED_TOOLS = [
   "ocr", "pdf-to-text", "text-to-pdf",
   "summary", "chat", "compare", "repair",
   "sign", "n-up", "crop", "alternate-mix", "flip",
-  "redact", "protect", "extract-images",
+  "redact", "protect", "extract-images", "markdown-to-pdf",
 ] as const;
 
 export function generateStaticParams() {
@@ -86,6 +87,7 @@ async function ToolContent({ params }: ToolPageProps) {
     case "redact": return <RedactToolView />;
     case "protect": return <ProtectToolView />;
     case "extract-images": return <ExtractImagesToolView />;
+    case "markdown-to-pdf": return <MarkdownToPdfToolView />;
     default:
       notFound();
   }

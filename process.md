@@ -69,7 +69,7 @@ These rules are strictly enforced for all AI agents and contributors working in 
 
 #### Phase 14: Asset Extraction & Document Authoring (In Progress)
 - [x] **Extract Images from PDF** (`/tool/extract-images` — parse raw XObject images into ZIP) *(2026-10-16)*
-- [ ] **Markdown to PDF** (`/tool/markdown-to-pdf` — split-pane editor with vector pagination)
+- [x] **Markdown to PDF** (`/tool/markdown-to-pdf` — split-pane editor with vector pagination) *(2026-10-17)*
 - [ ] **CSV to PDF** (`/tool/csv-to-pdf` — formatted tabular data rendering into PDF table)
 - [ ] **Invert PDF Colours** (`/tool/invert-colors` — dark mode, sepia, high-contrast transforms)
 - [ ] **Bates Numbering** (`/tool/bates-numbering` — legal sequence indexing with custom prefixes)
@@ -96,6 +96,7 @@ These rules are strictly enforced for all AI agents and contributors working in 
 
 | Date | Task Point / Item | Action Taken & Summary | Status | Next Planned Step |
 | :--- | :--- | :--- | :--- | :--- |
+| **2026-10-17** | **Project Package Rename** | Renamed the project package from `free-pdf` to npm-compatible `pdffire` in `package.json` and lockfile; updated README clone instructions. Public product branding remains PDFfire. | ✅ Complete | Continue Phase 14: CSV to PDF (`/tool/csv-to-pdf`). |
 | **2026-10-09** | **Process Setup & Governance** | Created `process.md` integrating `project-overview.md`. Established pre-action read rule and post-task update rule. Configured `AGENTS.md` workspace rule. | ✅ Complete | Complete Phase 0 setup (static export, Vitest, design tokens). |
 | **2026-10-09** | **Modularity & DRY Rule Enforcement** | Added rule capping files at max 160–170 lines of code, mandating sub-component decomposition, DRY principle, and reusable components across `AGENTS.md`, `process.md`, and workspace rules. | ✅ Complete | Continue Phase 0 foundation setup. |
 | **2026-10-09** | **shadcn/ui Integration** | Initialized shadcn/ui CLI (`base-nova`, `@base-ui/react`, Lucide icons, `tw-animate-css`, `cn` helper, button primitive), configured Tailwind CSS v4 variables in `globals.css`, and verified `npm run build`. | ✅ Complete | Configure static export compatibility & test tooling. |
@@ -132,8 +133,7 @@ These rules are strictly enforced for all AI agents and contributors working in 
 | **2026-10-16** | **Card-to-Footer Spacing Enhancement** | Added generous vertical breathing room between the bottom tool card row and the global footer (`pb-24 sm:pb-32 mb-20 sm:mb-24` on `#tools` container, `py-12 sm:py-16` on `Footer`). Verified 224px measured separation in Chrome browser with zero visual cramping. | ✅ Complete | Ready for Phase 14 Tool 2: Markdown to PDF (`/tool/markdown-to-pdf`). |
 | **2026-10-16** | **Search Bar Icon & Padding Alignment** | Fixed search input text and magnifying glass overlap in `ToolsDirectoryFilter`. Replaced absolute translation with an `inset-y-0 flex items-center` wrapper with explicit `0.875rem` left offset, balanced text padding (`style={{ paddingLeft: "2.35rem", paddingRight: "3.5rem" }}`), and natural 8px icon-to-text gap. Verified vertical centering and proportions via browser subagent. | ✅ Complete | Ready for Phase 14 Tool 2: Markdown to PDF (`/tool/markdown-to-pdf`). |
 | **2026-10-16** | **Tool Studio & Unified Sidebar Navigation (`/tool`)** | Designed and built a dedicated Tool Studio workspace with an expandable/collapsible sidebar adhering 100% to PDFfire's Ember Orange & Paper/Charcoal design system. Features categorized tool accordions with live counters, quick search, client-side Starred & Recent tools persistence via `useToolPreferences`, breadcrumb navigation, and responsive drawer on mobile. Created `/tool` interactive dashboard and unified `ToolShellLayout` across `/tool` and all `/tool/[toolId]` pages. All files strictly under 140 lines. Passed all 87/87 tests, 0 ESLint warnings, 37/37 static build routes. Verified via browser subagent across desktop and mobile. | ✅ Complete | Ready for Phase 14 Tool 2: Markdown to PDF (`/tool/markdown-to-pdf`). |
-
-
+| **2026-10-17** | **Phase 14: Markdown to PDF (`/tool/markdown-to-pdf`)** | Implemented a local split-pane Markdown authoring tool with live structure preview and vector PDF pagination. Added a portable Markdown parser for headings, paragraphs, lists, quotes, rules, inline formatting, and fenced code; registered the static route and toolkit card; and added focused parser/PDF pagination tests. Passed 89/89 Vitest tests, ESLint, TypeScript (`tsc --noEmit`), and diff validation. A production build was started but did not complete while the existing development server was active; rerun it after stopping that server. | ✅ Complete | Phase 14 Tool 3: CSV to PDF (`/tool/csv-to-pdf`). |
 
 
 

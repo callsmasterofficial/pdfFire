@@ -28,4 +28,6 @@ export * from "./redact-pii";
 export * from "./redact";
 export * from "./protect";
 export * from "./extract-images";
+export * from "./markdown-parser";
+export * from "./markdown-to-pdf";
 export * from "../../ocr/ocr-types";

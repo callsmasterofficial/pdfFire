@@ -2,7 +2,7 @@ import {
   Combine, Scissors, RotateCw, Layers, FileImage, Image as ImageIcon,
   Files, Zap, Stamp, Hash, PenTool, Lock, ShieldAlert, Fingerprint,
   FileText, CheckSquare, Unlock, ScanText, FileUp, Sparkles, MessageSquareText,
-  GitCompare, Wrench, LayoutGrid, Crop, Shuffle, FlipHorizontal,
+  GitCompare, Wrench, LayoutGrid, Crop, Shuffle, FlipHorizontal, FileCode2,
 } from "lucide-react";
 import { ToolCardProps } from "@/components/home/tool-card";
 
@@ -68,6 +68,10 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   {
     id: "extract-images", title: "Extract Images", category: "Convert", icon: ImageIcon, badge: "Phase 14", isAvailable: true,
     description: "Extract embedded photos and graphics from PDF pages into original PNG/JPEG or ZIP.",
+  },
+  {
+    id: "markdown-to-pdf", title: "Markdown to PDF", category: "Convert", icon: FileCode2, badge: "Phase 14", isAvailable: true,
+    description: "Write Markdown in a split-pane editor and export clean, locally generated vector PDF pages.",
   },
   {
     id: "ocr", title: "OCR Scanned PDF", category: "Convert", icon: ScanText, badge: "Phase 7", isAvailable: true,

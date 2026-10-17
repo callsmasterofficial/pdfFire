@@ -46,8 +46,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/your-repo/free-pdf.git
-cd free-pdf
+git clone https://github.com/your-repo/pdffire.git
+cd pdffire
 
 # Install dependencies
 npm install
