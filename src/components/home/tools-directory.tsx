@@ -39,12 +39,18 @@ export function ToolsDirectory() {
   };
 
   return (
-    <section id="tools" className="w-full max-w-6xl mx-auto px-4 pb-24 sm:pb-32 mb-20 sm:mb-24 scroll-mt-20">
+    <section
+      id="tools"
+      suppressHydrationWarning
+      className="w-full max-w-7xl mx-auto px-4 pb-24 sm:pb-32 mb-20 sm:mb-24 scroll-mt-20"
+    >
       <ToolsDirectoryHeader
         totalCount={TOOL_ITEMS.length}
         filteredCount={filteredTools.length}
         activeCategory={activeCategory}
-        hasActiveFilter={activeCategory !== "All" || searchQuery.trim().length > 0}
+        hasActiveFilter={
+          activeCategory !== "All" || searchQuery.trim().length > 0
+        }
       />
 
       <ToolsDirectoryFilter
@@ -63,7 +69,7 @@ export function ToolsDirectory() {
         />
       ) : (
         <div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
           suppressHydrationWarning
         >
           {filteredTools.map((tool) => (

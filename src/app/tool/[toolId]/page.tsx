@@ -32,6 +32,8 @@ import { RedactToolView } from "@/components/tools/redact-tool-view";
 import { ProtectToolView } from "@/components/tools/protect-tool-view";
 import { ExtractImagesToolView } from "@/components/tools/extract-images-tool-view";
 import { MarkdownToPdfToolView } from "@/components/tools/markdown-to-pdf-tool-view";
+import { CsvToPdfToolView } from "@/components/tools/csv-to-pdf-tool-view";
+import { InvertColorsToolView } from "@/components/tools/invert-colors-tool-view";
 
 const SUPPORTED_TOOLS = [
   "merge", "rotate", "extract", "split", "reorder",
@@ -41,7 +43,7 @@ const SUPPORTED_TOOLS = [
   "ocr", "pdf-to-text", "text-to-pdf",
   "summary", "chat", "compare", "repair",
   "sign", "n-up", "crop", "alternate-mix", "flip",
-  "redact", "protect", "extract-images", "markdown-to-pdf",
+  "redact", "protect", "extract-images", "markdown-to-pdf", "csv-to-pdf", "invert-colors",
 ] as const;
 
 export function generateStaticParams() {
@@ -88,6 +90,8 @@ async function ToolContent({ params }: ToolPageProps) {
     case "protect": return <ProtectToolView />;
     case "extract-images": return <ExtractImagesToolView />;
     case "markdown-to-pdf": return <MarkdownToPdfToolView />;
+    case "csv-to-pdf": return <CsvToPdfToolView />;
+    case "invert-colors": return <InvertColorsToolView />;
     default:
       notFound();
   }

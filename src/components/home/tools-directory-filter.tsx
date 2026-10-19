@@ -106,6 +106,7 @@ export function ToolsDirectoryFilter({
             >
               <span>{cat}</span>
               <span
+                suppressHydrationWarning
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono transition-colors ${
                   isActive
                     ? "bg-primary-foreground/20 text-primary-foreground"

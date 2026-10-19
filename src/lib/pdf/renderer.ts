@@ -79,7 +79,8 @@ export function renderPageToCanvas(
 
 export async function generateThumbnail(
   page: PDFPageProxy,
-  targetWidth = 140
+  targetWidth = 140,
+  signal?: AbortSignal,
 ): Promise<string> {
   const baseViewport = page.getViewport({ scale: 1.0 });
   const scale = targetWidth / baseViewport.width;
@@ -102,6 +103,8 @@ export async function generateThumbnail(
     canvas,
     viewport,
   });
+
+  signal?.addEventListener("abort", () => renderTask.cancel(), { once: true });
 
   await renderTask.promise;
   const dataUrl = canvas.toDataURL("image/jpeg", 0.82);

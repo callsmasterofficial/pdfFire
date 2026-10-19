@@ -21,6 +21,7 @@ export function PDFThumbnailSidebar({
 
   useEffect(() => {
     let isCancelled = false;
+    const controller = new AbortController();
 
     const loadThumbnails = async () => {
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -29,7 +30,7 @@ export function PDFThumbnailSidebar({
         try {
           const page = await pdfDoc.getPage(pageNum);
           if (isCancelled) break;
-          const url = await generateThumbnail(page, 130);
+          const url = await generateThumbnail(page, 130, controller.signal);
           if (isCancelled) break;
           setThumbnails((prev) => (prev[pageNum] ? prev : { ...prev, [pageNum]: url }));
         } catch {
@@ -42,6 +43,7 @@ export function PDFThumbnailSidebar({
 
     return () => {
       isCancelled = true;
+      controller.abort();
     };
   }, [pdfDoc, totalPages]);
 

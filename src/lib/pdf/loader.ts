@@ -103,9 +103,19 @@ export async function loadPdfDocument(
 
 export async function cleanupPdfDocument(pdfDoc: PDFDocumentProxy | null): Promise<void> {
   if (!pdfDoc) return;
-  try {
-    await pdfDoc.cleanup();
-  } catch (err) {
-    console.warn("Error cleaning up PDF document proxy:", err);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await pdfDoc.cleanup();
+      return;
+    } catch (err) {
+      const isRendering = err instanceof Error && err.message.includes("currently rendering");
+      if (!isRendering) {
+        console.warn("Error cleaning up PDF document proxy:", err);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
   }
+  // Thumbnail/canvas cancellation completes asynchronously. Retry after it settles.
+  setTimeout(() => { void cleanupPdfDocument(pdfDoc); }, 100);
 }

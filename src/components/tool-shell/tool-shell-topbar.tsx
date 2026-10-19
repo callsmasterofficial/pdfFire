@@ -29,7 +29,7 @@ export function ToolShellTopbar({
         <button
           type="button"
           onClick={onOpenMobileSidebar}
-          className="p-1.5 rounded-lg border border-border text-foreground hover:bg-muted max-md:inline-flex hidden"
+          className="inline-flex md:hidden p-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors cursor-pointer"
           aria-label="Open tool navigation"
         >
           <Menu className="size-4" />
@@ -39,7 +39,7 @@ export function ToolShellTopbar({
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="max-md:hidden inline-flex p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
+          className="hidden md:inline-flex p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer"
           title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >

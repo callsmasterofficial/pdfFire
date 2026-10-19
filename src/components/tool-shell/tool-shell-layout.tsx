@@ -28,7 +28,7 @@ export function ToolShellLayout({ children }: ToolShellLayoutProps) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Desktop Sticky Sidebar */}
-      <div className="max-md:hidden h-full shrink-0">
+      <div className="hidden md:flex h-full shrink-0">
         <ToolSidebar
           isCollapsed={isCollapsed}
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}

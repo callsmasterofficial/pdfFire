@@ -2,7 +2,7 @@ import {
   Combine, Scissors, RotateCw, Layers, FileImage, Image as ImageIcon,
   Files, Zap, Stamp, Hash, PenTool, Lock, ShieldAlert, Fingerprint,
   FileText, CheckSquare, Unlock, ScanText, FileUp, Sparkles, MessageSquareText,
-  GitCompare, Wrench, LayoutGrid, Crop, Shuffle, FlipHorizontal, FileCode2,
+  GitCompare, Wrench, LayoutGrid, Crop, Shuffle, FlipHorizontal, FileCode2, FileSpreadsheet, Contrast,
 } from "lucide-react";
 import { ToolCardProps } from "@/components/home/tool-card";
 
@@ -72,6 +72,14 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   {
     id: "markdown-to-pdf", title: "Markdown to PDF", category: "Convert", icon: FileCode2, badge: "Phase 14", isAvailable: true,
     description: "Write Markdown in a split-pane editor and export clean, locally generated vector PDF pages.",
+  },
+  {
+    id: "csv-to-pdf", title: "CSV to PDF", category: "Convert", icon: FileSpreadsheet, badge: "Phase 14", isAvailable: true,
+    description: "Format local CSV data into a clean, paginated landscape PDF table.",
+  },
+  {
+    id: "invert-colors", title: "Invert PDF Colours", category: "Edit & Optimize", icon: Contrast, badge: "Phase 14", isAvailable: true,
+    description: "Create dark-mode, sepia, or high-contrast PDF reading copies locally.",
   },
   {
     id: "ocr", title: "OCR Scanned PDF", category: "Convert", icon: ScanText, badge: "Phase 7", isAvailable: true,

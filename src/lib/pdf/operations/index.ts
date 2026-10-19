@@ -30,4 +30,6 @@ export * from "./protect";
 export * from "./extract-images";
 export * from "./markdown-parser";
 export * from "./markdown-to-pdf";
+export * from "./csv-to-pdf";
+export * from "./invert-colors";
 export * from "../../ocr/ocr-types";

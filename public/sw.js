@@ -43,6 +43,11 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
+  // Always bypass caching on localhost / local development environments
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return;
+  }
+
   // Cache-first for static Next.js assets, PDF.js workers, and local assets
   if (
     url.pathname.startsWith("/_next/static/") ||

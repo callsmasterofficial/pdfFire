@@ -19,7 +19,7 @@ export function ToolsDirectoryHeader({
       <div className="space-y-2">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
           <Flame className="size-3.5 fill-primary text-primary" />
-          <span>{totalCount} Local PDF Utilities</span>
+          <span suppressHydrationWarning>{totalCount} Local PDF Utilities</span>
         </div>
 
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
@@ -33,7 +33,7 @@ export function ToolsDirectoryHeader({
 
       <div className="flex items-center gap-2 self-start md:self-end text-xs text-muted-foreground font-mono">
         <Sparkles className="size-3.5 text-primary" />
-        <span>
+        <span suppressHydrationWarning>
           {hasActiveFilter
             ? `Showing ${filteredCount} of ${totalCount} tools${activeCategory !== "All" ? ` • ${activeCategory}` : ""}`
             : `${totalCount} tools available`}
