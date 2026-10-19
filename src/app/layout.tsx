@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
+import { SITE_CONFIG, getSiteUrl, getCanonicalUrl } from "@/lib/seo/site-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,10 +23,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "PDFfire — PDF Tools That Just Work",
-  description:
-    "Fast, private in-browser PDF manipulation. Merge, split, compress, convert, edit, and protect documents with zero server uploads.",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: SITE_CONFIG.defaultTitle,
+    template: SITE_CONFIG.titleTemplate,
+  },
+  description: SITE_CONFIG.defaultDescription,
   manifest: "/manifest.json",
+  alternates: {
+    canonical: getCanonicalUrl("/"),
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       {
@@ -52,15 +70,27 @@ export const metadata: Metadata = {
     title: "PDFfire",
   },
   openGraph: {
-    title: "PDFfire — PDF Tools That Just Work",
-    description: "Fast, private in-browser PDF manipulation with zero server uploads.",
-    siteName: "PDFfire",
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    url: getSiteUrl(),
+    siteName: SITE_CONFIG.name,
+    locale: SITE_CONFIG.locale,
     type: "website",
+    images: [
+      {
+        url: "/brand/pdffire-og.png",
+        width: 1200,
+        height: 630,
+        alt: "PDFfire — PDF Tools That Just Work",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
-    title: "PDFfire — PDF Tools That Just Work",
-    description: "Fast, private in-browser PDF manipulation with zero server uploads.",
+    card: "summary_large_image",
+    title: SITE_CONFIG.defaultTitle,
+    description: SITE_CONFIG.defaultDescription,
+    creator: SITE_CONFIG.twitterHandle,
+    images: ["/brand/pdffire-og.png"],
   },
 };
 

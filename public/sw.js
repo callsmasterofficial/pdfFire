@@ -5,7 +5,6 @@ const STATIC_PRECACHE = [
   "/icon.svg",
   "/icons/favicon.svg",
   "/icons/favicon-32x32.png",
-  "/pdf.worker.min.mjs",
 ];
 
 // Installation: Pre-cache core app shell assets

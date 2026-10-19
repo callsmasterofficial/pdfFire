@@ -1,117 +1,124 @@
 import React, { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { MergeToolView } from "@/components/tools/merge-tool-view";
-import { RotateToolView } from "@/components/tools/rotate-tool-view";
-import { ExtractToolView } from "@/components/tools/extract-tool-view";
-import { SplitToolView } from "@/components/tools/split-tool-view";
-import { ReorderToolView } from "@/components/tools/reorder-tool-view";
-import { ImagesToPdfView } from "@/components/tools/images-to-pdf-view";
-import { PdfToImagesView } from "@/components/tools/pdf-to-images-view";
-import { BatchToolView } from "@/components/tools/batch-tool-view";
-import { CompressToolView } from "@/components/tools/compress-tool-view";
-import { WatermarkToolView } from "@/components/tools/watermark-tool-view";
-import { PageNumberToolView } from "@/components/tools/page-number-tool-view";
-import { EditToolView } from "@/components/tools/edit-tool-view";
-import { MetadataToolView } from "@/components/tools/metadata-tool-view";
-import { HashToolView } from "@/components/tools/hash-tool-view";
-import { FormToolView } from "@/components/tools/form-tool-view";
-import { UnlockToolView } from "@/components/tools/unlock-tool-view";
-import { OcrToolView } from "@/components/tools/ocr-tool-view";
-import { PdfToTextView } from "@/components/tools/pdf-to-text-view";
-import { TextToPdfView } from "@/components/tools/text-to-pdf-view";
-import { AiSummaryToolView } from "@/components/tools/ai-summary-tool-view";
-import { AiChatToolView } from "@/components/tools/ai-chat-tool-view";
-import { CompareToolView } from "@/components/tools/compare-tool-view";
-import { RepairToolView } from "@/components/tools/repair-tool-view";
-import { SignToolView } from "@/components/tools/sign-tool-view";
-import { NUpToolView } from "@/components/tools/n-up-tool-view";
-import { CropToolView } from "@/components/tools/crop-tool-view";
-import { AlternateMixToolView } from "@/components/tools/alternate-mix-tool-view";
-import { FlipToolView } from "@/components/tools/flip-tool-view";
-import { RedactToolView } from "@/components/tools/redact-tool-view";
-import { ProtectToolView } from "@/components/tools/protect-tool-view";
-import { ExtractImagesToolView } from "@/components/tools/extract-images-tool-view";
-import { MarkdownToPdfToolView } from "@/components/tools/markdown-to-pdf-tool-view";
-import { CsvToPdfToolView } from "@/components/tools/csv-to-pdf-tool-view";
-import { InvertColorsToolView } from "@/components/tools/invert-colors-tool-view";
-
-const SUPPORTED_TOOLS = [
-  "merge", "rotate", "extract", "split", "reorder",
-  "img-to-pdf", "pdf-to-img", "batch", "compress",
-  "watermark", "page-number", "edit",
-  "metadata", "hash", "flatten", "unlock",
-  "ocr", "pdf-to-text", "text-to-pdf",
-  "summary", "chat", "compare", "repair",
-  "sign", "n-up", "crop", "alternate-mix", "flip",
-  "redact", "protect", "extract-images", "markdown-to-pdf", "csv-to-pdf", "invert-colors",
-] as const;
-
-export function generateStaticParams() {
-  return SUPPORTED_TOOLS.map((toolId) => ({ toolId }));
-}
+import { ToolViewRenderer } from "./tool-view-renderer";
+import { getToolSeoData, getRelatedTools, getAllToolSeoData } from "@/lib/seo/tools-seo-data";
+import { getCanonicalUrl, SITE_CONFIG } from "@/lib/seo/site-config";
+import {
+  generateSoftwareApplicationSchema,
+  generateBreadcrumbSchema,
+  generateFaqSchema,
+} from "@/lib/seo/schema-generators";
+import { JsonLd } from "@/components/seo/json-ld";
+import { ToolBreadcrumbs } from "@/components/seo/tool-breadcrumbs";
+import { ToolGuideSection } from "@/components/seo/tool-guide-section";
+import { ToolFaqSection } from "@/components/seo/tool-faq-section";
+import { ToolRelatedSection } from "@/components/seo/tool-related-section";
 
 interface ToolPageProps {
   params: Promise<{ toolId: string }>;
 }
 
-async function ToolContent({ params }: ToolPageProps) {
-  const { toolId } = await params;
+export function generateStaticParams() {
+  return getAllToolSeoData().map((tool) => ({ toolId: tool.id }));
+}
 
-  switch (toolId) {
-    case "merge": return <MergeToolView />;
-    case "rotate": return <RotateToolView />;
-    case "extract": return <ExtractToolView />;
-    case "split": return <SplitToolView />;
-    case "reorder": return <ReorderToolView />;
-    case "img-to-pdf": return <ImagesToPdfView />;
-    case "pdf-to-img": return <PdfToImagesView />;
-    case "batch": return <BatchToolView />;
-    case "compress": return <CompressToolView />;
-    case "watermark": return <WatermarkToolView />;
-    case "page-number": return <PageNumberToolView />;
-    case "edit": return <EditToolView />;
-    case "metadata": return <MetadataToolView />;
-    case "hash": return <HashToolView />;
-    case "flatten": return <FormToolView />;
-    case "unlock": return <UnlockToolView />;
-    case "ocr": return <OcrToolView />;
-    case "pdf-to-text": return <PdfToTextView />;
-    case "text-to-pdf": return <TextToPdfView />;
-    case "summary": return <AiSummaryToolView />;
-    case "chat": return <AiChatToolView />;
-    case "compare": return <CompareToolView />;
-    case "repair": return <RepairToolView />;
-    case "sign": return <SignToolView />;
-    case "n-up": return <NUpToolView />;
-    case "crop": return <CropToolView />;
-    case "alternate-mix": return <AlternateMixToolView />;
-    case "flip": return <FlipToolView />;
-    case "redact": return <RedactToolView />;
-    case "protect": return <ProtectToolView />;
-    case "extract-images": return <ExtractImagesToolView />;
-    case "markdown-to-pdf": return <MarkdownToPdfToolView />;
-    case "csv-to-pdf": return <CsvToPdfToolView />;
-    case "invert-colors": return <InvertColorsToolView />;
-    default:
-      notFound();
+export async function generateMetadata({ params }: ToolPageProps): Promise<Metadata> {
+  const { toolId } = await params;
+  const seo = getToolSeoData(toolId);
+  if (!seo) {
+    return {
+      title: "Tool Not Found",
+      robots: { index: false, follow: false },
+    };
   }
+
+  const canonicalUrl = getCanonicalUrl(`/tool/${seo.id}`);
+  return {
+    title: seo.title,
+    description: seo.metaDescription,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${seo.h1} — ${SITE_CONFIG.name}`,
+      description: seo.metaDescription,
+      url: canonicalUrl,
+      siteName: SITE_CONFIG.name,
+      type: "website",
+      images: [
+        {
+          url: "/brand/pdffire-og.png",
+          width: 1200,
+          height: 630,
+          alt: `${seo.h1} — ${SITE_CONFIG.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${seo.h1} — ${SITE_CONFIG.name}`,
+      description: seo.metaDescription,
+      images: ["/brand/pdffire-og.png"],
+    },
+  };
 }
 
 function ToolLoadingFallback() {
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-20 flex flex-col items-center justify-center">
-      <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-3" />
-      <p className="text-xs text-muted-foreground font-mono">Loading tool...</p>
+    <div className="w-full flex-1 flex flex-col items-center py-4 sm:py-6 px-3 sm:px-6">
+      <div className="w-full max-w-5xl mx-auto px-4 py-20 flex flex-col items-center justify-center">
+        <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-3" />
+        <p className="text-xs text-muted-foreground font-mono">Loading tool...</p>
+      </div>
+    </div>
+  );
+}
+
+async function ToolPageContent({ params }: ToolPageProps) {
+  const { toolId } = await params;
+  const seo = getToolSeoData(toolId);
+
+  if (!seo) {
+    notFound();
+  }
+
+  const softwareSchema = generateSoftwareApplicationSchema(seo);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Tools", path: "/tool" },
+    { name: seo.h1, path: `/tool/${seo.id}` },
+  ]);
+  const faqSchema = generateFaqSchema(seo.faqs);
+  const relatedTools = getRelatedTools(toolId);
+
+  return (
+    <div className="w-full flex-1 flex flex-col items-center py-4 sm:py-6 px-3 sm:px-6">
+      <JsonLd data={softwareSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
+
+      <div className="w-full max-w-5xl mx-auto">
+        <ToolBreadcrumbs
+          items={[
+            { name: "Tools", path: "/tool" },
+            { name: seo.h1, path: `/tool/${seo.id}` },
+          ]}
+        />
+
+        <ToolViewRenderer toolId={toolId} />
+
+        <ToolGuideSection tool={seo} />
+        <ToolFaqSection faqs={seo.faqs} toolH1={seo.h1} />
+        <ToolRelatedSection relatedTools={relatedTools} />
+      </div>
     </div>
   );
 }
 
 export default function ToolPage({ params }: ToolPageProps) {
   return (
-    <div className="w-full flex-1 flex flex-col items-center py-4 sm:py-6 px-3 sm:px-6">
-      <Suspense fallback={<ToolLoadingFallback />}>
-        <ToolContent params={params} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<ToolLoadingFallback />}>
+      <ToolPageContent params={params} />
+    </Suspense>
   );
 }

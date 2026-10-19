@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved && ["light", "dark", "system"].includes(saved)) {
+    if (saved && (saved === "light" || saved === "dark")) {
       setThemeState(saved);
     }
   }, []);

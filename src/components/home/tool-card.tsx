@@ -62,6 +62,7 @@ export function ToolCard({
     return (
       <Link
         href={`/tool/${id}`}
+        prefetch={false}
         suppressHydrationWarning
         className="block focus:outline-hidden focus:ring-2 focus:ring-primary/40 rounded-xl"
       >

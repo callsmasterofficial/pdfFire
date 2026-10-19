@@ -1,9 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
-import { PDFPreviewWorkspace } from "@/components/preview/pdf-preview-workspace";
 import { createSamplePdfFile } from "@/lib/pdf/test-fixtures";
+
+const PDFPreviewWorkspace = dynamic(
+  () =>
+    import("@/components/preview/pdf-preview-workspace").then(
+      (mod) => mod.PDFPreviewWorkspace
+    ),
+  {
+    loading: () => (
+      <div className="flex flex-col items-center justify-center p-16 rounded-2xl border border-border bg-surface shadow-xs">
+        <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-3" />
+        <p className="text-sm font-semibold text-foreground">Loading In-Memory Preview...</p>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 import { Sparkles, ShieldCheck } from "lucide-react";
 
 export function HomePreviewSection() {
