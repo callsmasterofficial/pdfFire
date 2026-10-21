@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Wrench, Download, RotateCcw, Loader2, Sparkles } from "lucide-react";
+import { Wrench, RotateCcw, Loader2, Sparkles } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { Button } from "@/components/ui/button";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
 import { RepairDiagnosticsCard } from "./repair/repair-diagnostics-card";
 import { repairPdfDocument, RepairResult } from "@/lib/pdf/operations/repair";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export function RepairToolView() {
@@ -110,12 +111,12 @@ export function RepairToolView() {
 
             <RepairDiagnosticsCard diagnostics={repairResult.diagnostics} />
 
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleDownload} size="lg" className="gap-2 shadow-xs">
-                <Download className="size-4" />
-                <span>Download Repaired PDF</span>
-              </Button>
-            </div>
+            <ResultPreviewSection
+              pdfBytes={repairResult.pdfBytes}
+              fileName={`${file?.name.replace(/\.[^/.]+$/, "")}-repaired.pdf`}
+              title="Repaired Document Preview"
+              onDownload={handleDownload}
+            />
           </div>
         )}
 

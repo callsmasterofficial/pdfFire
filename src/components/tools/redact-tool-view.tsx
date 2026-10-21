@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldAlert, Download, RotateCcw } from "lucide-react";
+import { ShieldAlert, RotateCcw } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -9,6 +9,7 @@ import { RedactPiiScanner } from "@/components/tools/redact/redact-pii-scanner";
 import { RedactPageCanvas } from "@/components/tools/redact/redact-page-canvas";
 import { RedactControls } from "@/components/tools/redact/redact-controls";
 import { applyRedactions, RedactionArea, RedactionResult } from "@/lib/pdf/operations/redact";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { PDFDocument } from "pdf-lib";
 
 export function RedactToolView() {
@@ -140,22 +141,12 @@ export function RedactToolView() {
             />
 
             {result && (
-              <div className="p-5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Redaction Applied!</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Permanently sanitized {result.redactedCount} {result.redactedCount === 1 ? "area" : "areas"} across{" "}
-                    <strong>{result.pagesAffected}</strong> {result.pagesAffected === 1 ? "page" : "pages"} and purged all metadata.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:opacity-90 inline-flex items-center gap-2 text-sm"
-                >
-                  <Download className="size-4" /> Download Redacted PDF
-                </button>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={`${file.name.replace(/\.pdf$/i, "")}_redacted.pdf`}
+                title="Redacted Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

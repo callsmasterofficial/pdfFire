@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { SortableList } from "@/components/dnd/sortable-list";
 import { SortableItem } from "@/components/dnd/sortable-item";
 import { mergePdfFiles, MergePdfResult } from "@/lib/pdf/operations/merge";
@@ -109,6 +110,16 @@ export function MergeToolView() {
               </div>
             </SortableList>
           </div>
+        )}
+
+        {result && (
+          <ResultPreviewSection
+            pdfBytes={result.pdfBytes}
+            fileName={result.fileName}
+            pageCount={result.pageCount}
+            title="Merged Document Preview"
+            onDownload={handleDownload}
+          />
         )}
 
         <ToolActionBar

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { FlipHorizontal, Download, RotateCcw } from "lucide-react";
+import { FlipHorizontal, RotateCcw } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { FlipSettings } from "@/components/tools/flip/flip-settings";
 import { FlipVisualCard } from "@/components/tools/flip/flip-visual-card";
 import { flipPdf, FlipOptions, FlipResult } from "@/lib/pdf/operations/flip";
@@ -103,21 +104,13 @@ export function FlipToolView() {
             </div>
 
             {result && (
-              <div className="p-5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Mirroring Applied!</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Flipped {result.flippedPagesCount} of {result.totalPages} {result.totalPages === 1 ? "page" : "pages"} ({options.direction}).
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:opacity-90 inline-flex items-center gap-2 text-sm"
-                >
-                  <Download className="size-4" /> Download Flipped PDF
-                </button>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={file ? `${file.name.replace(/\.pdf$/i, "")}_flipped.pdf` : "flipped.pdf"}
+                pageCount={result.totalPages}
+                title="Mirrored PDF Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

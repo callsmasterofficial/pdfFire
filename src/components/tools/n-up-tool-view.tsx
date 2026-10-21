@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { LayoutGrid, Download, RotateCcw } from "lucide-react";
+import { LayoutGrid, RotateCcw } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { NUpSheetDiagram } from "@/components/tools/n-up/n-up-sheet-diagram";
 import { NUpSettings } from "@/components/tools/n-up/n-up-settings";
 import { createNUpPdf, NUpOptions, NUpResult } from "@/lib/pdf/operations/n-up";
@@ -106,22 +107,13 @@ export function NUpToolView() {
             </div>
 
             {result && (
-              <div className="p-5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Imposition Complete!</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Imposed {result.sourcePageCount} source {result.sourcePageCount === 1 ? "page" : "pages"} onto{" "}
-                    <strong>{result.sheetCount}</strong> {result.sheetCount === 1 ? "sheet" : "sheets"} ({result.pagesPerSheet}-Up).
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:opacity-90 inline-flex items-center gap-2 text-sm"
-                >
-                  <Download className="size-4" /> Download Imposed PDF
-                </button>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={file ? `${file.name.replace(/\.pdf$/i, "")}_${options.pagesPerSheet}-up.pdf` : "n-up.pdf"}
+                pageCount={result.sheetCount}
+                title={`Imposed ${options.pagesPerSheet}-Up Sheet Preview`}
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

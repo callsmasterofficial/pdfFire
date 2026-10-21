@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Shuffle, Download } from "lucide-react";
+import { Shuffle } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { AlternateMixDropzones } from "@/components/tools/alternate-mix/alternate-mix-dropzones";
 import { AlternateMixSettings } from "@/components/tools/alternate-mix/alternate-mix-settings";
 import { alternateMixPdfs, AlternateMixOptions, AlternateMixResult } from "@/lib/pdf/operations/alternate-mix";
@@ -117,22 +118,13 @@ export function AlternateMixToolView() {
             />
 
             {result && (
-              <div className="p-5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Interleaving Complete!</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Merged {result.pagesFromA} pages from Document A and {result.pagesFromB} pages from Document B into{" "}
-                    <strong>{result.totalOutputPages}</strong> interleaved pages.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:opacity-90 inline-flex items-center gap-2 text-sm"
-                >
-                  <Download className="size-4" /> Download Mixed PDF
-                </button>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName="mixed_interleaved_document.pdf"
+                pageCount={result.totalOutputPages}
+                title="Interleaved Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

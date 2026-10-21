@@ -16,8 +16,8 @@ import {
 describe("Automated SEO Validation Suite", () => {
   const tools = getAllToolSeoData();
 
-  it("verifies all 34 tools have unique titles, descriptions, and H1s", () => {
-    expect(tools.length).toBe(34);
+  it("verifies all 37 tools have unique titles, descriptions, and H1s", () => {
+    expect(tools.length).toBe(37);
 
     const titles = new Set<string>();
     const descriptions = new Set<string>();
@@ -67,7 +67,7 @@ describe("Automated SEO Validation Suite", () => {
 
   it("verifies sitemap generates eligible, unique, and valid public URLs", () => {
     const sitemapEntries = generateSitemap();
-    expect(sitemapEntries.length).toBe(39); // 1 home + 1 tool studio + 34 tools + 3 trust
+    expect(sitemapEntries.length).toBe(42); // 1 home + 1 tool studio + 37 tools + 3 trust
 
     const seenUrls = new Set<string>();
     for (const entry of sitemapEntries) {

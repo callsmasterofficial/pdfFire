@@ -5,6 +5,7 @@ import { Hash, AlertCircle } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import {
   PageNumberOptionsCard,
   PageNumberFormState,
@@ -95,6 +96,16 @@ export function PageNumberToolView() {
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{error}</span>
               </div>
+            )}
+
+            {result && (
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Numbered Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

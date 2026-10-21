@@ -6,6 +6,7 @@ import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
 import { CompressStatsCard } from "./compress-stats-card";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import {
   compressPdfDocument,
   CompressionPreset,
@@ -97,7 +98,17 @@ export function CompressToolView() {
               </div>
             )}
 
-            {result && <CompressStatsCard result={result} />}
+            {result && (
+              <>
+                <CompressStatsCard result={result} />
+                <ResultPreviewSection
+                  pdfBytes={result.pdfBytes}
+                  fileName={result.fileName}
+                  title="Compressed Document Preview"
+                  onDownload={handleDownload}
+                />
+              </>
+            )}
 
             <ToolActionBar
               actionLabel="Compress PDF"

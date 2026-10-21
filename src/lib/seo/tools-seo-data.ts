@@ -1,6 +1,7 @@
 import { ToolSeoData } from "./types";
 import { ORGANIZE_SEO_DATA } from "./data-organize";
 import { CONVERT_SEO_DATA } from "./data-convert";
+import { AUTHORING_SEO_DATA } from "./data-authoring";
 import { EDIT_SEO_DATA } from "./data-edit";
 import { SECURITY_SEO_DATA } from "./data-security";
 import { ADVANCED_SEO_DATA } from "./data-advanced";
@@ -8,6 +9,7 @@ import { ADVANCED_SEO_DATA } from "./data-advanced";
 export const ALL_TOOLS_SEO_DATA: ToolSeoData[] = [
   ...ORGANIZE_SEO_DATA,
   ...CONVERT_SEO_DATA,
+  ...AUTHORING_SEO_DATA,
   ...EDIT_SEO_DATA,
   ...SECURITY_SEO_DATA,
   ...ADVANCED_SEO_DATA,

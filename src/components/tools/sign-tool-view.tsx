@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { PenTool, CheckCircle2, Sparkles, AlertCircle } from "lucide-react";
+import { PenTool, Sparkles, AlertCircle } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -9,8 +9,9 @@ import { SignCanvasPad } from "./sign/sign-canvas-pad";
 import { SignTypeGenerator } from "./sign/sign-type-generator";
 import { SignUploadPad } from "./sign/sign-upload-pad";
 import { SignPreviewPlacement } from "./sign/sign-preview-placement";
-import { signPdf, SignaturePlacement } from "@/lib/pdf/operations/sign";
+import { signPdf, SignaturePlacement, SignPdfResult } from "@/lib/pdf/operations/sign";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { Button } from "@/components/ui/button";
 
 type SignTab = "draw" | "type" | "upload";
@@ -24,7 +25,7 @@ export function SignToolView() {
   const [signDate, setSignDate] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDone, setIsDone] = useState(false);
+  const [result, setResult] = useState<SignPdfResult | null>(null);
 
   const handlePlacementReady = useCallback(
     (p: SignaturePlacement[], name: string, date: string) => {
@@ -40,14 +41,13 @@ export function SignToolView() {
     setIsProcessing(true);
     setError(null);
     try {
-      const result = await signPdf(file, {
+      const res = await signPdf(file, {
         signatureImageBase64: signatureDataUrl,
         placements,
         signerName: signerName.trim() || undefined,
         signDate: signDate || undefined,
       });
-      downloadPdfBytes(result.pdfBytes, result.fileName);
-      setIsDone(true);
+      setResult(res);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign document.");
     } finally {
@@ -55,11 +55,15 @@ export function SignToolView() {
     }
   };
 
+  const handleDownload = () => {
+    if (result) downloadPdfBytes(result.pdfBytes, result.fileName);
+  };
+
   const handleReset = () => {
     setFile(null);
     setSignatureDataUrl(null);
     setPlacements([]);
-    setIsDone(false);
+    setResult(null);
     setError(null);
   };
 
@@ -73,16 +77,19 @@ export function SignToolView() {
       <div className="flex flex-col gap-6">
         {!file ? (
           <SharedDropzone onFileSelect={(f) => setFile(f)} />
-        ) : isDone ? (
-          <div className="p-8 text-center flex flex-col items-center bg-surface rounded-2xl border border-border shadow-xs">
-            <CheckCircle2 className="size-12 text-success mb-3 animate-bounce" />
-            <h3 className="text-lg font-bold text-foreground">Document Successfully Signed!</h3>
-            <p className="text-xs text-muted-foreground mt-1 max-w-md">
-              Your signature has been embedded as vector art without any cloud uploads.
-            </p>
-            <Button onClick={handleReset} variant="outline" size="sm" className="mt-5 text-xs">
-              Sign Another Document
-            </Button>
+        ) : result ? (
+          <div className="space-y-4">
+            <ResultPreviewSection
+              pdfBytes={result.pdfBytes}
+              fileName={result.fileName}
+              title="Signed Document Preview"
+              onDownload={handleDownload}
+            />
+            <div className="flex justify-center">
+              <Button onClick={handleReset} variant="outline" size="sm" className="text-xs">
+                Sign Another Document
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -135,12 +142,13 @@ export function SignToolView() {
             )}
 
             <ToolActionBar
-              actionLabel="Sign & Download PDF"
+              actionLabel="Sign & Apply Placement"
               isProcessing={isProcessing}
-              canExecute={Boolean(signatureDataUrl && placements.length > 0)}
-              isDone={isDone}
+              canExecute={Boolean(signatureDataUrl && placements.length > 0) && !result}
+              isDone={!!result}
+              resultFileName={file ? `${file.name.replace(/\.pdf$/i, "")}-signed.pdf` : undefined}
               onExecute={handleExecuteSign}
-              onDownload={() => {}}
+              onDownload={handleDownload}
               onReset={handleReset}
             />
           </div>

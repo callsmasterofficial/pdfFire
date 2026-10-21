@@ -1,14 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  FileCode2,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertCircle, FileCode2, ShieldCheck } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -136,11 +132,13 @@ export function MarkdownToPdfToolView() {
           </div>
         )}
         {result && (
-          <div className="flex gap-2 rounded-lg bg-emerald-500/10 p-3 text-xs font-medium text-emerald-700 dark:text-emerald-300">
-            <CheckCircle2 className="size-4 shrink-0" />
-            Generated {result.pageCount}{" "}
-            {result.pageCount === 1 ? "page" : "pages"} of vector PDF text.
-          </div>
+          <ResultPreviewSection
+            pdfBytes={result.pdfBytes}
+            fileName={result.fileName}
+            pageCount={result.pageCount}
+            title="Markdown Vector PDF Preview"
+            onDownload={() => downloadPdfBytes(result.pdfBytes, result.fileName)}
+          />
         )}
         <div className="flex gap-2 rounded-xl border border-border/50 bg-muted/40 p-3 text-[11px] text-muted-foreground">
           <ShieldCheck className="size-4 shrink-0 text-primary" />

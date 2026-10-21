@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Crop, Download, RotateCcw } from "lucide-react";
+import { Crop, RotateCcw } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { CropSettings } from "@/components/tools/crop/crop-settings";
 import { CropVisualPreview } from "@/components/tools/crop/crop-visual-preview";
 import { cropAndResizePdf, CropResizeOptions, CropResizeResult } from "@/lib/pdf/operations/crop";
@@ -114,21 +115,13 @@ export function CropToolView() {
             </div>
 
             {result && (
-              <div className="p-5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground">Transformation Applied!</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Updated {result.modifiedPagesCount} of {result.totalPages} {result.totalPages === 1 ? "page" : "pages"}.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow-sm hover:opacity-90 inline-flex items-center gap-2 text-sm"
-                >
-                  <Download className="size-4" /> Download Cropped PDF
-                </button>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={file ? `${file.name.replace(/\.pdf$/i, "")}_${options.mode}.pdf` : "cropped.pdf"}
+                pageCount={result.totalPages}
+                title="Cropped Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

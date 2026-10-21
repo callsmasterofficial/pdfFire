@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FileText, Trash2, CheckCircle2, ShieldAlert } from "lucide-react";
+import { FileText, Trash2, ShieldAlert } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -14,6 +14,7 @@ import {
   UpdateMetadataResult,
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 
 export function MetadataToolView() {
   const [file, setFile] = useState<File | null>(null);
@@ -60,14 +61,7 @@ export function MetadataToolView() {
     setError(null);
     try {
       const res = await updatePdfMetadata(file, {
-        title: metadata.title,
-        author: metadata.author,
-        subject: metadata.subject,
-        keywords: metadata.keywords,
-        creator: metadata.creator,
-        producer: metadata.producer,
-        stripAll,
-        outputFileName: stripAll ? `sanitized-${file.name}` : `metadata-${file.name}`,
+        ...metadata, stripAll, outputFileName: stripAll ? `sanitized-${file.name}` : `metadata-${file.name}`,
       });
       setResult(res);
     } catch (err) {
@@ -147,10 +141,12 @@ export function MetadataToolView() {
             )}
 
             {result && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 font-medium">
-                <CheckCircle2 className="size-4 shrink-0" />
-                <span>Metadata successfully processed. Ready for download.</span>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                title="Updated Metadata Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

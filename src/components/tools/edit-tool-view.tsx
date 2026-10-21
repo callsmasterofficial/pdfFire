@@ -11,6 +11,7 @@ import { AnnotationItem } from "@/types/annotation";
 import { loadPdfDocument, cleanupPdfDocument, LoadedPDFResult } from "@/lib/pdf/loader";
 import { applyAnnotationsToPdf, AnnotatePdfResult } from "@/lib/pdf/operations/annotate";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 
 const INITIAL_SETTINGS: EditorSettings = {
   activeTool: "text",
@@ -42,30 +43,25 @@ export function EditToolView() {
 
   const pushNewState = (nextList: AnnotationItem[]) => {
     setAnnotations(nextList);
-    const updatedHistory = history.slice(0, historyIndex + 1);
-    updatedHistory.push(nextList);
-    setHistory(updatedHistory);
-    setHistoryIndex(updatedHistory.length - 1);
+    const updated = [...history.slice(0, historyIndex + 1), nextList];
+    setHistory(updated);
+    setHistoryIndex(updated.length - 1);
   };
 
   const handleAddAnnotation = (ann: AnnotationItem) => pushNewState([...annotations, ann]);
-  const handleUpdateAnnotation = (updated: AnnotationItem) =>
-    pushNewState(annotations.map((a) => (a.id === updated.id ? updated : a)));
-  const handleDeleteAnnotation = (id: string) =>
-    pushNewState(annotations.filter((a) => a.id !== id));
+  const handleUpdateAnnotation = (up: AnnotationItem) => pushNewState(annotations.map((a) => a.id === up.id ? up : a));
+  const handleDeleteAnnotation = (id: string) => pushNewState(annotations.filter((a) => a.id !== id));
 
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
-      const prev = history[historyIndex - 1];
-      setAnnotations(prev);
+      setAnnotations(history[historyIndex - 1]);
       setHistoryIndex(historyIndex - 1);
     }
   }, [historyIndex, history]);
 
   const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
-      const next = history[historyIndex + 1];
-      setAnnotations(next);
+      setAnnotations(history[historyIndex + 1]);
       setHistoryIndex(historyIndex + 1);
     }
   }, [historyIndex, history]);
@@ -73,11 +69,8 @@ export function EditToolView() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        if (e.shiftKey) handleRedo();
-        else handleUndo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
-        handleRedo();
-      }
+        if (e.shiftKey) handleRedo(); else handleUndo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "y") { handleRedo(); }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -146,6 +139,16 @@ export function EditToolView() {
                   onDeleteAnnotation={handleDeleteAnnotation}
                 />
               </div>
+            )}
+
+            {result && (
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Annotated Document Preview"
+                onDownload={() => downloadPdfBytes(result.pdfBytes, result.fileName)}
+              />
             )}
 
             <ToolActionBar

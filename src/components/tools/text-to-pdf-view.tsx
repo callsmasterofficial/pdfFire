@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileUp, CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
+import { FileUp, AlertCircle, ShieldCheck } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { convertTextToPdf, TextToPdfResult } from "@/lib/pdf/operations";
@@ -133,10 +134,13 @@ export function TextToPdfView() {
           )}
 
           {result && (
-            <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 font-medium">
-              <CheckCircle2 className="size-4 shrink-0" />
-              <span>PDF successfully generated ({result.pageCount} pages). Ready for download.</span>
-            </div>
+            <ResultPreviewSection
+              pdfBytes={result.pdfBytes}
+              fileName={result.fileName}
+              pageCount={result.pageCount}
+              title="Text Document PDF Preview"
+              onDownload={handleDownload}
+            />
           )}
 
           <div className="p-3 rounded-xl bg-muted/40 border border-border/40 text-[11px] text-muted-foreground flex items-center gap-2">

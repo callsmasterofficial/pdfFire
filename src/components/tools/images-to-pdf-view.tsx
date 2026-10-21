@@ -7,6 +7,7 @@ import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { convertImagesToPdf, ImagesToPdfResult } from "@/lib/pdf/operations/images-to-pdf";
 import { triggerBytesDownload } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { formatFileSize } from "@/lib/pdf/validator";
 
 export function ImagesToPdfView() {
@@ -122,6 +123,16 @@ export function ImagesToPdfView() {
               ))}
             </div>
           </div>
+        )}
+
+        {result && (
+          <ResultPreviewSection
+            pdfBytes={result.pdfBytes}
+            fileName={result.fileName}
+            pageCount={result.pageCount}
+            title="Converted PDF Preview"
+            onDownload={handleDownload}
+          />
         )}
 
         <ToolActionBar

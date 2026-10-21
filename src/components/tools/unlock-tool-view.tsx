@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { KeyRound, Eye, EyeOff, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
+import { KeyRound, Eye, EyeOff, ShieldCheck, AlertCircle } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -16,6 +16,7 @@ import {
   UnlockPdfResult,
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 
 export function UnlockToolView() {
   const [file, setFile] = useState<File | null>(null);
@@ -120,10 +121,13 @@ export function UnlockToolView() {
             )}
 
             {result && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 font-medium">
-                <CheckCircle2 className="size-4 shrink-0" />
-                <span>Document successfully decrypted and unlocked ({result.pageCount} pages). Ready for download.</span>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Unlocked Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

@@ -78,6 +78,18 @@ export const TOOL_ITEMS: ToolCardProps[] = [
     description: "Format local CSV data into a clean, paginated landscape PDF table.",
   },
   {
+    id: "docx-to-pdf", title: "Word to PDF", category: "Convert", icon: FileText, badge: "Phase 14", isAvailable: true,
+    description: "Convert Word DOCX documents to clean, vector-formatted PDF documents 100% locally.",
+  },
+  {
+    id: "xlsx-to-pdf", title: "Excel to PDF", category: "Convert", icon: FileSpreadsheet, badge: "Phase 14", isAvailable: true,
+    description: "Convert Excel XLSX spreadsheets and multi-sheet workbooks to landscape PDF tables 100% locally.",
+  },
+  {
+    id: "html-to-pdf", title: "HTML to PDF", category: "Convert", icon: FileCode2, badge: "Phase 14", isAvailable: true,
+    description: "Convert HTML documents, snippets, and tables to crisp vector PDF pages 100% locally.",
+  },
+  {
     id: "invert-colors", title: "Invert PDF Colours", category: "Edit & Optimize", icon: Contrast, badge: "Phase 14", isAvailable: true,
     description: "Create dark-mode, sepia, or high-contrast PDF reading copies locally.",
   },

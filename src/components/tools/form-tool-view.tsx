@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckSquare, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { CheckSquare, Lock, AlertCircle } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -13,6 +13,7 @@ import {
   FillFormResult,
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 
 export function FormToolView() {
   const [file, setFile] = useState<File | null>(null);
@@ -139,10 +140,12 @@ export function FormToolView() {
             )}
 
             {result && (
-              <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-2 font-medium">
-                <CheckCircle2 className="size-4 shrink-0" />
-                <span>Form successfully flattened into static graphics ({result.fieldCount} fields locked).</span>
-              </div>
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                title="Flattened Form Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

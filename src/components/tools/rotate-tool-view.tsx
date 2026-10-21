@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { rotatePdfDocument, RotatePdfResult } from "@/lib/pdf/operations/rotate";
 import { triggerBytesDownload } from "@/lib/pdf/download";
 
@@ -90,6 +91,16 @@ export function RotateToolView() {
               </div>
             </div>
           </div>
+        )}
+
+        {result && (
+          <ResultPreviewSection
+            pdfBytes={result.pdfBytes}
+            fileName={result.fileName}
+            pageCount={result.pageCount}
+            title="Rotated Document Preview"
+            onDownload={handleDownload}
+          />
         )}
 
         <ToolActionBar

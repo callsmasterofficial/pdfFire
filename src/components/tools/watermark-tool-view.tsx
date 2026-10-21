@@ -5,6 +5,7 @@ import { Stamp, AlertCircle } from "lucide-react";
 import { ToolLayout } from "./tool-layout";
 import { ToolActionBar } from "./tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import {
   WatermarkOptionsCard,
   WatermarkFormState,
@@ -91,6 +92,16 @@ export function WatermarkToolView() {
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{error}</span>
               </div>
+            )}
+
+            {result && (
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Watermarked Document Preview"
+                onDownload={handleDownload}
+              />
             )}
 
             <ToolActionBar

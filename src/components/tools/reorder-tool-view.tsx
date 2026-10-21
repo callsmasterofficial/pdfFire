@@ -10,6 +10,7 @@ import { SortableList } from "@/components/dnd/sortable-list";
 import { SortableItem } from "@/components/dnd/sortable-item";
 import { reorderPdfPages, ReorderPdfResult } from "@/lib/pdf/operations/reorder";
 import { triggerBytesDownload } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { loadPdfDocument, cleanupPdfDocument } from "@/lib/pdf/loader";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
@@ -121,13 +122,7 @@ export function ReorderToolView() {
                             P.{item.originalPageNumber}
                           </div>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deletePage(item.id)}
-                            className="size-6 p-0 text-destructive hover:bg-destructive/10 mt-1"
-                            title="Delete page"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => deletePage(item.id)} className="size-6 p-0 text-destructive hover:bg-destructive/10 mt-1" title="Delete page">
                             <Trash2 className="size-3" />
                           </Button>
                         </div>
@@ -137,6 +132,16 @@ export function ReorderToolView() {
                 </div>
               </SortableList>
             </div>
+
+            {result && (
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Reordered Document Preview"
+                onDownload={handleDownload}
+              />
+            )}
           </div>
         )}
 

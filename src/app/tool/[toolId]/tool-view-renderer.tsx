@@ -33,6 +33,9 @@ import { ProtectToolView } from "@/components/tools/protect-tool-view";
 import { ExtractImagesToolView } from "@/components/tools/extract-images-tool-view";
 import { MarkdownToPdfToolView } from "@/components/tools/markdown-to-pdf-tool-view";
 import { CsvToPdfToolView } from "@/components/tools/csv-to-pdf-tool-view";
+import { DocxToPdfToolView } from "@/components/tools/docx-to-pdf-tool-view";
+import { XlsxToPdfToolView } from "@/components/tools/xlsx-to-pdf-tool-view";
+import { HtmlToPdfToolView } from "@/components/tools/html-to-pdf-tool-view";
 import { InvertColorsToolView } from "@/components/tools/invert-colors-tool-view";
 
 interface ToolViewRendererProps {
@@ -74,6 +77,9 @@ export function ToolViewRenderer({ toolId }: ToolViewRendererProps) {
     case "extract-images": return <ExtractImagesToolView />;
     case "markdown-to-pdf": return <MarkdownToPdfToolView />;
     case "csv-to-pdf": return <CsvToPdfToolView />;
+    case "docx-to-pdf": return <DocxToPdfToolView />;
+    case "xlsx-to-pdf": return <XlsxToPdfToolView />;
+    case "html-to-pdf": return <HtmlToPdfToolView />;
     case "invert-colors": return <InvertColorsToolView />;
     default:
       notFound();

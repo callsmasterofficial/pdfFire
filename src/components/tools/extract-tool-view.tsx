@@ -9,6 +9,7 @@ import { ToolActionBar } from "./tool-action-bar";
 import { loadPdfDocument, cleanupPdfDocument } from "@/lib/pdf/loader";
 import { extractPdfPages, ExtractPdfResult } from "@/lib/pdf/operations/extract";
 import { triggerBytesDownload } from "@/lib/pdf/download";
+import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
 export function ExtractToolView() {
@@ -125,6 +126,16 @@ export function ExtractToolView() {
                 })}
               </div>
             </div>
+
+            {result && (
+              <ResultPreviewSection
+                pdfBytes={result.pdfBytes}
+                fileName={result.fileName}
+                pageCount={result.pageCount}
+                title="Extracted Document Preview"
+                onDownload={handleDownload}
+              />
+            )}
           </div>
         )}
 
