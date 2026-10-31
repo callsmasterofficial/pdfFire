@@ -10,7 +10,6 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { encryptPDF } from "@pdfsmaller/pdf-encrypt";
 import {
   decryptPdfWithPassword,
-  UnsupportedEncryptionError,
   WrongPasswordError,
 } from "../operations/decrypt/decrypt-document";
 import { checkPdfEncryption } from "../operations/security";
@@ -80,9 +79,48 @@ describe("in-place decryption", () => {
     expect(await extractPdfText(result.pdfBytes)).toContain("ACME-4471");
   });
 
-  it("declines encryption revisions it cannot handle, rather than guessing", async () => {
+  it("reports which cipher removed the encryption", async () => {
+    const result = await decryptPdfWithPassword(await encryptedDoc(), PASSWORD);
+    expect(result.method).toBe("AES-256");
+  });
+});
+
+describe("in-place decryption of legacy RC4 documents", () => {
+  it("harness confirms the RC4 document really is encrypted", async () => {
+    const encrypted = await encryptedDoc("RC4");
+
+    expect((await checkPdfEncryption(encrypted)).isEncrypted).toBe(true);
+    expect(new TextDecoder("latin1").decode(encrypted)).not.toContain("ACME-4471");
+  });
+
+  it("keeps the text readable", async () => {
+    const result = await decryptPdfWithPassword(await encryptedDoc("RC4"), PASSWORD);
+
+    expect(result.method).toBe("RC4");
+    expect(await extractPdfText(result.pdfBytes)).toContain("ACME-4471");
+    expect((await checkPdfEncryption(result.pdfBytes)).isEncrypted).toBe(false);
+  });
+
+  it("preserves document metadata strings", async () => {
+    const result = await decryptPdfWithPassword(await encryptedDoc("RC4"), PASSWORD);
+    const reloaded = await PDFDocument.load(result.pdfBytes, { updateMetadata: false });
+
+    expect(reloaded.getTitle()).toBe("Settlement");
+  });
+
+  it("accepts the owner password", async () => {
+    const encrypted = await encryptPDF(await plainDoc(), "userpw", {
+      ownerPassword: "ownerpw",
+      algorithm: "RC4",
+    });
+    const result = await decryptPdfWithPassword(encrypted, "ownerpw");
+
+    expect(await extractPdfText(result.pdfBytes)).toContain("ACME-4471");
+  });
+
+  it("rejects a wrong password", async () => {
     await expect(
-      decryptPdfWithPassword(await encryptedDoc("RC4"), PASSWORD)
-    ).rejects.toBeInstanceOf(UnsupportedEncryptionError);
+      decryptPdfWithPassword(await encryptedDoc("RC4"), "wrong")
+    ).rejects.toBeInstanceOf(WrongPasswordError);
   });
 });
