@@ -10,7 +10,7 @@ Rebuilt from live GitHub state and git ancestry. Every version of this section
 written on a branch is stale about whatever merged after it, so it is rebuilt
 rather than merged.
 
-Website `main` is `f39301c`.
+Website `main` is `7526dee`.
 
 Merged to website `main`:
 
@@ -26,6 +26,9 @@ Merged to website `main`:
 | #13 | integration of #5's security audit and decryption (FM-009, FM-011) |
 | #5 | closed as integrated by #13 |
 | #4 | table cell wrapping (FM-008) |
+| #17, #18 | integration follow-ups |
+| #19 | static export and the Cloudflare Pages target |
+| #20 | FileMelo rename finished, pricing and the entitlement model |
 
 All website PRs #1 to #11 and the integration PRs #13 to #15 are merged. The
 four converter migrations that #8 deferred are done in this change, so no
@@ -33,13 +36,15 @@ converter is left on the WinAnsi sanitiser.
 
 Other repositories:
 
-- `pdfFire-extension` `main` is `36c86b8`; PRs #1 (branding, resource exposure)
-  and #2 (CI) are merged. The extension has not been loaded in a browser.
-- `pdfFire-app` has PR #1 open, whose production dependency audit genuinely
-  fails. That must be fixed before the branch is release-ready.
+- `pdfFire-extension` `main` is `324fc7c`; PRs #1 (branding, resource
+  exposure), #2 (CI) and #4 (runtime smoke test) are merged. The tools have now
+  been run: 15 assertions over real PDFs pass, plus the two canvas tools by
+  hand. See that repository's README for what the harness does not cover.
+- `pdfFire-app` PR #1 is open and no longer draft. The production dependency
+  audit that was failing now passes, and the app is renamed to FileMelo.
 
-A merge is not a deployment. Nothing has been deployed, submitted to a store or
-made publicly live; that is verified separately from GitHub state.
+A merge is not a deployment, and a deployment is not a store submission. The
+website **is** publicly live; nothing is submitted to a store or approved.
 
 ### Documentation drift to watch
 
@@ -126,14 +131,52 @@ on wrangler 4.156 by delegating to Workers; `--force` is required.
 So: the code is integrated, gated, release-tested and **publicly live on
 `filemelo.com`**. Nothing is submitted to a store or approved.
 
+## Billing: built in code, blocked at the provider
+
+The plan model, the entitlement table and the `/pricing` comparison are live.
+The provider side is not, and the block is a specific one.
+
+Dodo Payments, inspected 2026-10-31 in test mode, business **Callsmaster
+Services LLP**:
+
+- Personal, Business and Bank verification: **Approved**.
+- Product Information: **On hold**. Dodo's own stated reason is that the
+  website was not yet publicly accessible. That reason no longer holds —
+  `filemelo.com` serves 200 — and the form says to email
+  `support@dodopayments.com` for a re-review.
+- No FileMelo products. The three products there are InspectDock's and were
+  left untouched, per the brief's rule about not altering another brand's
+  setup.
+- No API keys. No webhook endpoints.
+
+**What unblocks it:** the owner asking Dodo to re-review the product
+information now that the site is live. That is a message sent on their behalf
+to an external party, so it waits for them. Everything downstream — sandbox
+products, checkout, the customer portal, webhooks — is configuration against
+an account that is not yet cleared to carry FileMelo products, so it is not
+work that can be usefully done first.
+
+Meanwhile `isPurchasable()` returns false for every paid plan, because the
+product ids are null, and `/pricing` says so plainly rather than offering a
+checkout that would point at nothing.
+
 ## Next phase
 
-1. **Dodo Payments**: inspect the FileMelo business and products, then build
-   accounts and entitlements against sandbox before any live offer.
-2. **Extension**: load it unpacked and exercise it. Its runtime has never been
-   tested, only its manifest and syntax.
-3. **Mobile PR #1**: fix the genuine production dependency audit failure.
-4. **Store packaging and submissions**, once the runtime above is exercised.
+1. **Dodo product information**: owner to request a re-review, then create
+   sandbox Pro and Teams products, wire checkout, the portal and webhooks, and
+   fill the `NEXT_PUBLIC_DODO_PRODUCT_*` environment values that currently
+   leave every plan unbuyable.
+2. **Accounts and server-side entitlements**: the narrow scope change recorded
+   in `process.md` allows account, billing, membership, entitlement and consent
+   records. Nothing of that exists yet; the entitlement model is client-side
+   data only. Cloudflare Pages Functions are the minimum-cost home for it.
+3. **Store packaging and submissions.** `pdfFire-app` has no
+   `ios.bundleIdentifier` and no `android.package`, so neither store build is
+   possible yet; those identifiers, listings and signing credentials come
+   first.
+4. **Expo SDK 58** for `pdfFire-app`, which retires the `zod` override
+   documented in that repository's `docs/dependency-audit.md` and clears the
+   remaining moderate advisories in the Expo build tooling.
 
 ### Done since the last checkpoint
 
@@ -144,3 +187,13 @@ So: the code is integrated, gated, release-tested and **publicly live on
 - The Cloudflare Pages project `filemelo` now exists and serves the site on
   both custom domains. The earlier 1014 was a missing deploy target, not a
   broken DNS record, so no DNS record was changed.
+- The rename is finished. 79 references to the old brand survived into the live
+  site, two of them invisible to a text search because the wordmark is split
+  across elements. The Open Graph card had the old name set in type and was
+  regenerated.
+- Pro and Teams exist as a priced, limited, tested plan model with the evidence
+  in `docs/pricing-decision-log.md` — but no checkout, and the page says so.
+- The extension's tools have been run rather than assumed to work, including a
+  check that its metadata cleaner removes the XMP packet and not merely the
+  Info dictionary.
+- `pdfFire-app` passes its production audit, and its brand matches the product.
