@@ -25,12 +25,12 @@ import {
   PDFString,
 } from "pdf-lib";
 import { bytesToHex } from "@pdfsmaller/pdf-encrypt";
-import { decryptAesV3 } from "../../crypto/aes-cbc";
+import type { DocumentCipher, ObjectId } from "../../crypto/document-cipher";
 import {
-  recoverFileKey,
   UnsupportedEncryptionError,
   WrongPasswordError,
 } from "../../crypto/standard-security";
+import { buildCipher } from "./build-cipher";
 import { readEncryptDict } from "./read-encrypt-dict";
 
 export { UnsupportedEncryptionError, WrongPasswordError };
@@ -42,6 +42,8 @@ export interface DecryptResult {
   streamsDecrypted: number;
   /** Strings whose contents were decrypted. */
   stringsDecrypted: number;
+  /** Which cipher removed the encryption, for reporting. */
+  method: string;
 }
 
 /**
@@ -71,7 +73,15 @@ export async function decryptPdfWithPassword(
   });
 
   const encryptDict = readEncryptDict(doc);
-  const fileKey = await recoverFileKey(encryptDict, password);
+  const cipher = await buildCipher(encryptDict, password);
+
+  // With /EncryptMetadata false the XMP stream is left in the clear, so
+  // decrypting it would turn readable metadata into noise.
+  const metadataRef = doc.catalog.get(PDFName.of("Metadata"));
+  const clearMetadataObject =
+    !encryptDict.encryptMetadata && metadataRef instanceof PDFRef
+      ? metadataRef.objectNumber
+      : -1;
 
   // The encryption dictionary's own strings are never encrypted, and it is
   // about to be removed, so it must not be walked.
@@ -83,10 +93,16 @@ export async function decryptPdfWithPassword(
 
   for (const [ref, object] of doc.context.enumerateIndirectObjects()) {
     if (ref.objectNumber === encryptObjectNumber) continue;
+    const id: ObjectId = {
+      objectNumber: ref.objectNumber,
+      generationNumber: ref.generationNumber,
+    };
 
     if (object instanceof PDFRawStream) {
-      const plain = await decryptAesV3(object.contents, fileKey);
-      await decryptStringsIn(object.dict, fileKey, () => stringsDecrypted++);
+      await decryptStringsIn(object.dict, cipher, id, () => stringsDecrypted++);
+      if (ref.objectNumber === clearMetadataObject) continue;
+
+      const plain = await cipher.decrypt(object.contents, id);
       object.dict.set(PDFName.of("Length"), PDFNumber.of(plain.length));
       // `contents` is read-only, so the object is replaced rather than mutated.
       doc.context.assign(ref, PDFRawStream.of(object.dict, plain));
@@ -95,7 +111,7 @@ export async function decryptPdfWithPassword(
     }
 
     if (object instanceof PDFDict) {
-      await decryptStringsIn(object, fileKey, () => stringsDecrypted++);
+      await decryptStringsIn(object, cipher, id, () => stringsDecrypted++);
     }
   }
 
@@ -108,18 +124,20 @@ export async function decryptPdfWithPassword(
     pageCount: doc.getPageCount(),
     streamsDecrypted,
     stringsDecrypted,
+    method: cipher.method,
   };
 }
 
 /** Decrypts every string value directly inside `dict`. */
 async function decryptStringsIn(
   dict: PDFDict,
-  fileKey: Uint8Array,
+  cipher: DocumentCipher,
+  id: ObjectId,
   onDecrypted: () => void
 ): Promise<void> {
   for (const [key, value] of dict.entries()) {
     if (!(value instanceof PDFString) && !(value instanceof PDFHexString)) continue;
-    const plain = await decryptAesV3(value.asBytes(), fileKey);
+    const plain = await cipher.decrypt(value.asBytes(), id);
     // The plaintext is raw bytes and may already be UTF-16BE with a byte order
     // mark. Writing it back through fromText() would encode it a second time,
     // so it goes back as hex, byte for byte.
