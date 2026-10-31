@@ -67,7 +67,7 @@ describe("Automated SEO Validation Suite", () => {
 
   it("verifies sitemap generates eligible, unique, and valid public URLs", () => {
     const sitemapEntries = generateSitemap();
-    expect(sitemapEntries.length).toBe(42); // 1 home + 1 tool studio + 37 tools + 3 trust
+    expect(sitemapEntries.length).toBe(43); // 1 home + 1 tool studio + 1 pricing + 37 tools + 3 trust
 
     const seenUrls = new Set<string>();
     for (const entry of sitemapEntries) {

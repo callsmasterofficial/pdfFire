@@ -40,7 +40,7 @@ export function ToolSidebarHeader({
             className="size-6.5 rounded-md shadow-xs shrink-0 hidden dark:block"
           />
           <span className="font-extrabold text-base tracking-tight text-foreground">
-            PDF<span className="text-primary">fire</span>
+            File<span className="text-primary">Melo</span>
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground ml-0.5">
             studio

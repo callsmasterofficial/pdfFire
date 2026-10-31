@@ -79,7 +79,7 @@ export default function AboutPage() {
         <div className="p-6 rounded-2xl border border-border bg-surface-secondary/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Ready to get started?</h3>
-            <p className="text-xs text-muted-foreground">Explore 34+ free, privacy-first PDF tools.</p>
+            <p className="text-xs text-muted-foreground">Explore 37 free, privacy-first PDF tools.</p>
           </div>
           <Link
             href="/tool"

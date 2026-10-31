@@ -24,6 +24,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: getCanonicalUrl("/pricing"),
+      lastModified: releaseDate,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: getCanonicalUrl("/about"),
       lastModified: releaseDate,
       changeFrequency: "monthly",

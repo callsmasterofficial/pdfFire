@@ -29,7 +29,7 @@ export function Footer() {
               <span className="font-extrabold text-base">FileMelo</span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              PDF tools that just work. Fast, private in-browser document processing with zero server uploads.
+              Convert. Create. Simplify. Fast, private in-browser document processing with zero server uploads.
             </p>
             <div className="pt-1 flex items-center gap-1.5 text-[11px] font-medium text-success">
               <ShieldCheck className="size-3.5" />
@@ -113,7 +113,12 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>
                 <Link href="/tool" className="hover:text-primary transition-colors">
-                  Tool Studio (All 34 Tools)
+                  Tool Studio (All 37 Tools)
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-primary transition-colors">
+                  Pricing
                 </Link>
               </li>
               <li>
