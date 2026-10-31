@@ -90,60 +90,50 @@ evidence. The figure above is the suite run on the release SHA itself.
 
 ## Verified live and hosting state
 
-Checked directly, not carried over from an earlier session:
+Checked directly on 2026-10-31, not carried over from an earlier session:
 
-- `filemelo.com` and `www.filemelo.com` return HTTP 403 from Cloudflare with
-  body `error code: 1014`. That is Cloudflare's CNAME cross-user error: the
-  hostname resolves to Cloudflare (172.67.186.35, 104.21.19.118) but the zone
-  is not serving this account's content. It is a DNS/zone configuration problem
-  to fix in the dashboard, not a missing build.
-- `pdffire.com` does not resolve at all, while the source still uses
-  `https://pdffire.com` as its canonical host. That must change before launch.
-- No deployment provider is configured in the repository: there is no Vercel,
-  Wrangler or Netlify configuration and no deploy workflow. The only workflow is
-  the quality gate, so a merge to `main` publishes nothing.
-- Browser 1 is connected and reachable for the authorized Cloudflare and Dodo
-  dashboards. The built-in browser pane has no session and redirects to the
-  Cloudflare login, so dashboard work must go through Browser 1.
+- **The site is publicly live.** `https://filemelo.com/`,
+  `https://www.filemelo.com/` and `https://filemelo.pages.dev/` all return
+  HTTP 200. The apex serves `<title>FileMelo — Private PDF Tools</title>` with
+  `rel="canonical" href="https://filemelo.com"`. `/tool/merge`, `/tool/redact`,
+  `/about`, `/sitemap.xml`, `/robots.txt` and
+  `/fonts/NotoSansSC-Regular.otf` each return 200.
+- Hosting is Cloudflare Pages, project `filemelo`, production branch `main`,
+  deployed from `main` at `224f853` as a static export of `out/` (467 files,
+  23 MB). Both custom domains are attached to the project; the apex shows
+  **Active** with SSL enabled and `www` was still showing **Initializing** at
+  the time of the check even though it already served 200.
+- `wrangler.toml` and `npm run deploy` are committed, so the deploy target now
+  lives in the repository rather than in one operator's shell history. CI still
+  only gates quality; publishing is a deliberate `npm run deploy`, not an
+  automatic consequence of merging.
+- `pdffire.com` does not resolve. Nothing in the source references it any more.
 
-So: the code is integrated, gated and release-tested; nothing is deployed,
-submitted, approved or publicly live.
+### Why `error code: 1014` happened, for the record
 
-## Cloudflare: attempted, blocked on sign-in
+The apex and `www` were proxied CNAMEs pointing at `filemelo.pages.dev`, but
+**no Pages project named `filemelo` existed** — the account held only
+`inspectdock` and `status-page`, and `filemelo.pages.dev` was NXDOMAIN. So the
+diagnosis "a CNAME into another account's zone" was wrong in its cause though
+right in its symptom: the target simply did not exist. The DNS records needed
+no change at all. Creating the project and attaching the domains was the whole
+fix, and the confirm step showed the existing and new records to be identical
+for both hostnames.
 
-Attempted on 2026-10-31 through Browser 1, which is connected and was selected
-for the attempt. The zone's DNS page redirected to the Cloudflare login, which
-offered a chooser of saved profiles rather than an authenticated session.
+`npx wrangler@4 pages project create filemelo --production-branch main` fails
+on wrangler 4.156 by delegating to Workers; `--force` is required.
 
-So the session is signed out, not merely unreachable. Completing it means
-entering a password or finishing an authentication flow, which is not something
-to do on the owner's behalf. Most of the offered profiles belong to unrelated
-businesses and it is not evident which owns the FileMelo zone, so picking one
-would sign in to an unrelated account.
-
-**To unblock:** sign in to Cloudflare in Browser 1 on the account that owns
-`filemelo.com`, and confirm which account that is.
-
-**What the fix will be.** `error code: 1014` is Cloudflare's CNAME cross-user
-error: a proxied CNAME in this zone points at a hostname inside a *different*
-Cloudflare account's zone, which has not allowed it. The repair is to replace
-that record with one pointing at this project's own origin. That cannot be
-chosen until the hosting target exists, which is the next decision below.
+So: the code is integrated, gated, release-tested and **publicly live on
+`filemelo.com`**. Nothing is submitted to a store or approved.
 
 ## Next phase
 
-1. **Hosting.** Nothing deploys today and no provider is configured. The app
-   uses `cacheComponents` and `partialPrefetching`, so it needs a server
-   runtime and cannot simply be exported as static files. Decide between a
-   Cloudflare Workers deployment via OpenNext and another provider, then
-   configure it, before the DNS record can point anywhere useful.
-2. **Cloudflare DNS**, once signed in and the origin exists: fix the 1014,
-   choose apex versus www, and set the redirect for the other.
-3. **Dodo Payments**: inspect the FileMelo business and products, then build
+1. **Dodo Payments**: inspect the FileMelo business and products, then build
    accounts and entitlements against sandbox before any live offer.
-4. **Extension**: load it unpacked and exercise it. Its runtime has never been
+2. **Extension**: load it unpacked and exercise it. Its runtime has never been
    tested, only its manifest and syntax.
-5. **Mobile PR #1**: fix the genuine production dependency audit failure.
+3. **Mobile PR #1**: fix the genuine production dependency audit failure.
+4. **Store packaging and submissions**, once the runtime above is exercised.
 
 ### Done since the last checkpoint
 
@@ -151,3 +141,6 @@ chosen until the hosting target exists, which is the next decision below.
   `SITE_CONFIG` is FileMelo rather than PDFfire. Without this, repairing DNS
   would have served a site whose canonical links, sitemap and robots.txt all
   pointed at a dead domain.
+- The Cloudflare Pages project `filemelo` now exists and serves the site on
+  both custom domains. The earlier 1014 was a missing deploy target, not a
+  broken DNS record, so no DNS record was changed.
