@@ -1,0 +1,15 @@
+# Cloudflare Pages deployment for the FileMelo website.
+#
+# The site is a static export: every route is prerendered at build time and
+# there is no server runtime, so Pages serves plain files. That is the cheapest
+# option available and it keeps the product's central promise literal — there
+# is no server for a document to be sent to.
+#
+# Deploy with:
+#   npm run build && npx wrangler pages deploy out --project-name filemelo
+#
+# The font language packs under out/fonts are large but are fetched only when a
+# document needs one, so they cost bandwidth per use rather than per visit.
+name = "filemelo"
+compatibility_date = "2026-10-31"
+pages_build_output_dir = "out"

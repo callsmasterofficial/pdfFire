@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { getCanonicalUrl } from "../lib/seo/site-config";
 import { getAllToolSeoData } from "../lib/seo/tools-seo-data";
 
+// Emitted at build time: the site is a static export, so these have no
+// request-time behaviour to fall back on.
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const tools = getAllToolSeoData();
   const releaseDate = new Date("2026-10-19T00:00:00.000Z");
