@@ -1,0 +1,55 @@
+name: Verify CJK Unicode integration
+on:
+  push:
+    branches: [integrate/pr8-unicode-language-packs]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.repository == 'callsmasterofficial/pdfFire' && github.ref == 'refs/heads/integrate/pr8-unicode-language-packs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Merge Unicode packs with intentional dual-feature resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin feat/unicode-language-packs --no-tags
+          git merge --no-commit --no-ff FETCH_HEAD || true
+          conflicts=$(git diff --name-only --diff-filter=U)
+          expected=$(printf '%s\n' docs/continuation.md process.md src/components/tools/text-to-pdf-view.tsx src/lib/pdf/operations/text-to-pdf.ts)
+          if [ "$conflicts" != "$expected" ]; then
+            echo "::error::Unexpected conflicts: $conflicts"
+            exit 1
+          fi
+          mkdir -p docs/archives/pr8
+          git show FETCH_HEAD:docs/continuation.md > docs/archives/pr8/continuation.md
+          for file in docs/continuation.md process.md; do
+            git checkout --ours "$file"
+            git add "$file"
+          done
+          # PR8 provides the UnicodeTextWriter; current main only changed the producer metadata.
+          git checkout --theirs src/components/tools/text-to-pdf-view.tsx src/lib/pdf/operations/text-to-pdf.ts
+          sed -i 's/"PDFfire Client"/"FileMelo Client"/g' src/lib/pdf/operations/text-to-pdf.ts
+          git add docs/archives/pr8/continuation.md src/components/tools/text-to-pdf-view.tsx src/lib/pdf/operations/text-to-pdf.ts
+          if [ -n "$(git ls-files -u)" ]; then
+            echo "::error::Unresolved conflicts"; exit 1
+          fi
+          git commit -m "merge: keep Unicode writer, CJK lazy fonts and current FileMelo metadata"
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Push passing integration
+        run: git push origin HEAD:refs/heads/integrate/pr8-unicode-language-packs
