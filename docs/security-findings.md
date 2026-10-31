@@ -157,16 +157,14 @@ behaviour after these edits is untested.
 
 ## Open findings
 
-### FM-005 — Unicode language packs · **fixed for the shipped scripts**
+### FM-005 — Unicode language packs · **fixed across every converter**
 
 The converters could only draw the standard PDF fonts' 218 characters, so
-Chinese, Arabic, Hebrew, Thai and Indic text was reported as unrepresentable
-and replaced. Rendering it needs an embedded font, which was a licence and
-bundle-size decision rather than a coding one.
-
+Chinese, Arabic, Hebrew, Thai and Indic text was replaced rather than rendered.
 Six Noto packs are now served from `/fonts` and fetched only when a document
-needs one, so a Latin-only conversion downloads nothing. All are SIL OFL 1.1
-and the licence ships alongside them in `public/fonts/OFL.txt`.
+needs one; a Latin-only conversion downloads nothing and nothing is requested
+from a third party, so converting a Chinese document does not reveal that you
+did. All are SIL OFL 1.1 with the licence shipped alongside.
 
 | Pack | Covers | Size | Text copies back out |
 | --- | --- | --- | --- |
@@ -177,46 +175,43 @@ and the licence ships alongside them in `public/fonts/OFL.txt`.
 | Noto Sans Devanagari | Devanagari | 244 KB | approximately |
 | Noto Sans SC | Chinese, Japanese, Korean | 8.3 MB | exactly |
 
-Three findings from testing this rather than assuming it:
+**Owner decision, permanent: keep CJK.** The pack is self-hosted on purpose.
+Fetching it from a font CDN would reveal which documents a user converts and
+break the offline promise, so the 9.1 MB sits in the repository and in the
+CDN cache rather than in any user's download unless they convert CJK text.
 
-**Shaping works, but only with a regenerator runtime.** fontkit's Indic and
-Universal shapers are transpiled with generators and throw
-`regeneratorRuntime is not defined` without one. With it, shaping is genuinely
-correct: `क्ष` collapses to a single conjunct glyph and `हिन्दी` to five
-glyphs. `regenerator-runtime` (MIT, 28 KB) is therefore a direct dependency.
+Three things established by testing rather than assumption:
 
-**Subsetting is essential.** Embedded whole, the CJK pack makes an 8 MB
-document; with `subset: true` the same document is about 43 KB. A test asserts
-the output stays under 300 KB so this cannot regress unnoticed.
+- **Shaping needs a regenerator runtime.** fontkit's Indic and Universal
+  shapers are transpiled with generators and throw
+  `regeneratorRuntime is not defined` without one. With it, shaping is correct:
+  `क्ष` collapses to a single conjunct glyph. `regenerator-runtime` is a direct
+  dependency for that reason alone.
+- **Subsetting is the difference between usable and not.** Embedded whole the
+  CJK pack makes an 8 MB document; subsetted the same document is about 43 KB.
+  A test holds the output under 300 KB.
+- **Extraction is not exact for Arabic and Devanagari.** Correct shaping
+  reorders and merges glyphs in ways a PDF's character mapping cannot invert,
+  so copying that text out is imperfect even though the rendering is right.
+  Both packs are marked `approximate` and the UI says so.
 
-**Extraction is not exact for Arabic and Devanagari.** Correct shaping reorders
-and merges glyphs, and a PDF's glyph-to-character mapping cannot fully invert
-that, so copying Devanagari out returns visually-ordered text and Arabic
-returns stray control codes. The rendering is right; the copy is not. Both
-packs are marked `approximate` and the UI says so. This is still far better
-than the previous behaviour, which neither rendered nor extracted.
+**Now covering every converter.** `text-to-pdf` and `markdown-to-pdf` adopted
+the packs first; the DOCX, HTML, XLSX and CSV converters followed once their
+table rewriting had merged, and the OCR text layer with them. A `TextEngine`
+abstraction carries measuring and drawing into the shared table layout, so a
+cell can hold Chinese and a wrapped line can change font mid-string. The OCR
+layer matters particularly: without it, OCR of a Chinese scan produced nothing
+searchable.
 
-`@pdf-lib/fontkit` (MIT) is required for any non-standard font and is behind a
-dynamic import, so it is emitted as its own ~885 KB chunk that no route loads
-initially — confirmed absent from the build manifests.
+The WinAnsi sanitiser that preceded this is deleted rather than left in place,
+since keeping it would imply a fallback that no longer exists. `canEncodeWith`
+and `toFileSlug` remain, which is what the converters still need.
 
-**Decision (owner, 2026-10-31).** The CJK pack is kept, so `public/fonts`
-carries 9.1 MB of which 8.3 MB is Noto Sans SC. Self-hosting was chosen over a
-font CDN deliberately: fetching a pack from a third party would reveal which
-documents a user converts and would break the offline promise. The weight sits
-in the repository and in Cloudflare's cache, not in any user's download unless
-they convert CJK text.
-
-**Scope.** `text-to-pdf` and `markdown-to-pdf` use the packs. The DOCX, HTML,
-XLSX and CSV converters still use the WinAnsi sanitiser, because their text
-drawing is being rewritten in the table-wrapping work (FM-008) and migrating
-both at once would conflict; they adopt the packs after that merges. Characters
-no pack covers, such as emoji, are still reported and replaced.
-
-**Regression tests:** `unicode-language-packs.test.ts` (10), covering CJK,
-Greek/Cyrillic/Vietnamese, Hebrew, Thai, Devanagari shaping, Arabic reporting,
-mixed-script lines that switch font mid-string, the subsetted output size, and
-that Latin-only text downloads no pack at all.
+**Regression tests:** `unicode-language-packs.test.ts` (14) covers every
+converter including DOCX and HTML table cells, mixed-script lines, the
+subsetted output size, and that Latin-only text downloads no pack.
+`searchable-pdf-packs.test.ts` (3) covers the OCR layer, including that it
+stays invisible — a regression introduced and caught during the migration.
 
 ### FM-006 — Next.js had a published advisory · **fixed, merged**
 

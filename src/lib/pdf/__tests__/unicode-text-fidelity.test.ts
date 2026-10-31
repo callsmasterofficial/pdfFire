@@ -82,13 +82,16 @@ describe("Converter text fidelity", () => {
     expect(text).toContain("Déjà vu");
   });
 
-  it("reports characters the embedded fonts cannot draw instead of hiding them", async () => {
+  it("renders CJK through the DOCX converter rather than dropping it", async () => {
+    // This asserted 中 and 文 were dropped, which was correct while the DOCX
+    // converter could only sanitise. It now loads the CJK pack and draws them.
     const docx = createMockDocx(`<w:p><w:r><w:t>Hello 中文 world</w:t></w:r></w:p>`);
     const result = await convertDocxToPdf(docx);
+    const text = await extractPdfText(result.pdfBytes);
 
-    expect(result.textFidelity.droppedCharacters).toContain("中");
-    expect(result.textFidelity.droppedCharacters).toContain("文");
-    expect(result.textFidelity.isLossless).toBe(false);
+    expect(text).toContain("中文");
+    expect(result.textFidelity.packsUsed.map((pack) => pack.id)).toContain("cjk");
+    expect(result.textFidelity.isLossless).toBe(true);
   });
 
   it("reports lossless conversion when every character is encodable", async () => {
@@ -96,17 +99,19 @@ describe("Converter text fidelity", () => {
     const result = await convertDocxToPdf(docx);
 
     expect(result.textFidelity.isLossless).toBe(true);
-    expect(result.textFidelity.droppedCharacters).toEqual([]);
+    expect(result.textFidelity.unsupportedCharacters).toEqual([]);
   });
 
-  it("approximates Latin letters outside WinAnsi rather than dropping them", async () => {
-    // Vietnamese and Polish are Latin-script but largely outside WinAnsi.
+  it("renders Polish and Vietnamese exactly instead of folding their accents", async () => {
+    // These are Latin-script but largely outside WinAnsi. The sanitiser used to
+    // fold them to "Lodz"; the Latin pack draws them as written.
     const docx = createMockDocx(`<w:p><w:r><w:t>Łódź Tiếng Việt</w:t></w:r></w:p>`);
     const result = await convertDocxToPdf(docx);
     const text = await extractPdfText(result.pdfBytes);
 
-    expect(text).toContain("Lódz");
-    expect(result.textFidelity.approximatedCharacters.length).toBeGreaterThan(0);
+    expect(text).toContain("Łódź");
+    expect(text).toContain("Tiếng Việt");
+    expect(result.textFidelity.isLossless).toBe(true);
   });
 
   it("preserves WinAnsi-encodable text through HTML conversion", async () => {

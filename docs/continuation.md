@@ -27,17 +27,9 @@ Merged to website `main`:
 | #5 | closed as integrated by #13 |
 | #4 | table cell wrapping (FM-008) |
 
-Still open on the website:
-
-| PR | Branch | Base | State |
-| --- | --- | --- | --- |
-| #6 | `feat/legacy-pdf-decryption` | `main` | legacy RC4/AES-128 decryption (FM-012); being integrated |
-| #8 | `feat/unicode-language-packs` | `main` | CJK and other language packs (FM-005); retargeted from #1's branch |
-
-Then, once both #4 and #8 are on `main`: migrate the DOCX, HTML, XLSX and CSV
-converters onto the language packs. They still use the WinAnsi sanitiser,
-because #4 rewrote their text drawing and #8 could not migrate them at the same
-time without conflicting.
+All website PRs #1 to #11 and the integration PRs #13 to #15 are merged. The
+four converter migrations that #8 deferred are done in this change, so no
+converter is left on the WinAnsi sanitiser.
 
 Other repositories:
 

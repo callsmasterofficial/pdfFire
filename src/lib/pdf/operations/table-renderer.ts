@@ -8,6 +8,7 @@
  */
 import { PDFFont, PDFPage, rgb } from "pdf-lib";
 import { TableFidelityTracker, type CellLayout } from "../text/table-cell-layout";
+import { standardFontEngine, type TextEngine } from "../text/text-engine";
 
 export interface TableStyle {
   pageWidth: number;
@@ -17,7 +18,8 @@ export interface TableStyle {
 }
 
 export interface TableContext {
-  safe: (value: string) => string;
+  /** Measures and draws; a pack-backed engine handles non-Latin scripts. */
+  engine: TextEngine;
   regular: PDFFont;
   bold: PDFFont;
   getPage: () => PDFPage;
@@ -45,7 +47,6 @@ export interface RowLayout {
 export function layoutRow(
   values: string[],
   columnCount: number,
-  safe: (value: string) => string,
   tracker: TableFidelityTracker,
   font: PDFFont,
   size: number,
@@ -53,7 +54,7 @@ export function layoutRow(
   maxLines = MAX_LINES
 ): RowLayout {
   const cells = Array.from({ length: columnCount }, (_, index) =>
-    tracker.layout(safe(values[index] || ""), font, size, textWidth, maxLines)
+    tracker.layout(values[index] || "", font, size, textWidth, maxLines)
   );
   const lineCount = Math.max(1, ...cells.map((cell) => cell.lines.length));
   return { cells, height: ROW_PADDING + lineCount * size * LINE_RATIO };
@@ -69,13 +70,14 @@ export function drawRowCells(
     size: number;
     font: PDFFont;
     color: ReturnType<typeof rgb>;
+    engine?: TextEngine;
   }
 ): void {
   const lineHeight = options.size * LINE_RATIO;
   row.cells.forEach((cell, column) => {
     let lineY = options.rowTop - options.size - 2;
     for (const line of cell.lines) {
-      page.drawText(line, {
+      (options.engine ?? standardFontEngine).draw(page, line, {
         x: options.columnX(column),
         y: lineY,
         size: options.size,
@@ -89,7 +91,7 @@ export function drawRowCells(
 const BODY_SIZE = 8.5;
 
 export function drawTableRows(rows: string[][], context: TableContext, style: TableStyle): void {
-  const { safe, regular, bold, getPage, getY, setY, ensure, tracker } = context;
+  const { engine, regular, bold, getPage, getY, setY, ensure, tracker } = context;
   const maxCols = Math.min(Math.max(...rows.map((row) => row.length), 1), style.maxCols);
   const tableWidth = style.pageWidth - style.margin * 2;
   const colWidth = tableWidth / maxCols;
@@ -98,7 +100,7 @@ export function drawTableRows(rows: string[][], context: TableContext, style: Ta
   for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
     const isHeader = rowIndex === 0;
     const font = isHeader ? bold : regular;
-    const row = layoutRow(rows[rowIndex], maxCols, safe, tracker, font, BODY_SIZE, textWidth);
+    const row = layoutRow(rows[rowIndex], maxCols, tracker, font, BODY_SIZE, textWidth);
 
     ensure(row.height);
     const page = getPage();
@@ -122,6 +124,7 @@ export function drawTableRows(rows: string[][], context: TableContext, style: Ta
       size: BODY_SIZE,
       font,
       color: rgb(.15, .15, .18),
+      engine,
     });
 
     setY(rowTop - row.height);

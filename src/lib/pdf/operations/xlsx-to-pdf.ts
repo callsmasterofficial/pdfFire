@@ -1,6 +1,8 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { parseXlsxBytes, XlsxSheet } from "./xlsx-parser";
-import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
+import { canEncodeWith, toFileSlug } from "../text/font-safe-text";
+import { UnicodeTextWriter, type UnicodeFidelityReport } from "../text/unicode-text";
+import { writerEngine, type TextEngine } from "../text/text-engine";
 import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
 import { CELL_PADDING, drawRowCells, layoutRow } from "./table-renderer";
 
@@ -9,8 +11,8 @@ export interface XlsxToPdfResult {
   pageCount: number;
   fileName: string;
   metrics: { sheetCount: number; rowCount: number; cellCount: number };
-  /** Which characters the embedded fonts could not draw as authored. */
-  textFidelity: TextFidelityReport;
+  /** Language packs used, and anything still unrepresentable. */
+  textFidelity: UnicodeFidelityReport;
   /** Table cells whose text did not fit their column, even wrapped. */
   tableFidelity: TableFidelityReport;
 }
@@ -26,9 +28,13 @@ export async function convertXlsxToPdf(
   const doc = await PDFDocument.create();
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const sanitizer = new FontTextSanitizer([regular, bold]);
-  const safe = (value: string) => sanitizer.sanitize(value);
-  const tableTracker = new TableFidelityTracker();
+  // Non-Latin cells come from a language pack, downloaded only if needed.
+  const writer = UnicodeTextWriter.create(doc, canEncodeWith([regular, bold]));
+  await writer.prepare(
+    parsed.sheets.flatMap((sheet) => [sheet.name, ...sheet.rows.flat()]).join("\n")
+  );
+  const engine = writerEngine(writer);
+  const tableTracker = new TableFidelityTracker(engine);
 
   const sheetsToRender =
     selectedSheetIndex !== undefined && parsed.sheets[selectedSheetIndex]
@@ -40,7 +46,7 @@ export async function convertXlsxToPdf(
   }
 
   for (const sheet of sheetsToRender) {
-    renderSheetToPages(sheet, doc, safe, regular, bold, tableTracker);
+    renderSheetToPages(sheet, doc, engine, regular, bold, tableTracker);
   }
 
   const totalPages = doc.getPageCount();
@@ -61,7 +67,7 @@ export async function convertXlsxToPdf(
 
   return {
     pdfBytes,
-    textFidelity: sanitizer.report(),
+    textFidelity: writer.report(),
     tableFidelity: tableTracker.report(),
     pageCount: totalPages,
     fileName,
@@ -72,7 +78,7 @@ export async function convertXlsxToPdf(
 function renderSheetToPages(
   sheet: XlsxSheet,
   doc: PDFDocument,
-  safe: (value: string) => string,
+  engine: TextEngine,
   regular: PDFFont,
   bold: PDFFont,
   tracker: TableFidelityTracker
@@ -90,13 +96,13 @@ function renderSheetToPages(
   let y = PAGE.height - PAGE.margin;
 
   const drawHeader = () => {
-    page.drawText(safe(sheet.name), { x: PAGE.margin, y: y - 2, size: 15, font: bold, color: rgb(.1, .12, .18) });
+    engine.draw(page, sheet.name, { x: PAGE.margin, y: y - 2, size: 15, font: bold, color: rgb(.1, .12, .18) });
     y -= 26;
 
     const headers = Array.from({ length: maxCols }, (_, c) => (rows[0] || [])[c] || `Col ${c + 1}`);
-    const row = layoutRow(headers, maxCols, safe, tracker, bold, 8.5, textWidth);
+    const row = layoutRow(headers, maxCols, tracker, bold, 8.5, textWidth);
     page.drawRectangle({ x: PAGE.margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.18, .24, .36) });
-    drawRowCells(page, row, { rowTop: y, columnX, size: 8.5, font: bold, color: rgb(1, 1, 1) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8.5, font: bold, color: rgb(1, 1, 1), engine });
     y -= row.height;
   };
 
@@ -104,7 +110,7 @@ function renderSheetToPages(
 
   for (let r = 1; r < rows.length; r++) {
     // Lay the row out first: its height depends on how much its cells wrap.
-    const row = layoutRow(rows[r], maxCols, safe, tracker, regular, 8, textWidth);
+    const row = layoutRow(rows[r], maxCols, tracker, regular, 8, textWidth);
 
     if (y - row.height < PAGE.margin + 20) {
       page = doc.addPage([PAGE.width, PAGE.height]);
@@ -116,7 +122,7 @@ function renderSheetToPages(
       page.drawRectangle({ x: PAGE.margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.96, .96, .97) });
     }
 
-    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.15, .15, .17) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.15, .15, .17), engine });
     y -= row.height;
   }
 }

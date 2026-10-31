@@ -1,13 +1,15 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
+import { canEncodeWith, toFileSlug } from "../text/font-safe-text";
+import { UnicodeTextWriter, type UnicodeFidelityReport } from "../text/unicode-text";
+import { writerEngine } from "../text/text-engine";
 import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
 import { CELL_PADDING, drawRowCells, layoutRow } from "./table-renderer";
 
 export interface CsvTable { headers: string[]; rows: string[][]; }
 export interface CsvToPdfResult {
   pdfBytes: Uint8Array; pageCount: number; fileName: string; rowCount: number;
-  /** Which characters the embedded fonts could not draw as authored. */
-  textFidelity: TextFidelityReport;
+  /** Language packs used, and anything still unrepresentable. */
+  textFidelity: UnicodeFidelityReport;
   /** Table cells whose text did not fit their column, even wrapped. */
   tableFidelity: TableFidelityReport;
 }
@@ -37,36 +39,38 @@ export async function convertCsvToPdf(csv: string, title = "Data table"): Promis
   const columns = Math.min(table.headers.length, 6);
   const doc = await PDFDocument.create();
   const regular = await doc.embedFont(StandardFonts.Helvetica); const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const sanitizer = new FontTextSanitizer([regular, bold]);
-  const safe = (value: string) => sanitizer.sanitize(value);
-  const tracker = new TableFidelityTracker();
+  // Non-Latin cells come from a language pack, downloaded only if needed.
+  const writer = UnicodeTextWriter.create(doc, canEncodeWith([regular, bold]));
+  await writer.prepare([title, ...table.headers, ...table.rows.flat()].join("\n"));
+  const engine = writerEngine(writer);
+  const tracker = new TableFidelityTracker(engine);
   const width = 841.89; const height = 595.28; const margin = 36; const tableWidth = width - margin * 2;
   const columnWidth = tableWidth / columns;
   const textWidth = columnWidth - CELL_PADDING * 2;
   const columnX = (column: number) => margin + column * columnWidth + CELL_PADDING;
   let page = doc.addPage([width, height]); let y = height - margin;
   const header = () => {
-    page.drawText(safe(title), { x: margin, y, size: 16, font: bold, color: rgb(.1, .1, .12) }); y -= 30;
-    const row = layoutRow(table.headers, columns, safe, tracker, bold, 8, textWidth);
+    engine.draw(page, title, { x: margin, y, size: 16, font: bold, color: rgb(.1, .1, .12) }); y -= 30;
+    const row = layoutRow(table.headers, columns, tracker, bold, 8, textWidth);
     for (let col = 0; col < columns; col++) {
       page.drawRectangle({ x: margin + col * columnWidth, y: y - row.height + 4, width: columnWidth, height: row.height, color: rgb(.92, .29, .17) });
     }
-    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: bold, color: rgb(1, 1, 1) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: bold, color: rgb(1, 1, 1), engine });
     y -= row.height;
   };
   header();
   for (const [index, values] of table.rows.entries()) {
     // Lay the row out first: its height depends on how much its cells wrap.
-    const row = layoutRow(values, columns, safe, tracker, regular, 8, textWidth);
+    const row = layoutRow(values, columns, tracker, regular, 8, textWidth);
     if (y - row.height < margin) { page = doc.addPage([width, height]); y = height - margin; header(); }
     if (index % 2 === 0) page.drawRectangle({ x: margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.96, .96, .95) });
-    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.16, .16, .17) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.16, .16, .17), engine });
     y -= row.height;
   }
   doc.setTitle(title); doc.setCreator("FileMelo Client");
   return {
     pdfBytes: await doc.save(), pageCount: doc.getPageCount(), rowCount: table.rows.length,
-    fileName: `${toFileSlug(title, "csv-table")}.pdf`, textFidelity: sanitizer.report(),
+    fileName: `${toFileSlug(title, "csv-table")}.pdf`, textFidelity: writer.report(),
     tableFidelity: tracker.report(),
   };
 }
