@@ -8,8 +8,8 @@ Last updated: 2026-10-31.
 
 | Repository | Branch | Head | Pushed |
 | --- | --- | --- | --- |
-| `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `68b1a9d` | see PR table below |
-| `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | see PR table below |
+| `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
+| `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
 Both branches are cut from `main`. Nothing has been merged, deployed or
@@ -23,6 +23,7 @@ submitted to any store.
    security claims corrected.
 2. `76f7dd9` — converters stop replacing non-ASCII text with `?`.
 3. `68b1a9d` — overflow content draws on the current page instead of a stale one.
+4. `f1c5bf2` — security findings, capability matrix and this checkpoint.
 
 **pdfFire-extension**
 
@@ -63,9 +64,21 @@ test-only. Node in use: v22.23.4.
   and `pdfFire-app` is untouched. Repository names, bundle IDs and extension
   IDs are deliberately unchanged.
 
+## Deployment and hosting state (checked 2026-10-31)
+
+- `filemelo.com` resolves to Cloudflare but returns HTTP 403 with Cloudflare
+  error 1014, so it is not serving the application.
+- `pdffire.com` does not resolve. The source still uses it as the canonical
+  host (`https://pdffire.com`), which must change before launch.
+- The repository contains no deployment configuration: no Vercel, Wrangler,
+  Netlify or GitHub Actions workflow. Nothing deploys on merge.
+- `callsmasterofficial/pdfFire` is a **public** repository; the extension and
+  mobile repositories are private.
+
 ## Next task
 
-Open PRs for both branches, then pick up `docs/security-findings.md` in order:
+Both PRs are open and awaiting review. Then pick up
+`docs/security-findings.md` in order:
 
 1. **FM-007** — rebuild PII box geometry from the matched substring rather than
    the whole PDF.js text item, and delete the raw-bytes Node fallback in
