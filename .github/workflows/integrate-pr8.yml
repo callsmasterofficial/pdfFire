@@ -45,6 +45,20 @@ jobs:
             echo "::error::Unresolved conflicts"; exit 1
           fi
           git commit -m "merge: keep Unicode writer, CJK lazy fonts and current FileMelo metadata"
+      - name: Update legacy regression to assert actual CJK preservation
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const file='src/lib/pdf/__tests__/unicode-text-fidelity.test.ts';
+          let s=fs.readFileSync(file,'utf8');
+          const before='it("converts plain text with unsupported scripts instead of throwing", async () => {\n    // Previously pdf-lib\'s own "WinAnsi cannot encode" error reached the user.\n    const result = await convertTextToPdf("Hello 中文 world", { title: "Notes" });\n\n    expect(result.textFidelity.droppedCharacters).toContain("中");\n    expect(await extractPdfText(result.pdfBytes)).toContain("Hello");\n  });';
+          const after='it("preserves Chinese text with the on-demand CJK pack", async () => {\n    const result = await convertTextToPdf("Hello 中文 world", { title: "Notes" });\n    expect(result.textFidelity.packsUsed.map((pack) => pack.id)).toContain("cjk");\n    expect(result.textFidelity.unsupportedCharacters).not.toContain("中");\n    const extracted = await extractPdfText(result.pdfBytes);\n    expect(extracted).toContain("Hello");\n    expect(extracted).toContain("中文");\n  });';
+          if(!s.includes(before))throw new Error('Original regression test changed; refusing automatic edit');
+          fs.writeFileSync(file,s.replace(before,after));
+          NODE
+          git add src/lib/pdf/__tests__/unicode-text-fidelity.test.ts
+          git commit -m "test: require Chinese text preservation with CJK packs"
       - run: npm ci --no-audit --no-fund
       - run: npm test
       - run: npx tsc --noEmit
