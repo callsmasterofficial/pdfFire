@@ -1,18 +1,24 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { DocxBlock, parseDocxBytes } from "./docx-parser";
+import {
+  FontTextSanitizer,
+  toFileSlug,
+  type TextFidelityReport,
+} from "../text/font-safe-text";
 
 export interface DocxToPdfResult {
   pdfBytes: Uint8Array;
   pageCount: number;
   fileName: string;
   metrics: { paragraphCount: number; wordCount: number; tableCount: number };
+  /** Which characters the embedded fonts could not draw as authored. */
+  textFidelity: TextFidelityReport;
 }
 
 const PAGE = { width: 595.28, height: 841.89, margin: 54 };
-const safe = (s: string) => s.replace(/[^\x20-\x7E\n\t]/g, "?");
 
 function wrap(text: string, font: PDFFont, size: number, maxW: number): string[] {
-  const words = safe(text).split(/\s+/);
+  const words = text.split(/\s+/);
   const lines: string[] = [];
   let line = "";
   for (const w of words) {
@@ -31,6 +37,8 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const sanitizer = new FontTextSanitizer([regular, bold, italic]);
+  const safe = (text: string) => sanitizer.sanitize(text);
 
   let page = doc.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - PAGE.margin;
@@ -44,14 +52,14 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
       const leading = size * 1.4;
       ensure(leading + 10);
       y -= 6;
-      const lines = wrap(block.text, bold, size, PAGE.width - PAGE.margin * 2);
+      const lines = wrap(safe(block.text), bold, size, PAGE.width - PAGE.margin * 2);
       for (const line of lines) { ensure(leading); page.drawText(line, { x: PAGE.margin, y, size, font: bold, color: rgb(.1, .12, .18) }); y -= leading; }
       y -= 4;
       continue;
     }
     if (block.type === "bullet") {
       const size = 10.5; const leading = 15;
-      const lines = wrap(block.text, regular, size, PAGE.width - PAGE.margin * 2 - 18);
+      const lines = wrap(safe(block.text), regular, size, PAGE.width - PAGE.margin * 2 - 18);
       for (let i = 0; i < lines.length; i++) {
         ensure(leading);
         if (i === 0) page.drawText("•", { x: PAGE.margin + 4, y, size, font: bold, color: rgb(.2, .4, .7) });
@@ -61,12 +69,12 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
       continue;
     }
     if (block.type === "paragraph") {
-      drawParagraph(block, regular, bold, italic, page, () => y, (newY) => { y = newY; }, ensure);
+      drawParagraph(block, safe, regular, bold, italic, page, () => y, (newY) => { y = newY; }, ensure);
       y -= 4;
       continue;
     }
     if (block.type === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, regular, bold, page, () => y, (newY) => { y = newY; }, ensure);
+      drawTable(block.tableRows, safe, regular, bold, page, () => y, (newY) => { y = newY; }, ensure);
       y -= 8;
     }
   }
@@ -82,21 +90,23 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
   }
 
   const title = parsed.title && parsed.title !== "Document" ? parsed.title : fallbackTitle;
-  doc.setTitle(safe(title));
+  doc.setTitle(title);
   doc.setCreator("PDFfire Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
-  const fileName = `${safe(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "document"}.pdf`;
+  const fileName = `${toFileSlug(title)}.pdf`;
   return {
     pdfBytes,
     pageCount: totalPages,
     fileName,
-    metrics: { paragraphCount: parsed.paragraphCount, wordCount: parsed.wordCount, tableCount: parsed.tableCount }
+    metrics: { paragraphCount: parsed.paragraphCount, wordCount: parsed.wordCount, tableCount: parsed.tableCount },
+    textFidelity: sanitizer.report(),
   };
 }
 
 function drawParagraph(
   block: DocxBlock,
+  safe: (text: string) => string,
   regular: PDFFont,
   bold: PDFFont,
   italic: PDFFont,
@@ -110,7 +120,7 @@ function drawParagraph(
   const hasBold = block.runs.some((r) => r.bold);
   const hasItalic = block.runs.some((r) => r.italic);
   const font = hasBold ? bold : hasItalic ? italic : regular;
-  const lines = wrap(block.text, font, size, PAGE.width - PAGE.margin * 2);
+  const lines = wrap(safe(block.text), font, size, PAGE.width - PAGE.margin * 2);
   for (const line of lines) {
     ensure(leading);
     page.drawText(line, { x: PAGE.margin, y: getY(), size, font, color: rgb(.14, .14, .16) });
@@ -120,6 +130,7 @@ function drawParagraph(
 
 function drawTable(
   rows: string[][],
+  safe: (text: string) => string,
   regular: PDFFont,
   bold: PDFFont,
   page: PDFPage,

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { parseDocxBytes, convertDocxToPdf, DocxToPdfResult, ParsedDocx } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
 import { zipSync, strToU8 } from "fflate";
+import { TextFidelityNotice } from "@/components/tools/text-fidelity-notice";
 
 export function DocxToPdfToolView() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -121,6 +122,8 @@ export function DocxToPdfToolView() {
         )}
 
         {error && <div className="flex gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive"><AlertCircle className="size-4 shrink-0" />{error}</div>}
+        {result?.textFidelity && <TextFidelityNotice report={result.textFidelity} />}
+
         {result && (
           <ResultPreviewSection
             pdfBytes={result.pdfBytes}

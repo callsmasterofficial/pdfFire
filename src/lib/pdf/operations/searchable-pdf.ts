@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { OcrDocumentResult } from "../../ocr/ocr-types";
+import { FontTextSanitizer } from "../text/font-safe-text";
 
 export interface SearchablePdfResult {
   pdfBytes: Uint8Array;
@@ -13,6 +14,9 @@ export async function createSearchablePdf(
 ): Promise<SearchablePdfResult> {
   const pdfDoc = await PDFDocument.load(originalPdfBytes, { ignoreEncryption: true });
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  // Blanking accented characters would make the OCR layer unsearchable for the
+  // very words a user is most likely to look for.
+  const sanitizer = new FontTextSanitizer([font]);
 
   const pageCount = pdfDoc.getPageCount();
 
@@ -30,8 +34,7 @@ export async function createSearchablePdf(
     for (const line of lines) {
       if (yPos < 20) break;
       try {
-        // Sanitize string to standard ascii/winansi characters for StandardFonts
-        const cleanLine = line.replace(/[^\x20-\x7E]/g, " ").trim();
+        const cleanLine = sanitizer.sanitize(line).trim();
         if (cleanLine) {
           page.drawText(cleanLine, {
             x: 40,

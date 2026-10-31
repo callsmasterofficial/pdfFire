@@ -13,28 +13,8 @@ import {
   parseMarkdown,
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
-
-const SAMPLE = [
-  "# Project brief",
-  "",
-  "Turn ideas into a polished document entirely in your browser.",
-  "",
-  "## Highlights",
-  "",
-  "- Vector text stays crisp at every zoom level",
-  "- Headings, lists, quotes, and code are typeset automatically",
-  "",
-  "> Your Markdown never leaves this device.",
-  "",
-  "```",
-  'const privacy = "local-first";',
-  "```",
-  "",
-  "---",
-  "",
-  "Ready to export.",
-].join("\n");
-
+import { TextFidelityNotice } from "@/components/tools/text-fidelity-notice";
+import { MARKDOWN_SAMPLE as SAMPLE } from "@/components/tools/markdown/markdown-sample";
 export function MarkdownToPdfToolView() {
   const [title, setTitle] = useState("Project brief");
   const [markdown, setMarkdown] = useState(SAMPLE);
@@ -131,6 +111,8 @@ export function MarkdownToPdfToolView() {
             {error}
           </div>
         )}
+        {result?.textFidelity && <TextFidelityNotice report={result.textFidelity} />}
+
         {result && (
           <ResultPreviewSection
             pdfBytes={result.pdfBytes}
