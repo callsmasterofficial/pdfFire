@@ -22,6 +22,12 @@ export interface CharMetric {
   advance: number;
   /** Font size it was drawn at, used to convert the advance to text units. */
   fontSize: number;
+  /**
+   * TJ units that exactly restore this character's advance, read from the
+   * font's own metrics. Null when those metrics were unavailable, in which case
+   * the advance above is used as an estimate.
+   */
+  tjUnits: number | null;
 }
 
 export interface PageCoverage {
@@ -46,6 +52,7 @@ export function alignCoverage(
       covered: false,
       advance: 0,
       fontSize: 0,
+      tjUnits: null,
     }))
   );
 
@@ -73,6 +80,7 @@ export function alignCoverage(
           covered: true,
           advance: advances[j] ?? 0,
           fontSize: fontSizes[j] ?? 0,
+          tjUnits: null,
         };
         transferred++;
       }

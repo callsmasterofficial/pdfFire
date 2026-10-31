@@ -9,32 +9,10 @@
  */
 import { PDFDocument } from "pdf-lib";
 import { readPageContent, writePageContent } from "./page-content";
-import { alignCoverage } from "./align-coverage";
-import { blankAcrossOperations, rewriteShowOperation } from "./blank-text";
-import { rewritePositional } from "./rewrite-positional";
-import { findShowOperations } from "./show-operators";
-import { findTargetStrings, type Rect } from "./text-items";
-import { verifyRemoval } from "./verify-removal";
+import { exactDisplacements } from "./font-resources";
+import { rewriteContent, type RemovalPrecision } from "./rewrite-content";
 
-export class RedactionVerificationError extends Error {
-  readonly pages: number[];
-  constructor(pages: number[]) {
-    super(
-      `Redaction could not be verified on page(s) ${pages.join(", ")}: targeted text is still extractable. ` +
-        "The document was not modified."
-    );
-    this.name = "RedactionVerificationError";
-    this.pages = pages;
-  }
-}
-
-/**
- * `positional` deleted exactly the characters under the rectangles.
- * `content` could not align the two views of the page and fell back to
- * deleting every occurrence of the covered text, which can remove identical
- * text elsewhere on the same page.
- */
-export type RemovalPrecision = "positional" | "content";
+export type { RemovalPrecision };
 
 export interface TextRemovalResult {
   pdfBytes: Uint8Array;
@@ -57,47 +35,20 @@ export interface TextRemovalResult {
   shiftedPages: number[];
 }
 
-function rewriteContent(
-  content: string,
-  targets: string[],
-  coverage: {
-    text: string;
-    covered: boolean[];
-    advances: number[];
-    fontSizes: number[];
+import { findShowOperationsWithState } from "./text-state";
+import { findTargetStrings, type Rect } from "./text-items";
+import { verifyRemoval } from "./verify-removal";
+
+export class RedactionVerificationError extends Error {
+  readonly pages: number[];
+  constructor(pages: number[]) {
+    super(
+      `Redaction could not be verified on page(s) ${pages.join(", ")}: targeted text is still extractable. ` +
+        "The document was not modified."
+    );
+    this.name = "RedactionVerificationError";
+    this.pages = pages;
   }
-): { content: string; removed: number; precision: RemovalPrecision } {
-  const operations = findShowOperations(content);
-  if (operations.length === 0) {
-    return { content, removed: 0, precision: "positional" };
-  }
-
-  const operatorTexts = operations.map((operation) => operation.text);
-
-  // Prefer deleting by position. Content matching is the fallback, because it
-  // removes every occurrence of the covered text rather than the covered one.
-  const metrics = alignCoverage(operatorTexts, coverage);
-  const precision: RemovalPrecision = metrics ? "positional" : "content";
-  const blankedTexts = metrics
-    ? operatorTexts
-    : blankAcrossOperations(operatorTexts, targets);
-
-  let next = content;
-  let removed = 0;
-
-  // Reverse order, because a replacement may differ in length from what it
-  // replaces and earlier offsets must stay valid.
-  for (let i = operations.length - 1; i >= 0; i--) {
-    const operation = operations[i];
-    const replacement = metrics
-      ? rewritePositional(content, operation, metrics[i])
-      : rewriteShowOperation(content, operation, blankedTexts[i]);
-    if (replacement === null) continue;
-    next = next.slice(0, operation.start) + replacement + next.slice(operation.end);
-    removed++;
-  }
-
-  return { content: next, removed, precision };
 }
 
 export async function removeTextInRects(
@@ -125,7 +76,15 @@ export async function removeTextInRects(
   for (const { pageNumber, strings, text, covered, advances, fontSizes } of pageTargets) {
     const page = doc.getPage(pageNumber - 1);
     const content = readPageContent(doc, page);
-    const rewrite = rewriteContent(content, strings, { text, covered, advances, fontSizes });
+    const operations = findShowOperationsWithState(content);
+    const displacements = await exactDisplacements(doc, page, operations);
+    const rewrite = rewriteContent(
+      content,
+      strings,
+      { text, covered, advances, fontSizes },
+      operations,
+      displacements
+    );
     if (rewrite.removed === 0) continue;
 
     writePageContent(doc, page, rewrite.content);

@@ -270,21 +270,51 @@ and separates a **leak** (text we deleted is still there, which throws) from a
 original pathological cases: one of two identical lines, and a short covered
 word that appears again on an untouched line.
 
-### FM-013 — Character selection at box edges is approximate · **confirmed**
+### FM-013 — Advance widths now exact; edge selection still approximate · **partly fixed**
 
-PDF.js reports one width per text run, not per glyph, so which characters a
-box edge touches is estimated from an average character width. For a run of
-mixed-width text that estimate can be out by a character or two: a box drawn
-exactly around "555-0100" removed "555-0100 an".
+Advances were estimated by dividing a text run's total width by its character
+count. For mixed-width text that is wrong by enough to matter, and it caused two
+separate problems: the width given back after deleting characters was inexact,
+so the rest of the line drifted (the `shiftedPages` reports); and which
+characters a box edge touches was mis-estimated, so a box drawn exactly around
+"555-0100" selected "555-0100 an".
 
-Selection rounds outward deliberately, so a partially covered character is
-removed rather than left as a fragment, and nothing covered is ever left
-behind. The cost is that a few characters beside the box may also go, and the
-same approximation makes the restored advance inexact, which is what produces
-the `shiftedPages` reports.
+**Fixed: the advance.** `text/glyph-widths.ts` reads widths from the document
+itself — `/Widths` indexed from `/FirstChar` for simple fonts, with
+`/MissingWidth` as the default. The standard 14 fonts carry no `/Widths` at all,
+so their metrics are taken from pdf-lib's own copy by embedding the same font
+into a scratch document and measuring at size 1000, which makes the measurement
+the 1/1000-unit advance directly. No new dependency: `@pdf-lib/standard-fonts`
+is in the tree via pdf-lib, but pdf-lib's public API was enough.
 
-Exact widths would need the font dictionaries — `/Widths` and `/FirstChar` for
-simple fonts, `/W` and `/DW` for CID fonts — plus the encoding needed to map
-PDF.js's Unicode back to character codes. That is a real piece of work and is
-tracked here rather than implied away. A test records the current edge
-behaviour so it cannot change unnoticed.
+`redact/text-state.ts` tracks the text state each operator was drawn under —
+`Tf`, `Tc`, `Tw` and `Tz` — since all of them change a character's advance, and
+`redact/font-resources.ts` turns that into the exact TJ displacement:
+
+    n = -(W + 1000 x (Tc + Tw) / fontSize)
+
+Equating a TJ number's displacement with a character's advance cancels both the
+font size and the horizontal scaling, so horizontal scaling must *not* be
+applied here — TJ displacement is scaled by it already. A test asserts
+`shiftedPages` is empty for a partly covered line, and that the widths are the
+real metrics rather than a silent fallback: in Helvetica "W" measures more than
+three times "i", which an averaging model treats as equal.
+
+Where a font's metrics cannot be read the lookup reports itself inexact and the
+averaged estimate is used, so an unmeasurable font degrades rather than fails.
+
+**Still approximate: selection.** Coverage is still computed from PDF.js run
+geometry with averaged per-character widths, so a box edge can still take a
+character or two either side. Selection rounds outward deliberately — a
+partially covered character goes rather than being left as a fragment, and
+nothing covered is ever left behind — so this over-removes rather than leaks.
+
+Making selection exact means computing per-character positions from the exact
+widths instead, which requires coverage to be derived *after* the operator and
+run sequences are aligned rather than before. That is a restructure of the
+redaction pipeline rather than an addition to it, and it is the remaining half
+of this finding. A test records the current edge behaviour so it cannot change
+unnoticed.
+
+**Regression tests:** `glyph-widths.test.ts` (3) and the drift test in
+`redact-precision.test.ts`.

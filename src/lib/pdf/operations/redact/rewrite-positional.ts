@@ -20,7 +20,11 @@ import type { CharMetric } from "./align-coverage";
 /** Segments of one string element: kept text and the gaps left behind. */
 type Segment = { kind: "text"; value: string } | { kind: "gap"; units: number };
 
-function displacementUnits(width: number, fontSize: number): number {
+/**
+ * Fallback when the font's metrics could not be read: convert the average
+ * advance PDF.js reported. Less accurate, which is what FM-013 is about.
+ */
+function estimatedUnits(width: number, fontSize: number): number {
   if (!fontSize) return 0;
   return -1000 * (width / fontSize);
 }
@@ -29,6 +33,7 @@ function displacementUnits(width: number, fontSize: number): number {
 function segmentsFor(text: string, metrics: CharMetric[]): Segment[] {
   const segments: Segment[] = [];
   let kept = "";
+  let gapUnits = 0;
   let gapWidth = 0;
   let gapFontSize = 0;
 
@@ -39,19 +44,26 @@ function segmentsFor(text: string, metrics: CharMetric[]): Segment[] {
     }
   };
   const flushGap = () => {
-    if (gapWidth > 0) {
-      segments.push({ kind: "gap", units: displacementUnits(gapWidth, gapFontSize) });
-      gapWidth = 0;
-      gapFontSize = 0;
-    }
+    if (gapUnits === 0 && gapWidth === 0) return;
+    // Exact units are summed from the font's metrics; the estimate is only
+    // used for characters whose width could not be read.
+    const units = gapUnits + (gapWidth > 0 ? estimatedUnits(gapWidth, gapFontSize) : 0);
+    segments.push({ kind: "gap", units });
+    gapUnits = 0;
+    gapWidth = 0;
+    gapFontSize = 0;
   };
 
   for (let i = 0; i < text.length; i++) {
     const metric = metrics[i];
     if (metric?.covered) {
       flushKept();
-      gapWidth += metric.advance;
-      if (!gapFontSize) gapFontSize = metric.fontSize;
+      if (metric.tjUnits !== null) {
+        gapUnits += metric.tjUnits;
+      } else {
+        gapWidth += metric.advance;
+        if (!gapFontSize) gapFontSize = metric.fontSize;
+      }
     } else {
       flushGap();
       kept += text[i];

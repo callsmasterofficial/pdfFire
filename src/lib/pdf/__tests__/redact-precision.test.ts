@@ -186,4 +186,31 @@ describe("Redaction precision", () => {
     expect(text).not.toContain("44");
     expect(text).toContain("ID");
   });
+
+  it("leaves no layout shift when the font's metrics are available", async () => {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([520, 300]);
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    page.drawText("Phone 555-0100 and more text after it", { x: 50, y: 200, size: SIZE, font });
+    const bytes = await doc.save();
+
+    const prefix = font.widthOfTextAtSize("Phone ", SIZE);
+    const number = font.widthOfTextAtSize("555-0100", SIZE);
+    const result = await applyRedactions(bytes, [
+      {
+        id: "r1",
+        pageNumber: 1,
+        x: 50 + prefix,
+        y: 194,
+        width: number,
+        height: SIZE + 8,
+        fillColor: "black",
+      },
+    ]);
+
+    // The deleted characters' advance is restored from the font's own widths,
+    // so nothing downstream drifts under the box. See FM-013.
+    expect(result.shiftedPages).toEqual([]);
+    expect(result.textRemovalVerified).toBe(true);
+  });
 });
