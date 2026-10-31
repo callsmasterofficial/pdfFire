@@ -12,6 +12,7 @@
  * report it rather than hide it.
  */
 import type { PDFFont } from "pdf-lib";
+import { standardFontEngine, type TextEngine } from "./text-engine";
 
 export interface CellLayout {
   lines: string[];
@@ -38,7 +39,8 @@ export function wrapToWidth(
   text: string,
   font: PDFFont,
   size: number,
-  maxWidth: number
+  maxWidth: number,
+  engine: TextEngine = standardFontEngine
 ): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -53,14 +55,14 @@ export function wrapToWidth(
 
   for (const word of words) {
     const candidate = line ? `${line} ${word}` : word;
-    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+    if (engine.measure(candidate, size, font) <= maxWidth) {
       line = candidate;
       continue;
     }
 
     pushLine();
 
-    if (font.widthOfTextAtSize(word, size) <= maxWidth) {
+    if (engine.measure(word, size, font) <= maxWidth) {
       line = word;
       continue;
     }
@@ -68,7 +70,7 @@ export function wrapToWidth(
     // A single word wider than the column: break it by character.
     let chunk = "";
     for (const char of word) {
-      if (font.widthOfTextAtSize(chunk + char, size) > maxWidth && chunk) {
+      if (engine.measure(chunk + char, size, font) > maxWidth && chunk) {
         lines.push(chunk);
         chunk = char;
       } else {
@@ -83,11 +85,11 @@ export function wrapToWidth(
 }
 
 /** Trims `line` until it plus an ellipsis fits `maxWidth`. */
-function withEllipsis(line: string, font: PDFFont, size: number, maxWidth: number): string {
+function withEllipsis(line: string, font: PDFFont, size: number, maxWidth: number, engine: TextEngine): string {
   let trimmed = line;
   while (
     trimmed &&
-    font.widthOfTextAtSize(trimmed + ELLIPSIS, size) > maxWidth
+    engine.measure(trimmed + ELLIPSIS, size, font) > maxWidth
   ) {
     trimmed = trimmed.slice(0, -1);
   }
@@ -99,6 +101,9 @@ export class TableFidelityTracker {
   private truncatedCells = 0;
   private readonly examples: string[] = [];
 
+  /** `engine` decides how text is measured, so packs widen it beyond one font. */
+  constructor(private readonly engine: TextEngine = standardFontEngine) {}
+
   layout(
     text: string,
     font: PDFFont,
@@ -108,11 +113,11 @@ export class TableFidelityTracker {
   ): CellLayout {
     if (!text) return { lines: [], truncated: false };
 
-    const lines = wrapToWidth(text, font, size, maxWidth);
+    const lines = wrapToWidth(text, font, size, maxWidth, this.engine);
     if (lines.length <= maxLines) return { lines, truncated: false };
 
     const kept = lines.slice(0, maxLines);
-    kept[maxLines - 1] = withEllipsis(kept[maxLines - 1], font, size, maxWidth);
+    kept[maxLines - 1] = withEllipsis(kept[maxLines - 1], font, size, maxWidth, this.engine);
 
     this.truncatedCells++;
     if (this.examples.length < MAX_EXAMPLES) this.examples.push(text);

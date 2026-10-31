@@ -114,7 +114,15 @@ export class UnicodeTextWriter {
   draw(
     page: PDFPage,
     text: string,
-    options: { x: number; y: number; size: number; baseFont: PDFFont; color?: ReturnType<typeof rgb> }
+    options: {
+      x: number;
+      y: number;
+      size: number;
+      baseFont: PDFFont;
+      color?: ReturnType<typeof rgb>;
+      /** 0 draws nothing visible, as a searchable OCR layer needs. */
+      opacity?: number;
+    }
   ): number {
     let x = options.x;
     for (const run of this.runs(text, options.baseFont)) {
@@ -125,6 +133,7 @@ export class UnicodeTextWriter {
         size: options.size,
         font: run.font,
         color: options.color ?? rgb(0, 0, 0),
+        opacity: options.opacity,
       });
       x += run.font.widthOfTextAtSize(run.text, options.size);
     }

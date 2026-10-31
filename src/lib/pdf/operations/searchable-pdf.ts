@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { OcrDocumentResult } from "../../ocr/ocr-types";
-import { FontTextSanitizer } from "../text/font-safe-text";
+import { canEncodeWith } from "../text/font-safe-text";
+import { UnicodeTextWriter } from "../text/unicode-text";
 
 export interface SearchablePdfResult {
   pdfBytes: Uint8Array;
@@ -16,7 +17,10 @@ export async function createSearchablePdf(
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   // Blanking accented characters would make the OCR layer unsearchable for the
   // very words a user is most likely to look for.
-  const sanitizer = new FontTextSanitizer([font]);
+  // OCR of a Chinese or Arabic scan is only useful if the invisible text layer
+  // can hold those characters, so it uses the language packs too.
+  const writer = UnicodeTextWriter.create(pdfDoc, canEncodeWith([font]));
+  await writer.prepare(ocrResult.pages.map((page) => page.text).join("\n"));
 
   const pageCount = pdfDoc.getPageCount();
 
@@ -34,13 +38,13 @@ export async function createSearchablePdf(
     for (const line of lines) {
       if (yPos < 20) break;
       try {
-        const cleanLine = sanitizer.sanitize(line).trim();
+        const cleanLine = line.trim();
         if (cleanLine) {
-          page.drawText(cleanLine, {
+          writer.draw(page, cleanLine, {
             x: 40,
             y: yPos,
             size: fontSize,
-            font,
+            baseFont: font,
             color: rgb(0, 0, 0),
             opacity: 0.0, // Invisible searchable overlay
           });

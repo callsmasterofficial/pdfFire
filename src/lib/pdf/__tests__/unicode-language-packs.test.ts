@@ -10,6 +10,11 @@
 import { describe, expect, it } from "vitest";
 import { convertTextToPdf } from "../operations/text-to-pdf";
 import { convertMarkdownToPdf } from "../operations/markdown-to-pdf";
+import { convertDocxToPdf } from "../operations/docx-to-pdf";
+import { convertHtmlToPdf } from "../operations/html-to-pdf";
+import { convertXlsxToPdf } from "../operations/xlsx-to-pdf";
+import { convertCsvToPdf } from "../operations/csv-to-pdf";
+import { zipSync, strToU8 } from "fflate";
 import { extractPdfText } from "./helpers/pdf-text";
 
 describe("Unicode language packs", () => {
@@ -103,6 +108,72 @@ describe("Unicode language packs", () => {
 
     expect(text).toContain("标题");
     expect(text).toContain("正文内容");
+    expect(result.textFidelity.isLossless).toBe(true);
+  });
+
+  it("renders CJK through the DOCX converter, body and table alike", async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+        <w:body>
+          <w:p><w:r><w:t>正文内容</w:t></w:r></w:p>
+          <w:tbl><w:tr>
+            <w:tc><w:p><w:r><w:t>项目</w:t></w:r></w:p></w:tc>
+            <w:tc><w:p><w:r><w:t>金额</w:t></w:r></w:p></w:tc>
+          </w:tr></w:tbl>
+        </w:body>
+      </w:document>`;
+    const docx = zipSync({
+      "word/document.xml": strToU8(xml),
+      "[Content_Types].xml": strToU8('<?xml version="1.0"?><Types></Types>'),
+    });
+    const result = await convertDocxToPdf(docx);
+    const text = await extractPdfText(result.pdfBytes);
+
+    expect(text).toContain("正文内容");
+    expect(text).toContain("项目");
+    expect(text).toContain("金额");
+    expect(result.textFidelity.isLossless).toBe(true);
+  });
+
+  it("renders CJK through the HTML converter, body and table alike", async () => {
+    const result = await convertHtmlToPdf(
+      "<h1>标题</h1><p>正文内容</p><table><tr><td>项目</td><td>金额</td></tr></table>"
+    );
+    const text = await extractPdfText(result.pdfBytes);
+
+    expect(text).toContain("标题");
+    expect(text).toContain("项目");
+    expect(result.textFidelity.isLossless).toBe(true);
+  });
+
+  it("renders CJK through the CSV converter", async () => {
+    const result = await convertCsvToPdf("项目,金额\n差旅,1200", "费用报告");
+    const text = await extractPdfText(result.pdfBytes);
+
+    expect(text).toContain("项目");
+    expect(text).toContain("差旅");
+    expect(result.textFidelity.isLossless).toBe(true);
+  });
+
+  it("renders CJK through the XLSX converter", async () => {
+    const values = ["项目", "金额"];
+    const sst = `<?xml version="1.0"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${values
+      .map((v) => `<si><t>${v}</t></si>`)
+      .join("")}</sst>`;
+    const sheet = `<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+      <sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row></sheetData></worksheet>`;
+    const workbook = `<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+      <sheets><sheet name="报表" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+    const xlsx = zipSync({
+      "xl/sharedStrings.xml": strToU8(sst),
+      "xl/workbook.xml": strToU8(workbook),
+      "xl/worksheets/sheet1.xml": strToU8(sheet),
+    });
+    const result = await convertXlsxToPdf(xlsx);
+    const text = await extractPdfText(result.pdfBytes);
+
+    expect(text).toContain("项目");
+    expect(text).toContain("报表");
     expect(result.textFidelity.isLossless).toBe(true);
   });
 });
