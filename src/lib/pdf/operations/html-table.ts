@@ -14,7 +14,7 @@ export function drawHtmlTable(
   safe: (value: string) => string,
   regular: PDFFont,
   bold: PDFFont,
-  page: PDFPage,
+  getPage: () => PDFPage,
   getY: () => number,
   setY: (y: number) => void,
   ensure: (h: number) => void
@@ -26,6 +26,7 @@ export function drawHtmlTable(
 
   for (let rIdx = 0; rIdx < rows.length; rIdx++) {
     ensure(rowHeight);
+    const page = getPage();
     const rowY = getY();
     const isHeader = rIdx === 0;
     if (isHeader) {

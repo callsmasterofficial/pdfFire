@@ -109,7 +109,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
       continue;
     }
     if (block.kind === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, safe, regular, bold, page, () => y, (newY) => { y = newY; }, ensure);
+      drawTable(block.tableRows, safe, regular, bold, () => page, () => y, (newY) => { y = newY; }, ensure);
       y -= 6;
     }
   }

@@ -34,6 +34,39 @@ export async function extractPdfTextPerPage(bytes: Uint8Array): Promise<string[]
   return pages;
 }
 
+export interface TextItem {
+  text: string;
+  x: number;
+  y: number;
+}
+
+/** Positioned text items per page, for checking that content lands on the page. */
+export async function extractPdfTextItemsPerPage(bytes: Uint8Array): Promise<TextItem[][]> {
+  const pdfjs = await import("pdfjs-dist");
+  const task = pdfjs.getDocument({
+    data: new Uint8Array(bytes),
+    useWorkerFetch: false,
+    disableFontFace: true,
+  });
+  const doc = await task.promise;
+  const pages: TextItem[][] = [];
+  for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
+    const page = await doc.getPage(pageNumber);
+    const content = await page.getTextContent();
+    pages.push(
+      content.items
+        .filter((item: unknown) => typeof (item as { str?: string }).str === "string")
+        .map((item: unknown) => {
+          const typed = item as { str: string; transform?: number[] };
+          const transform = typed.transform ?? [1, 0, 0, 1, 0, 0];
+          return { text: typed.str, x: transform[4], y: transform[5] };
+        })
+    );
+  }
+  await task.destroy();
+  return pages;
+}
+
 /** Whole-document text as an independent reader sees it. */
 export async function extractPdfText(bytes: Uint8Array): Promise<string> {
   return (await extractPdfTextPerPage(bytes)).join("\n");

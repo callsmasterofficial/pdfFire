@@ -69,12 +69,12 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
       continue;
     }
     if (block.type === "paragraph") {
-      drawParagraph(block, safe, regular, bold, italic, page, () => y, (newY) => { y = newY; }, ensure);
+      drawParagraph(block, safe, regular, bold, italic, () => page, () => y, (newY) => { y = newY; }, ensure);
       y -= 4;
       continue;
     }
     if (block.type === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, safe, regular, bold, page, () => y, (newY) => { y = newY; }, ensure);
+      drawTable(block.tableRows, safe, regular, bold, () => page, () => y, (newY) => { y = newY; }, ensure);
       y -= 8;
     }
   }
@@ -110,7 +110,7 @@ function drawParagraph(
   regular: PDFFont,
   bold: PDFFont,
   italic: PDFFont,
-  page: PDFPage,
+  getPage: () => PDFPage,
   getY: () => number,
   setY: (y: number) => void,
   ensure: (h: number) => void
@@ -123,7 +123,7 @@ function drawParagraph(
   const lines = wrap(safe(block.text), font, size, PAGE.width - PAGE.margin * 2);
   for (const line of lines) {
     ensure(leading);
-    page.drawText(line, { x: PAGE.margin, y: getY(), size, font, color: rgb(.14, .14, .16) });
+    getPage().drawText(line, { x: PAGE.margin, y: getY(), size, font, color: rgb(.14, .14, .16) });
     setY(getY() - leading);
   }
 }
@@ -133,7 +133,7 @@ function drawTable(
   safe: (text: string) => string,
   regular: PDFFont,
   bold: PDFFont,
-  page: PDFPage,
+  getPage: () => PDFPage,
   getY: () => number,
   setY: (y: number) => void,
   ensure: (h: number) => void
@@ -145,6 +145,7 @@ function drawTable(
 
   for (let rIdx = 0; rIdx < rows.length; rIdx++) {
     ensure(rowHeight);
+    const page = getPage();
     const rowY = getY();
     const isHeader = rIdx === 0;
     if (isHeader) {
