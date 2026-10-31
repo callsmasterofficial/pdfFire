@@ -85,18 +85,19 @@ test-only. Node in use: v22.23.4.
 
 ## Next task
 
-Both PRs are open and awaiting review. Then pick up
-`docs/security-findings.md` in order:
+All four PRs are open and awaiting review. `docs/security-findings.md` has no
+open items that are both confirmed and unstarted except:
 
-1. **FM-007** — rebuild PII box geometry from the matched substring rather than
-   the whole PDF.js text item, and delete the raw-bytes Node fallback in
-   `scanPdfForPii` now that `getPdfjs()` works outside the browser.
-2. **FM-008** — table cell truncation: either wrap cells or report the loss the
-   way `textFidelity` reports font coverage. Currently silent.
-3. **FM-009** — apply the FM-001 method (claim versus independently verified
-   behaviour) to compress, repair, protect/unlock, flatten, sign and metadata
-   removal. Expect more false claims; `docs/tool-capability-matrix.md` is the
-   place to record the outcome.
+1. **FM-010** — deletion still matches text by content, so covering one
+   instance of a string removes identical text elsewhere on the page. Needs
+   positional matching: PDF.js runs aligned to content-stream operators.
+2. **FM-011** — `unlock` rasterises. A real fix needs a decrypting writer;
+   pdf-lib cannot open an encrypted document and PDF.js cannot re-serialise.
+   Disclosed in the meantime.
+
+Beyond those, the brief's phases 4 onwards are untouched: accounts, sandbox
+billing, entitlements, Teams, the extension's four store builds, mobile and
+desktop, localisation, and the cost register.
 
 Blocked on an owner decision:
 

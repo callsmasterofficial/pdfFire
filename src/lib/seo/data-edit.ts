@@ -11,13 +11,23 @@ export const EDIT_SEO_DATA: ToolSeoData[] = [
     secondaryKeywords: ["compress pdf", "reduce pdf size", "shrink pdf file free", "online pdf optimizer"],
     instructions: [
       { step: 1, title: "Select PDF", description: "Upload the document you want to compress." },
-      { step: 2, title: "Choose Preset", description: "Select Light (clean streams), Balanced (recommended), or Strong compression." },
+      { step: 2, title: "Choose Preset", description: "Light and Balanced reserialise the file and keep your text. Strong re-renders each page as a JPEG image, which can shrink scans a lot but removes the text layer." },
       { step: 3, title: "Compare & Download", description: "Review exact bytes saved and download your optimized PDF." },
     ],
-    features: ["Three honest compression presets", "Exact before and after byte measurements", "Preserves vector typography and form fields", "Zero server uploads"],
-    limitations: ["Already highly compressed PDFs with no redundant streams may yield minor reductions"],
+    features: [
+      "Exact before and after byte measurements, including when the file does not get smaller",
+      "Light and Balanced keep text selectable and leave form fields intact",
+      "Strong trades the text layer for size on image-heavy documents",
+      "Zero server uploads",
+    ],
+    limitations: [
+      "Light and Balanced reserialise object streams and strip metadata; they do not recompress or downsample images, so a PDF that is already well compressed may shrink very little or not at all",
+      "Some PDFs come out slightly larger after reserialising. The result reports the real figure rather than hiding it",
+      "Strong rasterises every page: text stops being selectable, searchable and screen-reader accessible",
+    ],
     faqs: [
-      { question: "Will compression blur my document text?", answer: "No. Vector text streams are never rasterized; only uncompressed object streams and redundant data are optimized." },
+      { question: "Will compression blur my document text?", answer: "Light and Balanced do not touch how the page is drawn, so text stays sharp and selectable. Strong is different: it re-renders each page as a JPEG, so text becomes part of an image and will soften, especially at small sizes. Use Strong for scans, not for text documents." },
+      { question: "Why did my PDF barely shrink?", answer: "Light and Balanced reserialise the file's object streams and remove metadata. They do not recompress images, which is where the bulk of most PDFs sits, so a document that is already well compressed has little to give back. Strong will shrink an image-heavy file much further, at the cost of the text layer." },
       { question: "Are my documents uploaded for compression?", answer: "No. All compression operations run locally in browser memory." },
     ],
     relatedToolIds: ["merge", "crop", "metadata", "pdf-to-img"],
@@ -93,7 +103,7 @@ export const EDIT_SEO_DATA: ToolSeoData[] = [
     instructions: [
       { step: 1, title: "Upload PDF & Create Signature", description: "Draw with mouse/stylus, pick a cursive font, or upload a photo of your signature." },
       { step: 2, title: "Place Signature", description: "Drag and drop your signature onto the exact page and location needed." },
-      { step: 3, title: "Download Signed PDF", description: "Export the signed document stamped directly into PDF vector streams." },
+      { step: 3, title: "Download Signed PDF", description: "Export the signed document with your signature drawn into the page content." },
     ],
     features: ["Smooth bezier stylus drawing pad", "4 cursive handwriting fonts", "Transparentized signature photo upload", "Drag-and-drop page placement"],
     limitations: ["This creates an electronic signature overlay; it is not a cryptographic PKI certificate stamp"],

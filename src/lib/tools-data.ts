@@ -35,7 +35,7 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   },
   {
     id: "compress", title: "Compress PDF", category: "Edit & Optimize", icon: Zap, badge: "Phase 5", isAvailable: true,
-    description: "Optimize PDF structure and object streams with honest before/after metrics.",
+    description: "Reserialize object streams, or rasterize pages for a bigger cut, with honest before/after metrics.",
   },
   {
     id: "watermark", title: "Watermark PDF", category: "Edit & Optimize", icon: Stamp, badge: "Phase 5", isAvailable: true,
@@ -115,11 +115,11 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   },
   {
     id: "flatten", title: "Fill & Flatten Form", category: "Security", icon: CheckSquare, badge: "Phase 6", isAvailable: true,
-    description: "Fill AcroForm fields and flatten into immutable, tamper-proof vector drawings.",
+    description: "Fill AcroForm fields and flatten them into page content so viewers can no longer edit them.",
   },
   {
     id: "unlock", title: "Unlock PDF", category: "Security", icon: Unlock, badge: "Phase 6", isAvailable: true,
-    description: "Remove password protection from encrypted documents and export clean files.",
+    description: "Open an encrypted document with its password and export an unlocked copy as page images.",
   },
   {
     id: "compare", title: "Compare PDFs", category: "Diagnostics", icon: GitCompare, badge: "Phase 11", isAvailable: true,
@@ -127,7 +127,7 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   },
   {
     id: "repair", title: "Repair PDF", category: "Diagnostics", icon: Wrench, badge: "Phase 11", isAvailable: true,
-    description: "Rebuild corrupted xref tables, repair broken headers, and salvage readable pages.",
+    description: "Repair broken headers and trailers, rebuild an unparseable xref table, and salvage readable pages.",
   },
   {
     id: "sign", title: "Sign PDF", category: "Edit & Optimize", icon: PenTool, badge: "Phase 12", isAvailable: true,

@@ -3,7 +3,14 @@ import { PDFDocument } from "pdf-lib";
 export interface RepairDiagnostics {
   headerRepaired: boolean;
   eofRepaired: boolean;
+  /**
+   * True only when the source could not be parsed as it stood. The document is
+   * always reserialised, so reporting a rebuild unconditionally told every
+   * user their xref had been broken.
+   */
   xrefRebuilt: boolean;
+  /** True when at least one page of real content came through. */
+  recoverySucceeded: boolean;
   pagesRecovered: number;
   originalSizeBytes: number;
   repairedSizeBytes: number;
@@ -76,9 +83,21 @@ export async function repairPdfDocument(fileOrBytes: File | Uint8Array): Promise
   // Step 2: Ensure valid EOF trailer
   const { sanitized: streamCleaned, eofFixed } = ensurePdfEof(headerCleaned, logs);
 
-  // Step 3: Rebuild xref and reconstruct pages in a clean PDF container
-  logs.push("Rebuilding cross-reference table (xref) and resolving object stream references...");
+  // Step 3: establish whether anything was actually wrong, before reserialising.
+  // The document is rebuilt either way, so without this probe every file would
+  // be reported as having had a broken cross-reference table.
+  let parsedAsIs = false;
+  try {
+    await PDFDocument.load(streamCleaned, { ignoreEncryption: true });
+    parsedAsIs = true;
+    logs.push("Source cross-reference table parsed cleanly; no structural rebuild was required.");
+  } catch (err: unknown) {
+    logs.push(`Source could not be parsed as it stood: ${(err as Error).message}`);
+    logs.push("Rebuilding cross-reference table (xref) and resolving object stream references...");
+  }
+
   let pagesRecovered = 0;
+  let recoverySucceeded = false;
   let repairedBytes: Uint8Array;
 
   try {
@@ -104,28 +123,32 @@ export async function repairPdfDocument(fileOrBytes: File | Uint8Array): Promise
         pristineDoc.addPage(page);
       }
       pagesRecovered = pageCount;
+      recoverySucceeded = true;
       logs.push(`Successfully transferred and reserialized all ${pagesRecovered} page(s).`);
     } else {
-      logs.push("Warning: No pages recoverable in stream; generating blank recovery page.");
+      // A blank page is not a recovered page. Saying so would tell the user
+      // their content was salvaged when nothing was.
       pristineDoc.addPage([595.28, 841.89]);
-      pagesRecovered = 1;
+      logs.push("No page content could be salvaged. The output is an empty placeholder, not recovered content.");
     }
 
     repairedBytes = await pristineDoc.save({ useObjectStreams: false });
-    logs.push("Generated brand-new uncorrupted cross-reference table and trailers.");
+    if (recoverySucceeded) {
+      logs.push("Generated brand-new uncorrupted cross-reference table and trailers.");
+    }
   } catch (err: unknown) {
-    logs.push(`Aggressive structural recovery invoked: ${(err as Error).message}`);
+    logs.push(`Structural recovery failed: ${(err as Error).message}`);
     const fallbackDoc = await PDFDocument.create();
     fallbackDoc.addPage([595.28, 841.89]);
-    pagesRecovered = 1;
     repairedBytes = await fallbackDoc.save();
-    logs.push("Emergency fallback generated clean document.");
+    logs.push("No content could be recovered from this file. The output is an empty placeholder.");
   }
 
   const diagnostics: RepairDiagnostics = {
     headerRepaired: headerFixed,
     eofRepaired: eofFixed,
-    xrefRebuilt: true,
+    xrefRebuilt: !parsedAsIs,
+    recoverySucceeded,
     pagesRecovered,
     originalSizeBytes,
     repairedSizeBytes: repairedBytes.length,

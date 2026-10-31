@@ -197,12 +197,74 @@ The DOCX, HTML, XLSX and CSV table renderers clip cell text at 22–31
 characters and append "...". Longer values are lost from the output with no
 warning. Unlike FM-002 this is reported nowhere.
 
-### FM-009 — Other tools' claims are not independently verified · **unverified**
+### FM-009 — Security tool claims audited · **done**
 
-FM-001 was found because a claim was checked against behaviour. The same
-exercise has not been done for compress, repair, protect/unlock, flatten,
-sign, metadata removal or the summary and retrieval features. The brief lists
-exactly the distinctions to test (a drawn signature is not a certificate-backed
-signature; re-saving is not compression; clearing a few fields is not
-sanitisation). Treat their marketing copy as unverified until each has a test
-like the ones above.
+Each tool's public copy was turned into a test. `security-tool-claims.test.ts`
+(10 tests) is written from `src/lib/seo/`, not from the implementation.
+
+**Claims that held:**
+
+- **protect** — genuinely writes an AES-256 encryption dictionary (`/R 6`,
+  `/V 5`), not a silent RC4 fallback, and an independent reader refuses the
+  file without the password. The only change was dropping "military-grade",
+  which means nothing, and saying plainly that password strength is what
+  actually decides the outcome.
+- **flatten** — `form.flatten()` really does leave no interactive fields
+  behind. "Static vector page paths" became an accurate description of drawing
+  the field's appearance into the page, and "tamper-proof" is gone.
+
+**Claims that were false, now fixed:**
+
+- **metadata** — "Strip All Metadata for instant privacy sanitization" cleared
+  only the six Info dictionary fields. The XMP packet, which normally repeats
+  the same author and title, survived untouched, as did the creation date; the
+  author's name was still readable in the exported bytes. `stripAll` now also
+  deletes the XMP stream (and the orphaned object, not just the catalog
+  reference, since pdf-lib still writes unreferenced objects), clears both
+  dates, and loads with `updateMetadata: false` so pdf-lib does not stamp a
+  fresh Producer and ModDate back on. The copy now also says what is *not*
+  covered: annotation authors, form values, embedded file properties.
+- **repair** — `xrefRebuilt` was hardcoded `true`, so every document was told
+  its cross-reference table had been rebuilt, and the report card rendered a
+  green "Pristine Rebuilt" unconditionally. It now reflects a strict-parse
+  probe of the source. Worse, an unsalvageable file produced a blank page and
+  reported `pagesRecovered: 1`: a fabricated page presented as recovered
+  content. That is now `0` with `recoverySucceeded: false`, and the card shows
+  a warning that the download is an empty placeholder.
+- **compress** — the FAQ answered "Will compression blur my document text?"
+  with "No. Vector text streams are never rasterized", while the Strong preset
+  rasterises every page to JPEG. The copy now describes each preset honestly,
+  including that Light and Balanced do not recompress images and so may barely
+  shrink a well-compressed file, and that some files come out larger.
+- **unlock** — see FM-011. The listing claimed "Decrypts document streams
+  locally"; it does not.
+- **sign** — "stamped directly into PDF vector streams" was wrong for a drawn
+  or uploaded signature, which is an image. Reworded. Its limitation about not
+  being a PKI certificate was already correct and stayed.
+
+**Also found while auditing:** `text-to-pdf` never had the ASCII-stripping bug,
+so Latin-1 text was safe, but it passed text straight to `drawText` with no
+sanitiser. On CJK input pdf-lib's own error — `WinAnsi cannot encode "中"
+(0x4e2d)` — reached the user as the failure message. It now uses
+`FontTextSanitizer` like the other converters and reports what it could not
+draw. Three stale `PDFfire` producer strings were also replaced.
+
+A pre-existing test asserted `xrefRebuilt === true` for a healthy document, so
+the suite was pinning the false positive in place. It now asserts the truthful
+value, with a comment saying why it changed.
+
+### FM-011 — Unlock rasterises the document · **confirmed, disclosed**
+
+`unlockPdfWithPassword` opens the file with PDF.js and re-renders every page to
+a JPEG at scale 2.0, then rebuilds a PDF from those images. The output opens
+without a password, but it has no text layer: nothing can be selected,
+searched or read by a screen reader, and the file is usually much larger.
+
+The listing described this as "Decrypts document streams locally", which it is
+not. The mechanism is now stated in the copy, in the tool's description, and in
+an `UnlockRasterizationNotice` shown before the user commits.
+
+A real fix needs a decrypting writer: pdf-lib cannot open an encrypted document
+at all, and PDF.js can decrypt but cannot re-serialise. Until one exists, the
+honest options are the disclosed rasterised copy or no feature. Not started.
+

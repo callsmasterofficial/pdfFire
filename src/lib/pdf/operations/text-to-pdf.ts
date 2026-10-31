@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { FontTextSanitizer, type TextFidelityReport } from "../text/font-safe-text";
 
 export interface TextToPdfOptions {
   title?: string;
@@ -9,6 +10,8 @@ export interface TextToPdfOptions {
 }
 
 export interface TextToPdfResult {
+  /** Which characters the embedded fonts could not draw as authored. */
+  textFidelity: TextFidelityReport;
   pdfBytes: Uint8Array;
   pageCount: number;
   fileName: string;
@@ -29,6 +32,10 @@ export async function convertTextToPdf(
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  // Without this, an unencodable character makes pdf-lib throw its own
+  // "WinAnsi cannot encode" error at the user instead of converting what it can.
+  const sanitizer = new FontTextSanitizer([font, boldFont]);
+  const safe = (value: string) => sanitizer.sanitize(value);
 
   const pageWidth = 595.28; // Standard A4 width in pt
   const pageHeight = 841.89; // Standard A4 height in pt
@@ -37,7 +44,7 @@ export async function convertTextToPdf(
 
   // Word wrapping helper
   const wrapParagraph = (text: string): string[] => {
-    const words = text.split(/\s+/);
+    const words = safe(text).split(/\s+/);
     const lines: string[] = [];
     let currentLine = "";
 
@@ -71,7 +78,7 @@ export async function convertTextToPdf(
   let currentY = pageHeight - margin;
 
   if (title) {
-    currentPage.drawText(title, {
+    currentPage.drawText(safe(title), {
       x: margin,
       y: currentY - 14,
       size: 16,
@@ -100,13 +107,14 @@ export async function convertTextToPdf(
   }
 
   pdfDoc.setTitle(title);
-  pdfDoc.setCreator("PDFfire Client");
+  pdfDoc.setCreator("FileMelo Client");
   pdfDoc.setModificationDate(new Date());
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
 
   return {
     pdfBytes,
+    textFidelity: sanitizer.report(),
     pageCount: pdfDoc.getPageCount(),
     fileName: outputFileName,
   };

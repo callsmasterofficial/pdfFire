@@ -26,14 +26,14 @@ first.
 | Tool | Platform | Claim status | Verification | Notes |
 | --- | --- | --- | --- | --- |
 | `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams and the export is re-parsed; fails closed. Non-text content is covered only. FM-001. |
-| `protect` | web | **Unverified** | Unit tested | Uses `@pdfsmaller/pdf-encrypt`. No test confirms an independent reader enforces the password, nor which algorithm is applied. |
-| `unlock` | web | **Unverified** | Unit tested | Needs a user-supplied password; authorised-use wording not reviewed. |
-| `metadata` | web | **Unverified** | Unit tested | "Strip metadata" must be checked against XMP, object-stream copies, incremental revisions and embedded thumbnails before it can be called sanitisation. |
-| `flatten` | web | **Unverified** | Unit tested | Claims form fields become "tamper-proof vector graphics". Untested, and "tamper-proof" is a claim to re-word. |
-| `sign` | web | **Unverified** | Unit tested | A drawn or typed signature. Not certificate-backed, and must never be described as identity verification. |
+| `protect` | web | Verified 2026-10-31 | **Independently verified** | Writes a genuine AES-256 dictionary (`/R 6`, `/V 5`); an independent reader refuses the file without the password. FM-009. |
+| `unlock` | web | Corrected 2026-10-31 | Unit tested | Rasterises every page: the output has no text layer. Disclosed in copy and UI. FM-011. |
+| `metadata` | web | Corrected 2026-10-31 | **Independently verified** | Now clears Info fields, the XMP packet and both dates. Annotation authors, form values and embedded file properties are explicitly out of scope. FM-009. |
+| `flatten` | web | Verified 2026-10-31 | **Independently verified** | Leaves no interactive fields behind. "Tamper-proof" removed from the copy. FM-009. |
+| `sign` | web | Corrected 2026-10-31 | Unit tested | A drawn or typed signature, not certificate-backed. "Vector streams" wording corrected; the PKI limitation was already stated. |
 | `hash` | web | **Unverified** | Unit tested | Checksums; low risk. |
 | `compare` | web | **Unverified** | Unit tested | Text/visual comparison. |
-| `repair` | web | **Unverified** | Unit tested | Attempts specific faults only. Must not be presented as universal corruption repair. |
+| `repair` | web | Corrected 2026-10-31 | **Independently verified** | Diagnostics now report only repairs actually performed, and an unsalvageable file reports 0 pages recovered. FM-009. |
 
 ## Conversion and extraction
 
@@ -48,7 +48,7 @@ first.
 | `pdf-to-text` | web | n/a | Unit tested | PDF.js extraction. |
 | `pdf-to-img` / `img-to-pdf` | web | n/a | Unit tested | — |
 | `extract-images` | web | n/a | Unit tested | Raw XObject extraction; does not recover every embedded image form. |
-| `text-to-pdf` | web | **Unverified** | Unit tested | Not yet checked against the FM-002 fix; may still be ASCII-limited. |
+| `text-to-pdf` | web | Corrected 2026-10-31 | **Independently verified** | Preserved Latin-1 already, but threw pdf-lib's raw "WinAnsi cannot encode" error on CJK. Now sanitises and reports like the others. FM-009. |
 
 **Shared limit (FM-005):** every converter embeds the standard PDF fonts, which
 encode 218 characters. CJK, Arabic, Indic and Thai cannot be drawn at all; they
@@ -63,11 +63,11 @@ tool in this table supports complex-script shaping or RTL layout.
 
 ## Editing and optimisation
 
-| Tool | Platform | Verification | Notes |
-| --- | --- | --- | --- |
-| `compress` | web | **Unverified** | Re-saves with object streams. That is not image recompression or downsampling, and not every PDF shrinks. Claims need checking against actual byte deltas on a fixture corpus. |
-| `watermark`, `page-number`, `invert-colors`, `edit` | web | Unit tested | `edit` adds overlays; it does **not** modify existing PDF text or layout. |
-| `batch` | web | Unit tested | — |
+| Tool | Platform | Claim status | Verification | Notes |
+| --- | --- | --- | --- | --- |
+| `compress` | web | Corrected 2026-10-31 | Unit tested | Light/Balanced reserialise only; Strong rasterises. All three now described accurately, including that files can grow. FM-009. |
+| `watermark`, `page-number`, `invert-colors`, `edit` | web | — | Unit tested | `edit` adds overlays; it does **not** modify existing PDF text or layout. |
+| `batch` | web | — | Unit tested | — |
 
 ## AI and insights
 

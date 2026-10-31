@@ -124,7 +124,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
 
   const title = parsed.title && parsed.title !== "HTML Document" ? parsed.title : fallbackTitle;
   doc.setTitle(title);
-  doc.setCreator("PDFfire Pure-Client Converter");
+  doc.setCreator("FileMelo Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
   const fileName = `${toFileSlug(title)}.pdf`;

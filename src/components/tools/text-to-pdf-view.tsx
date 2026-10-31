@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { convertTextToPdf, TextToPdfResult } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
+import { TextFidelityNotice } from "@/components/tools/text-fidelity-notice";
 
 const DEFAULT_SAMPLE_TEXT = `PDFfire Local Document Creator
 
@@ -132,6 +133,9 @@ export function TextToPdfView() {
               <span>{error}</span>
             </div>
           )}
+
+          {result?.textFidelity && <TextFidelityNotice report={result.textFidelity} />}
+
 
           {result && (
             <ResultPreviewSection
