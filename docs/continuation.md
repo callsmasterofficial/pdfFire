@@ -178,8 +178,12 @@ checkout that would point at nothing.
    are captured, so trim before upload.
 3. **Native store identifiers.** `pdfFire-app` has no `ios.bundleIdentifier`
    and no `android.package`, so neither store build is possible yet.
-4. **Expo SDK 58** for `pdfFire-app`, which retires the `zod` override
-   documented in that repository's `docs/dependency-audit.md`.
+4. **Device QA for the mobile app.** Expo SDK 58 is merged (`e1b612f`):
+   React Native 0.88, zero high-severity advisories, no overrides, and all
+   three platform bundles build. But no native binary has been run — the
+   `pod install` for a simulator build failed with `No space left on device`
+   (the machine is at 100% with ~500 MiB free and a 13 GB CocoaPods cache).
+   That is an environment limit, not a code problem.
 5. **Native-language review** of the store copy. 55 locales are drafted and
    none is reviewed; every record says so in its own status field.
 
@@ -210,3 +214,12 @@ checkout that would point at nothing.
   Cloudflare limits it rests on and the conditions that would change it.
 - The extension has been captured for real in all four target browsers, which
   found two runtime bugs that source review had not.
+- `pdfFire-app` is on Expo SDK 58. The `zod` override is gone rather than
+  carried forward, because `@expo/cli@58` dropped the dependency it existed
+  for — which is what that repository's `docs/dependency-audit.md` said should
+  happen. Twelve moderate advisories remain in Expo's build tooling and are
+  left deliberately; pinning them would be a new override of the kind this
+  change just retired.
+- **Do not let `expo prebuild` choose the bundle identifier.** On this machine
+  it invented `com.thethaitourism.filemelo`, from an unrelated project's
+  namespace. The value is permanent once it reaches App Store Connect.
