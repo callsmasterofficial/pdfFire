@@ -47,12 +47,12 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/brand/pdffire-mark-light.svg",
+        url: "/brand/filemelo-mark-light.svg",
         media: "(prefers-color-scheme: light)",
         type: "image/svg+xml",
       },
       {
-        url: "/brand/pdffire-mark-dark.svg",
+        url: "/brand/filemelo-mark-dark.svg",
         media: "(prefers-color-scheme: dark)",
         type: "image/svg+xml",
       },
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PDFfire",
+    title: "FileMelo",
   },
   openGraph: {
     title: SITE_CONFIG.defaultTitle,
@@ -78,10 +78,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/brand/pdffire-og.png",
+        url: "/brand/filemelo-og.png",
         width: 1200,
         height: 630,
-        alt: "PDFfire — PDF Tools That Just Work",
+        alt: "FileMelo — Convert. Create. Simplify.",
       },
     ],
   },
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     title: SITE_CONFIG.defaultTitle,
     description: SITE_CONFIG.defaultDescription,
     creator: SITE_CONFIG.twitterHandle,
-    images: ["/brand/pdffire-og.png"],
+    images: ["/brand/filemelo-og.png"],
   },
 };
 

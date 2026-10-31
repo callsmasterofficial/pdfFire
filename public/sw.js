@@ -1,4 +1,4 @@
-const CACHE_NAME = "pdffire-cache-v1";
+const CACHE_NAME = "filemelo-cache-v1";
 const STATIC_PRECACHE = [
   "/",
   "/manifest.json",

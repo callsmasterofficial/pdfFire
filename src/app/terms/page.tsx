@@ -6,9 +6,9 @@ import { FileText, CheckCircle2 } from "lucide-react";
 import { getCanonicalUrl } from "@/lib/seo/site-config";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — PDFfire Browser Productivity Tools",
+  title: "Terms of Service — FileMelo Browser Productivity Tools",
   description:
-    "Read PDFfire's Terms of Service. Usage terms, client-side disclaimer, and open source licensing information.",
+    "Read FileMelo's Terms of Service. Usage terms, client-side disclaimer, and open source licensing information.",
   alternates: {
     canonical: getCanonicalUrl("/terms"),
   },
@@ -28,7 +28,7 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Effective Date: October 19, 2026 • PDFfire Open Usage Terms
+            Effective Date: October 19, 2026 • FileMelo Open Usage Terms
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export default function TermsPage() {
               <span>1. Acceptance of Terms</span>
             </h2>
             <p className="leading-relaxed">
-              By accessing or using PDFfire, you agree to these Terms of Service. PDFfire provides browser-based document productivity utilities operating strictly on your device.
+              By accessing or using FileMelo, you agree to these Terms of Service. FileMelo provides browser-based document productivity utilities operating strictly on your device.
             </p>
           </section>
 
@@ -59,7 +59,7 @@ export default function TermsPage() {
               <span>3. Disclaimer of Warranties</span>
             </h2>
             <p className="leading-relaxed">
-              PDFfire is provided &ldquo;as is&rdquo; without warranty of any kind, express or implied. While we employ rigorous quality assurance and testing across standard PDF specifications, complex third-party proprietary PDF extensions, corrupted files, or severe device memory constraints may affect processing outcomes.
+              FileMelo is provided &ldquo;as is&rdquo; without warranty of any kind, express or implied. While we employ rigorous quality assurance and testing across standard PDF specifications, complex third-party proprietary PDF extensions, corrupted files, or severe device memory constraints may affect processing outcomes.
             </p>
           </section>
 
@@ -69,7 +69,7 @@ export default function TermsPage() {
               <span>4. Lawful Use & Prohibited Activities</span>
             </h2>
             <p className="leading-relaxed">
-              You agree not to use PDFfire for unlawful purposes, including unauthorized decryption of documents you do not have permission to access, or attempting to compromise the integrity of the application.
+              You agree not to use FileMelo for unlawful purposes, including unauthorized decryption of documents you do not have permission to access, or attempting to compromise the integrity of the application.
             </p>
           </section>
 
@@ -79,7 +79,7 @@ export default function TermsPage() {
               <span>5. Open Source & Third-Party Attribution</span>
             </h2>
             <p className="leading-relaxed">
-              PDFfire is built upon established open-source technologies including pdf-lib, PDF.js, and Tesseract.js. All respective third-party licenses and intellectual property rights remain with their respective owners.
+              FileMelo is built upon established open-source technologies including pdf-lib, PDF.js, and Tesseract.js. All respective third-party licenses and intellectual property rights remain with their respective owners.
             </p>
           </section>
         </div>

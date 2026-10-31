@@ -95,7 +95,7 @@ export function ProtectToolView() {
             <div className="p-3 rounded-xl bg-muted/40 border border-border/40 text-[11px] text-muted-foreground flex items-center gap-2">
               <ShieldAlert className="size-4 text-primary shrink-0" />
               <span>
-                Zero Server Transmission: Encryption happens client-side via Web Crypto AES-256. Keep your password safe; PDFfire cannot recover lost passwords.
+                Zero Server Transmission: Encryption happens client-side via Web Crypto AES-256. Keep your password safe; FileMelo cannot recover lost passwords.
               </span>
             </div>
 

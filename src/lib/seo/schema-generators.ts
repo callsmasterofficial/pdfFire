@@ -7,7 +7,7 @@ export function generateWebSiteSchema() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_CONFIG.name,
-    alternateName: "PDFfire Toolkit",
+    alternateName: "FileMelo Toolkit",
     url: siteUrl,
     description: SITE_CONFIG.defaultDescription,
     potentialAction: {

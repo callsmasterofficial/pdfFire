@@ -67,7 +67,7 @@ describe("Automated SEO Validation Suite", () => {
 
   it("verifies sitemap generates eligible, unique, and valid public URLs", () => {
     const sitemapEntries = generateSitemap();
-    expect(sitemapEntries.length).toBe(42); // 1 home + 1 tool studio + 37 tools + 3 trust
+    expect(sitemapEntries.length).toBe(43); // 1 home + 1 tool studio + 1 pricing + 37 tools + 3 trust
 
     const seenUrls = new Set<string>();
     for (const entry of sitemapEntries) {
@@ -115,9 +115,9 @@ describe("Automated SEO Validation Suite", () => {
   it("verifies critical branding and Open Graph assets exist on disk", () => {
     const publicDir = path.resolve(process.cwd(), "public");
     const requiredFiles = [
-      "brand/pdffire-og.png",
-      "brand/pdffire-mark-light.svg",
-      "brand/pdffire-mark-dark.svg",
+      "brand/filemelo-og.png",
+      "brand/filemelo-mark-light.svg",
+      "brand/filemelo-mark-dark.svg",
       "icon.svg",
       "icons/icon-512.png",
       "icons/favicon.ico",

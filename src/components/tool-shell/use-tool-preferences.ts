@@ -2,9 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-const STARRED_KEY = "pdffire_starred_tools";
-const RECENT_KEY = "pdffire_recent_tools";
+const STARRED_KEY = "filemelo_starred_tools";
+const RECENT_KEY = "filemelo_recent_tools";
+// Read-only fallbacks from before the rename, so an existing visitor does not
+// lose their starred and recent tools. Reading one migrates it and clears it.
+const LEGACY_STARRED_KEY = "pdffire_starred_tools";
+const LEGACY_RECENT_KEY = "pdffire_recent_tools";
 const MAX_RECENT = 6;
+
+/** Reads `key`, falling back to `legacyKey` and migrating it across. */
+function readWithMigration(key: string, legacyKey: string): string | null {
+  const current = localStorage.getItem(key);
+  if (current) return current;
+  const legacy = localStorage.getItem(legacyKey);
+  if (!legacy) return null;
+  localStorage.setItem(key, legacy);
+  localStorage.removeItem(legacyKey);
+  return legacy;
+}
 
 export function useToolPreferences() {
   const [starredIds, setStarredIds] = useState<string[]>([]);
@@ -13,10 +28,10 @@ export function useToolPreferences() {
 
   useEffect(() => {
     try {
-      const storedStarred = localStorage.getItem(STARRED_KEY);
+      const storedStarred = readWithMigration(STARRED_KEY, LEGACY_STARRED_KEY);
       if (storedStarred) setStarredIds(JSON.parse(storedStarred));
 
-      const storedRecent = localStorage.getItem(RECENT_KEY);
+      const storedRecent = readWithMigration(RECENT_KEY, LEGACY_RECENT_KEY);
       if (storedRecent) setRecentIds(JSON.parse(storedRecent));
     } catch {
       // LocalStorage error fallback

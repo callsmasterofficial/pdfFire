@@ -51,10 +51,10 @@ export function ToolShellTopbar({
           <Link
             href="/"
             className="flex items-center gap-1 hover:text-foreground transition-colors"
-            title="PDFfire Home"
+            title="FileMelo Home"
           >
             <Home className="size-3.5" />
-            <span className="hidden sm:inline">PDFfire</span>
+            <span className="hidden sm:inline">FileMelo</span>
           </Link>
           <ChevronRight className="size-3 text-muted-foreground/60" />
           <Link

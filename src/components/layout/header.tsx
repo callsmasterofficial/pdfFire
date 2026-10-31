@@ -18,8 +18,8 @@ export function Header() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/brand/pdffire-mark-light.svg"
-              alt="PDFfire Logo"
+              src="/brand/filemelo-mark-light.svg"
+              alt="FileMelo Logo"
               width={32}
               height={32}
               className="size-8 rounded-lg shrink-0 dark:hidden"
@@ -27,13 +27,13 @@ export function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/icon.svg"
-              alt="PDFfire Logo"
+              alt="FileMelo Logo"
               width={32}
               height={32}
               className="size-8 rounded-lg shadow-xs shrink-0 hidden dark:block"
             />
             <span className="tracking-tight text-foreground font-extrabold text-xl">
-              PDF<span className="text-primary">fire</span>
+              File<span className="text-primary">Melo</span>
             </span>
           </Link>
 
@@ -63,6 +63,12 @@ export function Header() {
                 className="hover:text-foreground transition-colors hidden sm:inline-block"
               >
                 Workspace
+              </Link>
+              <Link
+                href="/pricing"
+                className="hover:text-foreground transition-colors hidden sm:inline-block"
+              >
+                Pricing
               </Link>
             </nav>
             <PwaInstallButton />
