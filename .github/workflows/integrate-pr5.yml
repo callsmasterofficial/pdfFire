@@ -1,0 +1,58 @@
+name: Isolated PR5 documentation conflict resolution
+on:
+  push:
+    branches: [integrate/pr5-security-audit]
+permissions:
+  contents: write
+concurrency:
+  group: resolve-pr5-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integrate:
+    if: github.repository == 'callsmasterofficial/pdfFire' && github.ref == 'refs/heads/integrate/pr5-security-audit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Merge PR5 code and resolve docs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin audit/security-tool-claims --no-tags
+          git merge --no-commit --no-ff FETCH_HEAD || true
+          conflicts=$(git diff --name-only --diff-filter=U)
+          echo "$conflicts"
+          expected=$(printf '%s\n' docs/continuation.md docs/security-findings.md docs/tool-capability-matrix.md process.md)
+          if [ "$conflicts" != "$expected" ]; then
+            echo "::error::Unexpected merge conflict paths. No changes pushed."
+            exit 1
+          fi
+          mkdir -p docs/archives/pr5
+          git show FETCH_HEAD:docs/security-findings.md > docs/archives/pr5/security-findings.md
+          git show FETCH_HEAD:docs/tool-capability-matrix.md > docs/archives/pr5/tool-capability-matrix.md
+          for file in docs/continuation.md docs/security-findings.md docs/tool-capability-matrix.md process.md; do
+            git checkout --ours "$file"
+            git add "$file"
+          done
+          git add docs/archives/pr5/security-findings.md docs/archives/pr5/tool-capability-matrix.md
+          if [ -n "$(git ls-files -u)" ]; then
+            echo "::error::Unresolved conflicts"
+            exit 1
+          fi
+          git commit -m "merge: integrate PR5 code, retain current docs and archive PR5 audit records"
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Push verified merge to integration branch
+        run: git push origin HEAD:refs/heads/integrate/pr5-security-audit
