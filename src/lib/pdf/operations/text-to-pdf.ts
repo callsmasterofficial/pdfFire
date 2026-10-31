@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { FontTextSanitizer, type TextFidelityReport } from "../text/font-safe-text";
+import { UnicodeTextWriter, type UnicodeFidelityReport } from "../text/unicode-text";
+import { canEncodeWith } from "../text/font-safe-text";
 
 export interface TextToPdfOptions {
   title?: string;
@@ -10,9 +11,9 @@ export interface TextToPdfOptions {
 }
 
 export interface TextToPdfResult {
-  /** Which characters the embedded fonts could not draw as authored. */
-  textFidelity: TextFidelityReport;
   pdfBytes: Uint8Array;
+  /** Language packs used, and anything still unrepresentable. */
+  textFidelity: UnicodeFidelityReport;
   pageCount: number;
   fileName: string;
 }
@@ -32,10 +33,11 @@ export async function convertTextToPdf(
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  // Without this, an unencodable character makes pdf-lib throw its own
-  // "WinAnsi cannot encode" error at the user instead of converting what it can.
-  const sanitizer = new FontTextSanitizer([font, boldFont]);
-  const safe = (value: string) => sanitizer.sanitize(value);
+
+  // Anything the standard fonts cannot draw is rendered from a language pack,
+  // downloaded only if this document actually needs it.
+  const writer = UnicodeTextWriter.create(pdfDoc, canEncodeWith([font, boldFont]));
+  await writer.prepare(`${title}\n${rawText}`);
 
   const pageWidth = 595.28; // Standard A4 width in pt
   const pageHeight = 841.89; // Standard A4 height in pt
@@ -44,13 +46,13 @@ export async function convertTextToPdf(
 
   // Word wrapping helper
   const wrapParagraph = (text: string): string[] => {
-    const words = safe(text).split(/\s+/);
+    const words = text.split(/\s+/);
     const lines: string[] = [];
     let currentLine = "";
 
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      const testWidth = writer.widthOf(testLine, fontSize, font);
       if (testWidth <= contentWidth) {
         currentLine = testLine;
       } else {
@@ -78,11 +80,11 @@ export async function convertTextToPdf(
   let currentY = pageHeight - margin;
 
   if (title) {
-    currentPage.drawText(safe(title), {
+    writer.draw(currentPage, title, {
       x: margin,
       y: currentY - 14,
       size: 16,
-      font: boldFont,
+      baseFont: boldFont,
       color: rgb(0.12, 0.12, 0.14),
     });
     currentY -= 36;
@@ -95,11 +97,11 @@ export async function convertTextToPdf(
     }
 
     if (line) {
-      currentPage.drawText(line, {
+      writer.draw(currentPage, line, {
         x: margin,
         y: currentY,
         size: fontSize,
-        font,
+        baseFont: font,
         color: rgb(0.2, 0.2, 0.2),
       });
     }
@@ -114,7 +116,7 @@ export async function convertTextToPdf(
 
   return {
     pdfBytes,
-    textFidelity: sanitizer.report(),
+    textFidelity: writer.report(),
     pageCount: pdfDoc.getPageCount(),
     fileName: outputFileName,
   };
