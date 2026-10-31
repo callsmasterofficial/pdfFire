@@ -17,7 +17,7 @@ import {
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
 import { ResultPreviewSection } from "@/components/preview/result-preview-section";
-import { UnlockRasterizationNotice } from "@/components/tools/unlock/unlock-rasterization-notice";
+import { UnlockMethodNotice } from "@/components/tools/unlock/unlock-method-notice";
 
 export function UnlockToolView() {
   const [file, setFile] = useState<File | null>(null);
@@ -73,7 +73,7 @@ export function UnlockToolView() {
   return (
     <ToolLayout
       title="Unlock PDF"
-      description="Open an encrypted document with its password and export an unlocked copy \u2014 100% in your browser. Pages are re-rendered as images, so the text layer is not preserved."
+      description="Remove a password using your own credentials \u2014 100% in your browser. AES-256 documents are decrypted in place, so the text stays selectable."
       icon={KeyRound}
       category="Security"
     >
@@ -84,7 +84,7 @@ export function UnlockToolView() {
           <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-6">
             <SecurityStatusCard status={status} fileName={file.name} />
 
-            <UnlockRasterizationNotice />
+            <UnlockMethodNotice method={result?.method} />
 
             <div className="space-y-2">
               <Label htmlFor="pdf-password" className="text-xs font-semibold text-foreground/80">

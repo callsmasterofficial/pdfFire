@@ -253,18 +253,61 @@ A pre-existing test asserted `xrefRebuilt === true` for a healthy document, so
 the suite was pinning the false positive in place. It now asserts the truthful
 value, with a comment saying why it changed.
 
-### FM-011 — Unlock rasterises the document · **confirmed, disclosed**
+### FM-011 — Unlock rasterised the document · **fixed for AES-256**
 
-`unlockPdfWithPassword` opens the file with PDF.js and re-renders every page to
-a JPEG at scale 2.0, then rebuilds a PDF from those images. The output opens
-without a password, but it has no text layer: nothing can be selected,
-searched or read by a screen reader, and the file is usually much larger.
+`unlockPdfWithPassword` opened the file with PDF.js and re-rendered every page
+to a JPEG, then rebuilt a PDF from those images. The output opened without a
+password but had no text layer: nothing selectable, searchable or screen-reader
+readable, and usually a much larger file. The listing called this "Decrypts
+document streams locally".
 
-The listing described this as "Decrypts document streams locally", which it is
-not. The mechanism is now stated in the copy, in the tool's description, and in
-an `UnlockRasterizationNotice` shown before the user commits.
+The gap was real — pdf-lib cannot open an encrypted document, and PDF.js can
+decrypt but cannot write one back out — but it turned out to be bridgeable.
+pdf-lib *will* parse the structure with `ignoreEncryption: true`, leaving every
+stream and string as ciphertext; decrypting those in place and dropping
+`/Encrypt` lets pdf-lib reserialise, recomputing lengths and the
+cross-reference table.
 
-A real fix needs a decrypting writer: pdf-lib cannot open an encrypted document
-at all, and PDF.js can decrypt but cannot re-serialise. Until one exists, the
-honest options are the disclosed rasterised copy or no feature. Not started.
+Implemented in `crypto/` and `operations/decrypt/`:
 
+- `crypto/aes-cbc.ts` — PDF uses CBC two ways. Stream and string data is
+  PKCS#7 padded, which `crypto.subtle.decrypt` handles. Recovering the file key
+  from `/UE` or `/OE` is unpadded, which WebCrypto refuses, so one extra
+  ciphertext block is appended, crafted to decrypt to a full padding block.
+  Crafting it needs only AES block *encryption*, which the existing encryption
+  dependency already exports — no new dependency, and no hand-rolled cipher.
+- `crypto/standard-security.ts` — Algorithm 2.A password validation and key
+  recovery for revision 6, accepting either the user or the owner password,
+  using the dependency's exported `computeHash2B`.
+- `operations/decrypt/decrypt-document.ts` — walks every indirect object,
+  decrypts streams and strings, removes `/Encrypt`, and reserialises.
+
+Two details worth recording because they were wrong first time:
+`PDFRawStream.contents` is read-only, so streams are replaced rather than
+mutated; and decrypted strings must go back as hex, byte for byte, because
+`PDFHexString.fromText()` would re-encode plaintext that is already UTF-16BE
+with a byte order mark and corrupt the title.
+
+**Scope and fallback.** Only AES-256 (V5 R6) is decrypted in place. RC4 and
+AES-128 use MD5-based derivation and are declined rather than guessed at, and
+documents holding objects inside encrypted object streams are declined too,
+since pdf-lib parses those during load before anything can be decrypted. Both
+cases fall back to the image path, which still works; the result reports
+`method: "decrypted" | "rasterized"` and `UnlockMethodNotice` states which
+happened. A wrong password raises `WrongPasswordError` and never silently
+falls back.
+
+**Regression tests:** `decrypt-document.test.ts` (7) — the document is
+genuinely encrypted to begin with, the output opens without a password, the
+text is still extractable by an independent parser, metadata survives, the
+owner password works, a wrong password is refused, and an unsupported revision
+is declined rather than mangled.
+
+### FM-012 — Legacy encryption still rasterises · **confirmed**
+
+RC4 (R2/R3) and AES-128 (R4) documents, and any document with encrypted object
+streams, still take the image fallback. RC4 is a stream cipher the dependency
+already exports, and R2–R4 key derivation is MD5-based, so extending
+`standard-security.ts` is tractable. Object streams need the ObjStm contents
+decrypted before pdf-lib parses them, which its API does not allow, so those
+would need a different approach. Disclosed in the tool copy meanwhile.

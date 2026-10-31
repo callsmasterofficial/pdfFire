@@ -119,7 +119,7 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   },
   {
     id: "unlock", title: "Unlock PDF", category: "Security", icon: Unlock, badge: "Phase 6", isAvailable: true,
-    description: "Open an encrypted document with its password and export an unlocked copy as page images.",
+    description: "Remove a password with your own credentials, keeping the text intact for AES-256 documents.",
   },
   {
     id: "compare", title: "Compare PDFs", category: "Diagnostics", icon: GitCompare, badge: "Phase 11", isAvailable: true,

@@ -74,7 +74,7 @@ export const SECURITY_SEO_DATA: ToolSeoData[] = [
   {
     id: "unlock",
     title: "Unlock PDF Online Free — Remove Password Protection from PDF",
-    metaDescription: "Remove password protection from an encrypted PDF locally. Each page is re-rendered as an image, so the copy opens without a password but its text is no longer selectable.",
+    metaDescription: "Remove password protection from an encrypted PDF locally. AES-256 documents are decrypted in place and keep their text; older encryption falls back to page images.",
     h1: "Unlock Password Protected PDF Online",
     category: "Security",
     primaryIntent: "Remove password encryption from a PDF for easy access",
@@ -82,21 +82,23 @@ export const SECURITY_SEO_DATA: ToolSeoData[] = [
     instructions: [
       { step: 1, title: "Select Protected PDF", description: "Upload your password-protected document." },
       { step: 2, title: "Enter Password", description: "Type the authorized password to decrypt the file in browser memory." },
-      { step: 3, title: "Download Unlocked PDF", description: "Save a PDF that opens without a password. Pages are re-rendered as images, so text is no longer selectable or searchable." },
+      { step: 3, title: "Download Unlocked PDF", description: "Save a PDF that opens without a password. FileMelo tells you whether it kept the text layer or had to fall back to page images." },
     ],
     features: [
-      "Opens the document locally with your password and exports an unencrypted copy",
+      "Decrypts AES-256 documents in place, keeping text, fonts and structure intact",
+      "Accepts either the user or the owner password",
       "Removes print, copy, and edit restrictions",
+      "States which method was used, so you are never left guessing whether the text survived",
       "Zero server uploads",
     ],
     limitations: [
-      "Each page is re-rendered as an image, so the output has no selectable or searchable text layer and is not screen-reader accessible",
-      "File size usually grows, because pages become images rather than text",
+      "Only AES-256 (revision 6) can be decrypted in place. RC4 and AES-128 documents fall back to re-rendering each page as an image, which opens without a password but has no selectable or searchable text and is not screen-reader accessible",
+      "Documents that keep their objects inside encrypted object streams also take the image fallback",
       "Requires knowledge of the valid document password; does not brute-force unknown passwords",
     ],
     faqs: [
       { question: "Does FileMelo save my password?", answer: "Never. The password and the document are handled entirely in local browser memory and discarded immediately." },
-      { question: "Will the unlocked PDF still have selectable text?", answer: "No. FileMelo opens the document with your password and re-renders each page as an image, so the copy opens without a password but the text layer is gone \u2014 it cannot be selected, searched or read by a screen reader. Keep the original if you need the text." },
+      { question: "Will the unlocked PDF still have selectable text?", answer: "For AES-256 documents, yes. FileMelo removes the encryption from the file itself, so the text, fonts and structure are untouched. Older RC4 and AES-128 encryption cannot be removed that way, so those documents are re-rendered as page images and lose the text layer. The tool tells you which path it took." },
     ],
     relatedToolIds: ["protect", "redact", "metadata", "compress"],
   },
