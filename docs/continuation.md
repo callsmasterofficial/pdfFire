@@ -10,7 +10,7 @@ Rebuilt from live GitHub state and git ancestry. Every version of this section
 written on a branch is stale about whatever merged after it, so it is rebuilt
 rather than merged.
 
-Website `main` is `7526dee`.
+Website `main` is `1c9984c`.
 
 Merged to website `main`:
 
@@ -29,6 +29,8 @@ Merged to website `main`:
 | #17, #18 | integration follow-ups |
 | #19 | static export and the Cloudflare Pages target |
 | #20 | FileMelo rename finished, pricing and the entitlement model |
+| #21 | cross-repository checkpoint refresh |
+| #22 | billing control plane and the infrastructure/AWS decision |
 
 All website PRs #1 to #11 and the integration PRs #13 to #15 are merged. The
 four converter migrations that #8 deferred are done in this change, so no
@@ -36,10 +38,11 @@ converter is left on the WinAnsi sanitiser.
 
 Other repositories:
 
-- `pdfFire-extension` `main` is `324fc7c`; PRs #1 (branding, resource
-  exposure), #2 (CI) and #4 (runtime smoke test) are merged. The tools have now
-  been run: 15 assertions over real PDFs pass, plus the two canvas tools by
-  hand. See that repository's README for what the harness does not cover.
+- `pdfFire-extension` `main` is `be90f99`; PRs #1, #2, #4 and #5 are merged.
+  The tools are run by a 17-assertion smoke harness, and the extension is
+  captured for real in Chrome, Edge, Opera and Firefox — installed, from its
+  own origin, at each store's accepted screenshot size. Listings cover 55/55/30/1
+  locales. See `store/README.md` there.
 - `pdfFire-app` PR #1 is open and no longer draft. The production dependency
   audit that was failing now passes, and the app is renamed to FileMelo.
 
@@ -162,21 +165,23 @@ checkout that would point at nothing.
 
 ## Next phase
 
-1. **Dodo product information**: owner to request a re-review, then create
-   sandbox Pro and Teams products, wire checkout, the portal and webhooks, and
-   fill the `NEXT_PUBLIC_DODO_PRODUCT_*` environment values that currently
-   leave every plan unbuyable.
-2. **Accounts and server-side entitlements**: the narrow scope change recorded
-   in `process.md` allows account, billing, membership, entitlement and consent
-   records. Nothing of that exists yet; the entitlement model is client-side
-   data only. Cloudflare Pages Functions are the minimum-cost home for it.
-3. **Store packaging and submissions.** `pdfFire-app` has no
-   `ios.bundleIdentifier` and no `android.package`, so neither store build is
-   possible yet; those identifiers, listings and signing credentials come
-   first.
+1. **Dodo product information**: owner to request a re-review. Then create the
+   four sandbox products, set `DODO_API_KEY` and `DODO_WEBHOOK_SECRET` as Pages
+   secrets, create the D1 database, and set the `NEXT_PUBLIC_DODO_PRODUCT_*`
+   ids **last** — `docs/billing-operations.md` has the commands and says why
+   that order matters.
+2. **Browser-store submissions.** The packs are complete in
+   `pdfFire-extension/store/`: real screenshots per browser at each store's
+   size, listings in each store's accepted locales, and per-store checklists.
+   What remains is owner-only — category, licence, a support URL, and the
+   uploads themselves. Edge accepts at most six screenshots per language; seven
+   are captured, so trim before upload.
+3. **Native store identifiers.** `pdfFire-app` has no `ios.bundleIdentifier`
+   and no `android.package`, so neither store build is possible yet.
 4. **Expo SDK 58** for `pdfFire-app`, which retires the `zod` override
-   documented in that repository's `docs/dependency-audit.md` and clears the
-   remaining moderate advisories in the Expo build tooling.
+   documented in that repository's `docs/dependency-audit.md`.
+5. **Native-language review** of the store copy. 55 locales are drafted and
+   none is reviewed; every record says so in its own status field.
 
 ### Done since the last checkpoint
 
@@ -197,3 +202,11 @@ checkout that would point at nothing.
   check that its metadata cleaner removes the XMP packet and not merely the
   Info dictionary.
 - `pdfFire-app` passes its production audit, and its brand matches the product.
+- The billing control plane exists and is tested, without a provider. Schema,
+  webhook receiver, signature verification and entitlement resolution are
+  written and covered by 43 synthetic tests; `isPurchasable()` is still false
+  and `/pricing` still says purchase is not open.
+- `docs/infrastructure-decision.md` answers the AWS question: no, with the
+  Cloudflare limits it rests on and the conditions that would change it.
+- The extension has been captured for real in all four target browsers, which
+  found two runtime bugs that source review had not.
