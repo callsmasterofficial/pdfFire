@@ -1,39 +1,27 @@
 /**
- * Finds the text that actually sits under a redaction rectangle.
+ * Works out which characters sit under a redaction rectangle.
  *
  * Geometry comes from PDF.js, which resolves fonts, encodings and text
  * matrices properly. Re-deriving that from the raw stream would be the easiest
  * place to get redaction subtly wrong.
+ *
+ * The result is the covered *text*, not whole runs: deleting a whole run would
+ * remove characters the rectangle never covered.
  */
 import { getDocumentParams, getPdfjs } from "../../pdfjs-init";
+import {
+  rectToCharRange,
+  toTextItemGeometry,
+  type Rect,
+} from "../../text/text-item-geometry";
 
-export interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type { Rect };
 
 export interface PageTargets {
   /** 1-based page number. */
   pageNumber: number;
-  /** Distinct strings painted inside a redaction rectangle on this page. */
+  /** Distinct strings to delete from this page, longest first. */
   strings: string[];
-}
-
-/**
- * Descenders fall below the baseline that PDF.js reports, so the measured box
- * is extended downwards before testing for overlap.
- */
-const DESCENDER_RATIO = 0.25;
-
-function overlaps(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
 }
 
 export async function findTargetStrings(
@@ -52,25 +40,24 @@ export async function findTargetStrings(
       const content = await page.getTextContent();
       const strings = new Set<string>();
 
-      for (const item of content.items) {
-        const str = (item as { str?: string }).str;
-        if (typeof str !== "string" || !str.trim()) continue;
+      for (const raw of content.items) {
+        const item = toTextItemGeometry(raw as Parameters<typeof toTextItemGeometry>[0]);
+        if (!item || !item.str.trim()) continue;
 
-        const transform = (item as { transform?: number[] }).transform ?? [1, 0, 0, 1, 0, 0];
-        const glyphHeight =
-          Math.abs(transform[3]) || (item as { height?: number }).height || 12;
-        const box: Rect = {
-          x: transform[4],
-          y: transform[5] - glyphHeight * DESCENDER_RATIO,
-          width: (item as { width?: number }).width || 1,
-          height: glyphHeight * (1 + DESCENDER_RATIO),
-        };
-
-        if (rects.some((rect) => overlaps(box, rect))) strings.add(str);
+        for (const rect of rects) {
+          const range = rectToCharRange(item, rect);
+          if (!range) continue;
+          const covered = item.str.slice(range[0], range[1]);
+          if (covered.trim()) strings.add(covered);
+        }
       }
 
       if (strings.size > 0) {
-        results.push({ pageNumber, strings: [...strings] });
+        // Longest first, so a wider match is blanked before any substring of it.
+        results.push({
+          pageNumber,
+          strings: [...strings].sort((a, b) => b.length - a.length),
+        });
       }
     }
   } finally {
