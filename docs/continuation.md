@@ -9,7 +9,7 @@ Last updated: 2026-10-31.
 | Repository | Branch | Head | Pushed |
 | --- | --- | --- | --- |
 | `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
-| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | see PR table | stacked on the fix branch |
+| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | `a55948b` | [PR #3](https://github.com/callsmasterofficial/pdfFire/pull/3) (stacked on #1) |
 | `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) (draft) |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
@@ -46,8 +46,9 @@ Run from `pdfFire/`:
 npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
 ```
 
-- Vitest: **140 passed / 140**, 28 files. Baseline on `main` was 111 in 24 files;
-  29 tests were added.
+- Vitest: **148 passed / 148**, 29 files on `fix/pii-redaction-geometry`
+  (140 in 28 files on `fix/redaction-truth-and-unicode`). Baseline on `main`
+  was 111 in 24 files; 37 tests were added in total.
 - `tsc --noEmit`: clean.
 - `eslint`: clean, 0 warnings.
 - `next build`: succeeds, 48 routes. On this branch it still halts once per
