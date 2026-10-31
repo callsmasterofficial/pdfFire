@@ -17,6 +17,7 @@ import {
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
 import { ResultPreviewSection } from "@/components/preview/result-preview-section";
+import { UnlockMethodNotice } from "@/components/tools/unlock/unlock-method-notice";
 
 export function UnlockToolView() {
   const [file, setFile] = useState<File | null>(null);
@@ -72,7 +73,7 @@ export function UnlockToolView() {
   return (
     <ToolLayout
       title="Unlock PDF"
-      description="Remove password protection from encrypted documents 100% inside your browser."
+      description="Remove a password using your own credentials \u2014 100% in your browser. AES-256 documents are decrypted in place, so the text stays selectable."
       icon={KeyRound}
       category="Security"
     >
@@ -82,6 +83,8 @@ export function UnlockToolView() {
         {file && (
           <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-6">
             <SecurityStatusCard status={status} fileName={file.name} />
+
+            <UnlockMethodNotice method={result?.method} />
 
             <div className="space-y-2">
               <Label htmlFor="pdf-password" className="text-xs font-semibold text-foreground/80">

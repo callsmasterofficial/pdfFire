@@ -50,7 +50,7 @@ export async function convertXlsxToPdf(
 
   const title = sheetsToRender.length === 1 ? sheetsToRender[0].name : fallbackTitle;
   doc.setTitle(title);
-  doc.setCreator("PDFfire Pure-Client Converter");
+  doc.setCreator("FileMelo Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
   const fileName = `${toFileSlug(title, "spreadsheet")}.pdf`;

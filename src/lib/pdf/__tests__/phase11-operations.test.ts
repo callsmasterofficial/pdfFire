@@ -114,13 +114,17 @@ describe("Phase 11: Document Comparison & Diagnostics", () => {
       expect(verified.getPageCount()).toBe(2);
     });
 
-    it("rebuilds xref tables into a valid standard document", async () => {
+    it("reserialises a valid document without claiming it was broken", async () => {
       const sampleDoc = await PDFDocument.create();
       sampleDoc.addPage([300, 300]);
       const validBytes = await sampleDoc.save();
 
       const { diagnostics, pdfBytes } = await repairPdfDocument(validBytes);
-      expect(diagnostics.xrefRebuilt).toBe(true);
+      // This previously asserted xrefRebuilt === true for a healthy file,
+      // which is what made the diagnostic report meaningless: every document
+      // was told its cross-reference table had been rebuilt. See FM-009.
+      expect(diagnostics.xrefRebuilt).toBe(false);
+      expect(diagnostics.recoverySucceeded).toBe(true);
       expect(diagnostics.pagesRecovered).toBe(1);
       expect(pdfBytes.length).toBeGreaterThan(100);
     });

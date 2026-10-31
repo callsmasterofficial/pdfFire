@@ -91,7 +91,7 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
 
   const title = parsed.title && parsed.title !== "Document" ? parsed.title : fallbackTitle;
   doc.setTitle(title);
-  doc.setCreator("PDFfire Pure-Client Converter");
+  doc.setCreator("FileMelo Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
   const fileName = `${toFileSlug(title)}.pdf`;

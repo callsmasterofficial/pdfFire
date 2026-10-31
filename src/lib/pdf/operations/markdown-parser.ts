@@ -16,7 +16,7 @@ const inlineText = (value: string) => value
   .replace(/~~(.*?)~~/g, "$1")
   .trim();
 
-/** Parses the portable Markdown subset that PDFfire lays out as vector PDF text. */
+/** Parses the portable Markdown subset that FileMelo lays out as PDF text. */
 export function parseMarkdown(markdown: string): MarkdownBlock[] {
   const blocks: MarkdownBlock[] = [];
   const lines = markdown.replace(/\r/g, "").split("\n");
