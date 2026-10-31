@@ -303,11 +303,41 @@ text is still extractable by an independent parser, metadata survives, the
 owner password works, a wrong password is refused, and an unsupported revision
 is declined rather than mangled.
 
-### FM-012 — Legacy encryption still rasterises · **confirmed**
+### FM-012 — Legacy encryption · **fixed for RC4; AES-128 implemented**
 
-RC4 (R2/R3) and AES-128 (R4) documents, and any document with encrypted object
-streams, still take the image fallback. RC4 is a stream cipher the dependency
-already exports, and R2–R4 key derivation is MD5-based, so extending
-`standard-security.ts` is tractable. Object streams need the ObjStm contents
-decrypted before pdf-lib parses them, which its API does not allow, so those
-would need a different approach. Disclosed in the tool copy meanwhile.
+Revisions 2 to 4 derive the file key with MD5 and encrypt with RC4 or AES-128.
+Both are weak ciphers, but documents using them are common and the alternative
+for a user who holds the password was losing the text to a rasterised copy.
+
+`crypto/legacy-security.ts` implements the relevant algorithms from
+ISO 32000-1 7.6.3: the 32-byte password padding and MD5 key derivation
+(Algorithm 2, including the `/EncryptMetadata` false case), the expected `/U`
+value (Algorithms 4 and 5), user validation (Algorithm 6), recovery of the user
+password from `/O` with the owner password (Algorithm 7), and the per-object key
+(Algorithm 1, with the AESV2 `sAlT` suffix).
+
+`crypto/document-cipher.ts` turns a validated file key into a cipher, so the
+object walker no longer needs to know which revision it is rewriting:
+AES-256 uses the file key directly, while revisions 2 to 4 derive a key per
+object and use RC4 or AES-128.
+
+**Evidence, and the difference between the two paths.** RC4 (V2 R3, 128-bit) is
+validated end to end against documents produced by the encryption dependency:
+the text is recoverable afterwards, metadata survives, the owner password works,
+and a wrong password is refused. That also validates the shared Algorithm 2
+derivation against a third-party producer.
+
+AES-128 (V4, AESV2) is **not** validated that way, because the dependency cannot
+produce such a document. Its revision-specific parts — the salted per-object key
+and the leading initialisation vector — are covered by direct unit tests, and
+the `/CF` to `/CFM` resolution by a parser test. That is weaker evidence than a
+real fixture and the capability matrix records it as such. A third-party AES-128
+fixture would settle it.
+
+Still declined, and still falling back to the disclosed image path: documents
+holding objects inside encrypted object streams, since pdf-lib parses those
+during load before anything can be decrypted; and any crypt filter other than
+AESV3, AESV2 or V2.
+
+**Regression tests:** `decrypt-document.test.ts` (12) and
+`decrypt-ciphers.test.ts` (5).

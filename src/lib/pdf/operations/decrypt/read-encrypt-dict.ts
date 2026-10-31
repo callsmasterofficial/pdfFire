@@ -3,7 +3,16 @@
  * `ignoreEncryption: true`, where pdf-lib has parsed the structure but left
  * every stream and string as ciphertext.
  */
-import { PDFDict, PDFDocument, PDFHexString, PDFName, PDFNumber, PDFString } from "pdf-lib";
+import {
+  PDFArray,
+  PDFBool,
+  PDFDict,
+  PDFDocument,
+  PDFHexString,
+  PDFName,
+  PDFNumber,
+  PDFString,
+} from "pdf-lib";
 import {
   UnsupportedEncryptionError,
   type EncryptionDictionary,
@@ -36,15 +45,32 @@ function filterMethod(encrypt: PDFDict, which: "StmF" | "StrF"): string {
   return cfm instanceof PDFName ? cfm.asString().replace(/^\//, "") : "Unknown";
 }
 
+/** First element of the trailer /ID array, which the revision 2-4 key uses. */
+function firstFileId(doc: PDFDocument): Uint8Array {
+  const id = doc.context.lookupMaybe(doc.context.trailerInfo.ID, PDFArray);
+  const first = id?.get(0);
+  if (first instanceof PDFHexString || first instanceof PDFString) return first.asBytes();
+  return new Uint8Array(0);
+}
+
 export function readEncryptDict(doc: PDFDocument): EncryptionDictionary {
   const encrypt = doc.context.lookupMaybe(doc.context.trailerInfo.Encrypt, PDFDict);
   if (!encrypt) {
     throw new UnsupportedEncryptionError("This document has no encryption dictionary.");
   }
 
+  const version = numberOf(encrypt, "V");
+  // /Length is in bits and defaults to 40 for V1.
+  const lengthBits = numberOf(encrypt, "Length", version === 1 ? 40 : 128);
+  const metadataFlag = encrypt.lookup(PDFName.of("EncryptMetadata"));
+
   return {
-    v: numberOf(encrypt, "V"),
+    v: version,
     r: numberOf(encrypt, "R"),
+    keyLength: Math.max(5, Math.floor(lengthBits / 8)),
+    p: numberOf(encrypt, "P", -1),
+    idFirst: firstFileId(doc),
+    encryptMetadata: metadataFlag instanceof PDFBool ? metadataFlag.asBoolean() : true,
     u: bytesOf(encrypt, "U"),
     o: bytesOf(encrypt, "O"),
     ue: bytesOf(encrypt, "UE"),

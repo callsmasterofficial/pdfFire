@@ -27,6 +27,13 @@ export class WrongPasswordError extends Error {
 export interface EncryptionDictionary {
   v: number;
   r: number;
+  /** File key length in bytes, as implied by /Length. */
+  keyLength: number;
+  /** /P permissions, needed by the revision 2-4 key derivation. */
+  p: number;
+  /** First element of the trailer /ID array. */
+  idFirst: Uint8Array;
+  encryptMetadata: boolean;
   /** 48 bytes: 32-byte hash, 8-byte validation salt, 8-byte key salt. */
   u: Uint8Array;
   o: Uint8Array;
@@ -55,12 +62,8 @@ function keySalt(entry: Uint8Array): Uint8Array {
   return entry.slice(HASH_LENGTH + SALT_LENGTH, HASH_LENGTH + SALT_LENGTH * 2);
 }
 
-export function assertSupported(dict: EncryptionDictionary): void {
-  if (dict.v !== 5 || dict.r !== 6) {
-    throw new UnsupportedEncryptionError(
-      `This document uses encryption revision ${dict.r} (V${dict.v}). Only AES-256 (V5 R6) can be decrypted in place.`
-    );
-  }
+/** Checks the AES-256 path specifically; other revisions are handled elsewhere. */
+export function assertAes256Supported(dict: EncryptionDictionary): void {
   for (const method of [dict.streamFilterMethod, dict.stringFilterMethod]) {
     if (method !== "AESV3") {
       throw new UnsupportedEncryptionError(
@@ -81,7 +84,7 @@ export async function recoverFileKey(
   dict: EncryptionDictionary,
   password: string
 ): Promise<Uint8Array> {
-  assertSupported(dict);
+  assertAes256Supported(dict);
   const encoded = encodePasswordAES256(password);
 
   const userHash = await computeHash2B(encoded, validationSalt(dict.u), new Uint8Array(0));

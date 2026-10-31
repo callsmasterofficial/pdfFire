@@ -27,7 +27,7 @@ first.
 | --- | --- | --- | --- | --- |
 | `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams and the export is re-parsed; fails closed. Non-text content is covered only. FM-001. |
 | `protect` | web | Verified 2026-10-31 | **Independently verified** | Writes a genuine AES-256 dictionary (`/R 6`, `/V 5`); an independent reader refuses the file without the password. FM-009. |
-| `unlock` | web | Fixed 2026-10-31 | **Independently verified** | AES-256 is decrypted in place and keeps its text. RC4/AES-128 and encrypted object streams fall back to page images; the result reports which. FM-011, FM-012. |
+| `unlock` | web | Fixed 2026-10-31 | **Independently verified** (AES-256, RC4) | AES-256 and RC4 are decrypted in place and keep their text, verified against real encrypted documents. AES-128 is implemented but only unit-tested, since no fixture producer is available. Encrypted object streams still fall back to page images; the result reports which method ran. FM-011, FM-012. |
 | `metadata` | web | Corrected 2026-10-31 | **Independently verified** | Now clears Info fields, the XMP packet and both dates. Annotation authors, form values and embedded file properties are explicitly out of scope. FM-009. |
 | `flatten` | web | Verified 2026-10-31 | **Independently verified** | Leaves no interactive fields behind. "Tamper-proof" removed from the copy. FM-009. |
 | `sign` | web | Corrected 2026-10-31 | Unit tested | A drawn or typed signature, not certificate-backed. "Vector streams" wording corrected; the PKI limitation was already stated. |
