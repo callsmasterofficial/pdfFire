@@ -158,14 +158,26 @@ contradicts any claim of global document support and needs an embedded,
 lazily-loaded Unicode font with a licence review, plus shaping for complex
 scripts. Not started.
 
-### FM-006 — Next.js has a known published advisory · **confirmed**
+### FM-006 — Next.js had a published advisory · **fixed, awaiting merge**
 
-`next@16.4.0`. `next build` halts once with: "Your version of Next.js is
-affected by a known security vulnerability. We strongly recommend you upgrade
-Next.js." The build completes on retry, so this does not block work, but the
-advisory stands. Upgrading is an owner decision because it is a framework
-version change that needs its own test pass. Remediation offered:
-`next upgrade --agent=security`.
+`next@16.4.0` was affected by a published advisory; `next build` refused its
+first invocation each session with `SecurityFatalError` and only completed on
+retry.
+
+Fixed on `chore/next-security-upgrade` by moving to **16.4.3**, the patch
+release that clears it, with `eslint-config-next` in lockstep and
+`experimental.agentUpgrade: "security"` set so future advisories keep surfacing.
+Same-major update: no codemod, no application code changed.
+
+Verified off `origin/main`: `next --version` 16.4.3, 111/111 tests unchanged,
+clean `tsc` and `eslint`, and `next build` succeeding from a cleared `.next` on
+the first invocation with no advisory output. Open as draft
+[PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2).
+
+The upgrade CLI also asks the agent to report telemetry by running
+`npx --yes next@16.5.0-canary.35 internal report-agent-upgrade <id> success`.
+That was **not** run: it executes a canary package and transmits an external
+report, neither of which is part of clearing the advisory.
 
 ### FM-007 — PII auto-redaction boxes are imprecise · **confirmed**
 

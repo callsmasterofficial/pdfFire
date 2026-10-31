@@ -9,6 +9,7 @@ Last updated: 2026-10-31.
 | Repository | Branch | Head | Pushed |
 | --- | --- | --- | --- |
 | `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
+| `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) (draft) |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
@@ -24,6 +25,12 @@ submitted to any store.
 2. `76f7dd9` — converters stop replacing non-ASCII text with `?`.
 3. `68b1a9d` — overflow content draws on the current page instead of a stale one.
 4. `f1c5bf2` — security findings, capability matrix and this checkpoint.
+
+**pdfFire** (`chore/next-security-upgrade`, cut separately from `origin/main`)
+
+1. `b5170e0` — Next.js 16.4.0 → 16.4.3 for the published advisory (FM-006).
+   Touches only `package.json`, `package-lock.json` and `next.config.ts`, so it
+   is disjoint from the fix branch and merge order does not matter.
 
 **pdfFire-extension**
 
@@ -42,8 +49,9 @@ npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
   29 tests were added.
 - `tsc --noEmit`: clean.
 - `eslint`: clean, 0 warnings.
-- `next build`: succeeds, 48 routes. It halts once per invocation with the
-  Next.js security advisory notice (see FM-006) and completes on retry.
+- `next build`: succeeds, 48 routes. On this branch it still halts once per
+  invocation with the Next.js advisory notice and completes on retry; that is
+  fixed on `chore/next-security-upgrade` (FM-006), not here.
 
 `npx vitest run` needs `vitest.setup.ts`, which shims `Promise.try` and
 `Uint8Array.prototype.toHex` for `pdfjs-dist@6` on Node 22. Those shims are
@@ -92,9 +100,10 @@ Both PRs are open and awaiting review. Then pick up
 
 Blocked on an owner decision:
 
-- **FM-006** — upgrading `next@16.4.0` past the published advisory.
 - **FM-005** — embedding a Unicode font: needs a licence decision and a view on
   bundle size versus lazily downloaded subsets.
+- Whether to report upgrade telemetry to Vercel via the canary package the
+  Next.js upgrade CLI names (see FM-006). Not run.
 
 ## Rollback
 
