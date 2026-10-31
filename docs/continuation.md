@@ -6,69 +6,64 @@ Last updated: 2026-10-31.
 
 ## Where the work is
 
-| Repository | Branch | Head | Pushed |
+Rebuilt from live GitHub state and git ancestry on 2026-10-31, not from the
+previous contents of this file, which claimed nothing had merged.
+
+Website `main` is `8db8410`.
+
+Merged to website `main`, in the order it happened:
+
+| PR | Branch | What |
+| --- | --- | --- |
+| #10 | `fix/production-dependency-audit` | production audit remediation (into #2's branch) |
+| #9 | `release/ci-gates-2026-10-31` | quality-gate CI workflow (into #2's branch) |
+| #2 | `chore/next-security-upgrade` | Next.js 16.4.3 for the published advisory |
+| #1 | `fix/redaction-truth-and-unicode` | redaction leak, Unicode loss, pagination loss |
+| #11 | `ci/validate-retargeted-prs` | revalidate stacked PRs when their base moves |
+| #3 | `fix/pii-redaction-geometry` | PII box geometry |
+| #7 | `fix/redaction-positional-matching` | positional redaction and exact font metrics |
+
+Still open on the website:
+
+| PR | Branch | Base | State |
 | --- | --- | --- | --- |
-| `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
-| `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) |
-| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | `a55948b` | [PR #3](https://github.com/callsmasterofficial/pdfFire/pull/3) (on #1) |
-| `callsmasterofficial/pdfFire` | `fix/table-cell-truncation` | `f12790d` | [PR #4](https://github.com/callsmasterofficial/pdfFire/pull/4) (on #1) |
-| `callsmasterofficial/pdfFire` | `audit/security-tool-claims` | `34241fe` | [PR #5](https://github.com/callsmasterofficial/pdfFire/pull/5) (on #1) |
-| `callsmasterofficial/pdfFire` | `feat/legacy-pdf-decryption` | `9646e79` | [PR #6](https://github.com/callsmasterofficial/pdfFire/pull/6) (on #5) |
-| `callsmasterofficial/pdfFire` | `fix/redaction-positional-matching` | `fd66be8` | [PR #7](https://github.com/callsmasterofficial/pdfFire/pull/7) (on #3) — FM-010 **and** FM-013 |
-| `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
-| `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
+| #4 | `fix/table-cell-truncation` | `main` | retargeted from #1's branch; being integrated |
+| #5 | `audit/security-tool-claims` | `main` | conflicts with `main` |
+| #6 | `feat/legacy-pdf-decryption` | `audit/security-tool-claims` | waits on #5 |
+| #8 | `feat/unicode-language-packs` | `main` | retargeted from #1's branch; conflicts |
 
-#1 and #2 are cut from `main`. The rest stack: #3, #4 and #5 on #1, #6 on #5,
-and #7 on #3. Siblings on the same base touch different files — #3 and #7 the
-redaction engine, #4 the table renderers, #5 and #6 the security operations —
-so each group can merge in any order. Nothing has been merged, deployed or
-submitted to any store.
+Other repositories:
 
-This file is edited on several branches at once, so it conflicts on merge.
-Resolve by keeping whichever version lists more PRs; none of the rows
-contradict each other.
+- `pdfFire-extension` `main` is `36c86b8`; PRs #1 (branding, resource exposure)
+  and #2 (CI) are merged.
+- `pdfFire-app` has PR #1 open, a CI workflow whose production dependency audit
+  fails. That failure is real and must be fixed before the branch is treated as
+  release-ready.
 
-### Commits
+A merge is not a deployment. Nothing has been deployed, submitted to a store,
+or made publicly live, and that is verified separately from GitHub state.
 
-**pdfFire** (website/PWA)
+### Resolving conflicts in this file
 
-1. `91907a8` — redaction removes covered text and is verified on export; false
-   security claims corrected.
-2. `76f7dd9` — converters stop replacing non-ASCII text with `?`.
-3. `68b1a9d` — overflow content draws on the current page instead of a stale one.
-4. `f1c5bf2` — security findings, capability matrix and this checkpoint.
-
-**pdfFire** (`chore/next-security-upgrade`, cut separately from `origin/main`)
-
-1. `b5170e0` — Next.js 16.4.0 → 16.4.3 for the published advisory (FM-006).
-   Touches only `package.json`, `package-lock.json` and `next.config.ts`, so it
-   is disjoint from the fix branch and merge order does not matter.
-
-**pdfFire-extension**
-
-1. `41a2c85` — competitor references removed, stale FreePDF branding replaced,
-   `web_accessible_resources` dropped.
+This file is edited on several branches at once. Resolve by rebuilding the
+current-state section above from live PR metadata and git ancestry. Do **not**
+resolve it by keeping the longer version, the one listing more PRs, or a
+blanket "ours"/"theirs": every version written on a branch is stale about
+whatever merged after it. Earlier merges of #3 and #7 resolved documentation
+conflicts that way and dropped four findings sections from
+`docs/security-findings.md`.
 
 ## Verified state
 
-Run from `pdfFire/`:
+Run from `pdfFire/`, which is what the CI workflow runs:
 
 ```bash
-npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
+npm ci && npm test && npx tsc --noEmit && npm run lint && npm run build && npm audit --omit=dev --audit-level=high
 ```
 
-- Vitest, per branch: **140 / 140** on `fix/redaction-truth-and-unicode`,
-  **148 / 148** on `fix/pii-redaction-geometry`,
-  **146 / 146** on `fix/table-cell-truncation`,
-  **159 / 159** on `audit/security-tool-claims`,
-  **169 / 169** on `feat/legacy-pdf-decryption`,
-  **160 / 160** on `fix/redaction-positional-matching`.
-  Baseline on `main` was 111 in 24 files.
-- `tsc --noEmit`: clean.
-- `eslint`: clean, 0 warnings.
-- `next build`: succeeds, 48 routes. On this branch it still halts once per
-  invocation with the Next.js advisory notice and completes on retry; that is
-  fixed on `chore/next-security-upgrade` (FM-006), not here.
+Per-branch test counts are not additive and no single historical figure is
+release evidence. The only figure that counts is the suite run on the exact
+release SHA after the stack is integrated.
 
 `npx vitest run` needs `vitest.setup.ts`, which shims `Promise.try` and
 `Uint8Array.prototype.toHex` for `pdfjs-dist@6` on Node 22. Those shims are

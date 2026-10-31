@@ -7,6 +7,13 @@ tested in this project.
 
 Last updated: 2026-10-31.
 
+> **Documentation note (2026-10-31).** Earlier merges of #3 and #7 resolved
+> conflicts in this file by taking one side, which dropped the FM-008, FM-009,
+> FM-011 and FM-012 sections from `main`. FM-008 is restored here. The others
+> return with the branches that own them (#5 and #6); if they are still missing
+> after those merge, they were lost the same way and should be recovered from
+> the branch history rather than rewritten from memory.
+
 ## How these were verified
 
 Security-sensitive output is checked by re-reading the exported bytes with a
@@ -158,7 +165,7 @@ contradicts any claim of global document support and needs an embedded,
 lazily-loaded Unicode font with a licence review, plus shaping for complex
 scripts. Not started.
 
-### FM-006 — Next.js had a published advisory · **fixed, awaiting merge**
+### FM-006 — Next.js had a published advisory · **fixed, merged**
 
 `next@16.4.0` was affected by a published advisory; `next build` refused its
 first invocation each session with `SecurityFatalError` and only completed on
@@ -171,8 +178,7 @@ Same-major update: no codemod, no application code changed.
 
 Verified off `origin/main`: `next --version` 16.4.3, 111/111 tests unchanged,
 clean `tsc` and `eslint`, and `next build` succeeding from a cleared `.next` on
-the first invocation with no advisory output. Open as draft
-[PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2).
+the first invocation with no advisory output. Merged to `main` in [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2).
 
 The upgrade CLI also asks the agent to report telemetry by running
 `npx --yes next@16.5.0-canary.35 internal report-agent-upgrade <id> success`.
@@ -226,6 +232,38 @@ line, and the invariant that matters most: deleting the email leaves
 The bogus Node fallback is also gone. It decoded raw PDF bytes as UTF-8 and
 regex-scanned them, which cannot work on compressed streams; `getPdfjs()` now
 runs outside the browser, so the real parser is used everywhere.
+
+### FM-008 — Table cells were truncated silently · **fixed**
+
+The DOCX, HTML, XLSX and CSV table renderers clipped cell text at a fixed
+character count — 22, 25, 26 or 31 depending on the renderer — and appended
+"...". Anything longer was gone from the output, reported nowhere. A
+63-character cell came out as `Quarterly revenue reco...`, losing 41
+characters.
+
+A character count is also the wrong measure: in a proportional font
+"WWWWWWWWWW" and "iiiiiiiiii" are the same length and nothing like the same
+width, so the limit was simultaneously too strict for narrow text and too loose
+for wide text.
+
+Fixed by wrapping instead of clipping:
+
+- `text/table-cell-layout.ts` wraps to the column's measured width, breaking
+  words that are themselves wider than the column rather than letting them
+  overflow into the next one. `TableFidelityTracker` records every cell that
+  still does not fit.
+- `operations/table-renderer.ts` lays a row out *before* reserving vertical
+  space, so row height follows the tallest cell. The DOCX and HTML renderers
+  were near-identical copies of the same loop and now share this one;
+  `html-table.ts` is gone. XLSX and CSV keep their own chrome, including
+  per-page header repetition, but share `layoutRow` and `drawRowCells`.
+- A cell is only cut when it exceeds six wrapped lines, and each cut is
+  reported through `tableFidelity`, shown by `TableFidelityNotice` in the four
+  table converter views.
+
+**Regression tests:** `table-cell-fidelity.test.ts` (6) — long cells survive in
+all four converters with no "..." in the output, truncation is reported for an
+unbreakable 4000-character token, and a table that fits reports none.
 
 ### FM-010 — Deletion removed identical text elsewhere on the page · **fixed**
 
