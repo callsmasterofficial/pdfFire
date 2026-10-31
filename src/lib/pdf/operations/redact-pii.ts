@@ -1,11 +1,26 @@
-import { getPdfjs, getLocalCmapAndFontConfig } from "../pdfjs-init";
+import { getDocumentParams, getPdfjs } from "../pdfjs-init";
+import { buildPageTextMap, toItemCharRanges } from "./redact/page-text-map";
+import { charRangeToRect, type Rect } from "../text/text-item-geometry";
 
-export interface PiiFinding {
+export type PiiType = "email" | "phone" | "ssn" | "credit_card" | "custom";
+
+/** A pattern match in a page's text, before any geometry is known. */
+export interface PiiMatch {
   id: string;
   pageNumber: number;
-  type: "email" | "phone" | "ssn" | "credit_card" | "custom";
+  type: PiiType;
   text: string;
-  bbox: { x: number; y: number; width: number; height: number };
+  /** Character range within the page's extracted text. */
+  start: number;
+  end: number;
+}
+
+export interface PiiFinding extends PiiMatch {
+  /**
+   * Rectangles covering the match, in PDF user space. One per text run the
+   * match crosses, since a run has its own position and size.
+   */
+  boxes: Rect[];
 }
 
 export interface PiiScanOptions {
@@ -26,9 +41,8 @@ const REGEXES = {
 export function scanTextForPii(
   text: string,
   pageNumber = 1,
-  options: PiiScanOptions = {},
-  bbox = { x: 50, y: 500, width: 120, height: 16 }
-): PiiFinding[] {
+  options: PiiScanOptions = {}
+): PiiMatch[] {
   const {
     includeEmails = true,
     includePhones = true,
@@ -37,75 +51,65 @@ export function scanTextForPii(
     customKeywords = [],
   } = options;
 
-  const findings: PiiFinding[] = [];
+  const matches: PiiMatch[] = [];
   let nextId = 1;
 
-  const checkPattern = (type: PiiFinding["type"], regex: RegExp) => {
+  const collect = (type: PiiType, regex: RegExp) => {
     regex.lastIndex = 0;
-    const matches = text.match(regex);
-    if (matches) {
-      for (const m of matches) {
-        findings.push({
-          id: `pii-${pageNumber}-${nextId++}`,
-          pageNumber,
-          type,
-          text: m,
-          bbox,
-        });
-      }
+    for (const match of text.matchAll(regex)) {
+      if (match.index === undefined || !match[0]) continue;
+      matches.push({
+        id: `pii-${pageNumber}-${nextId++}`,
+        pageNumber,
+        type,
+        text: match[0],
+        start: match.index,
+        end: match.index + match[0].length,
+      });
     }
   };
 
-  if (includeEmails) checkPattern("email", REGEXES.email);
-  if (includePhones) checkPattern("phone", REGEXES.phone);
-  if (includeSsn) checkPattern("ssn", REGEXES.ssn);
-  if (includeCards) checkPattern("credit_card", REGEXES.credit_card);
+  if (includeEmails) collect("email", REGEXES.email);
+  if (includePhones) collect("phone", REGEXES.phone);
+  if (includeSsn) collect("ssn", REGEXES.ssn);
+  if (includeCards) collect("credit_card", REGEXES.credit_card);
 
-  for (const kw of customKeywords) {
-    if (!kw.trim()) continue;
-    const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    checkPattern("custom", new RegExp(`\\b${esc}\\b`, "gi"));
+  for (const keyword of customKeywords) {
+    if (!keyword.trim()) continue;
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    collect("custom", new RegExp(`\\b${escaped}\\b`, "gi"));
   }
 
-  return findings;
+  return matches;
 }
 
 export async function scanPdfForPii(
   bytes: Uint8Array | ArrayBuffer,
   options: PiiScanOptions = {}
 ): Promise<PiiFinding[]> {
-  if (typeof window === "undefined") {
-    // Node.js test environment fallback: decode raw stream text
-    const raw = typeof bytes === "string" ? bytes : new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-    return scanTextForPii(raw, 1, options);
-  }
-
   const pdfjs = await getPdfjs();
-  const fontConfig = getLocalCmapAndFontConfig();
-  const loadingTask = pdfjs.getDocument({
-    data: bytes,
-    ...fontConfig,
-    useSystemFonts: true,
-  });
-
-  const doc = await loadingTask.promise;
+  const task = pdfjs.getDocument(getDocumentParams(bytes));
+  const doc = await task.promise;
   const findings: PiiFinding[] = [];
 
-  for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-    const page = await doc.getPage(pageNum);
-    const content = await page.getTextContent();
+  try {
+    for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
+      const page = await doc.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const map = buildPageTextMap(content.items as Parameters<typeof buildPageTextMap>[0]);
+      if (!map.text.trim()) continue;
 
-    for (const item of content.items) {
-      if (!("str" in item) || typeof item.str !== "string" || !item.str.trim()) continue;
-      const transform = item.transform || [1, 0, 0, 1, 0, 0];
-      const itemFindings = scanTextForPii(item.str, pageNum, options, {
-        x: transform[4],
-        y: transform[5],
-        width: item.width || 60,
-        height: Math.abs(transform[3]) || item.height || 12,
-      });
-      findings.push(...itemFindings);
+      for (const match of scanTextForPii(map.text, pageNumber, options)) {
+        const boxes = toItemCharRanges(map, match.start, match.end)
+          .map(({ itemIndex, start, end }) =>
+            charRangeToRect(map.items[itemIndex], start, end)
+          );
+        if (boxes.length === 0) continue;
+        findings.push({ ...match, boxes });
+      }
     }
+  } finally {
+    await task.destroy();
   }
 
   return findings;

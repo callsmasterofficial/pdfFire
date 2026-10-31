@@ -1,11 +1,15 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
+import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
+import { CELL_PADDING, drawRowCells, layoutRow } from "./table-renderer";
 
 export interface CsvTable { headers: string[]; rows: string[][]; }
 export interface CsvToPdfResult {
   pdfBytes: Uint8Array; pageCount: number; fileName: string; rowCount: number;
   /** Which characters the embedded fonts could not draw as authored. */
   textFidelity: TextFidelityReport;
+  /** Table cells whose text did not fit their column, even wrapped. */
+  tableFidelity: TableFidelityReport;
 }
 
 /** Parses RFC 4180-style quoted cells without sending tabular data anywhere. */
@@ -26,7 +30,6 @@ export function parseCsv(source: string): CsvTable {
   return { headers, rows: data };
 }
 
-const clipped = (value: string, max: number) => value.length > max ? `${value.slice(0, max - 3)}...` : value;
 
 export async function convertCsvToPdf(csv: string, title = "Data table"): Promise<CsvToPdfResult> {
   const table = parseCsv(csv);
@@ -36,31 +39,34 @@ export async function convertCsvToPdf(csv: string, title = "Data table"): Promis
   const regular = await doc.embedFont(StandardFonts.Helvetica); const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const sanitizer = new FontTextSanitizer([regular, bold]);
   const safe = (value: string) => sanitizer.sanitize(value);
+  const tracker = new TableFidelityTracker();
   const width = 841.89; const height = 595.28; const margin = 36; const tableWidth = width - margin * 2;
-  const columnWidth = tableWidth / columns; const rowHeight = 22;
+  const columnWidth = tableWidth / columns;
+  const textWidth = columnWidth - CELL_PADDING * 2;
+  const columnX = (column: number) => margin + column * columnWidth + CELL_PADDING;
   let page = doc.addPage([width, height]); let y = height - margin;
   const header = () => {
     page.drawText(safe(title), { x: margin, y, size: 16, font: bold, color: rgb(.1, .1, .12) }); y -= 30;
+    const row = layoutRow(table.headers, columns, safe, tracker, bold, 8, textWidth);
     for (let col = 0; col < columns; col++) {
-      const x = margin + col * columnWidth;
-      page.drawRectangle({ x, y: y - rowHeight + 4, width: columnWidth, height: rowHeight, color: rgb(.92, .29, .17) });
-      page.drawText(clipped(safe(table.headers[col] || ""), 26), { x: x + 5, y: y - 11, size: 8, font: bold, color: rgb(1, 1, 1) });
+      page.drawRectangle({ x: margin + col * columnWidth, y: y - row.height + 4, width: columnWidth, height: row.height, color: rgb(.92, .29, .17) });
     }
-    y -= rowHeight;
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: bold, color: rgb(1, 1, 1) });
+    y -= row.height;
   };
   header();
   for (const [index, values] of table.rows.entries()) {
-    if (y - rowHeight < margin) { page = doc.addPage([width, height]); y = height - margin; header(); }
-    if (index % 2 === 0) page.drawRectangle({ x: margin, y: y - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.96, .96, .95) });
-    for (let col = 0; col < columns; col++) {
-      const x = margin + col * columnWidth;
-      page.drawText(clipped(safe(values[col] || ""), 31), { x: x + 5, y: y - 11, size: 8, font: regular, color: rgb(.16, .16, .17) });
-    }
-    y -= rowHeight;
+    // Lay the row out first: its height depends on how much its cells wrap.
+    const row = layoutRow(values, columns, safe, tracker, regular, 8, textWidth);
+    if (y - row.height < margin) { page = doc.addPage([width, height]); y = height - margin; header(); }
+    if (index % 2 === 0) page.drawRectangle({ x: margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.96, .96, .95) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.16, .16, .17) });
+    y -= row.height;
   }
   doc.setTitle(title); doc.setCreator("FileMelo Client");
   return {
     pdfBytes: await doc.save(), pageCount: doc.getPageCount(), rowCount: table.rows.length,
     fileName: `${toFileSlug(title, "csv-table")}.pdf`, textFidelity: sanitizer.report(),
+    tableFidelity: tracker.report(),
   };
 }

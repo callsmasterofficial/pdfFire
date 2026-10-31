@@ -25,7 +25,7 @@ first.
 
 | Tool | Platform | Claim status | Verification | Notes |
 | --- | --- | --- | --- | --- |
-| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams and the export is re-parsed; fails closed. Non-text content is covered only. FM-001. |
+| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams by position, the advance is restored so the line does not reflow, and the export is re-parsed; fails closed. Character positions and advances come from the fonts' own widths, so selection follows the box and lines do not drift; a font whose widths cannot be read falls back to an average and says so (FM-013). Non-text content is covered only. FM-001, FM-010. |
 | `protect` | web | Verified 2026-10-31 | **Independently verified** | Writes a genuine AES-256 dictionary (`/R 6`, `/V 5`); an independent reader refuses the file without the password. FM-009. |
 | `unlock` | web | Fixed 2026-10-31 | **Independently verified** (AES-256, RC4) | AES-256 and RC4 are decrypted in place and keep their text, verified against real encrypted documents. AES-128 is implemented but only unit-tested, since no fixture producer is available. Encrypted object streams still fall back to page images; the result reports which method ran. FM-011, FM-012. |
 | `metadata` | web | Corrected 2026-10-31 | **Independently verified** | Now clears Info fields, the XMP packet and both dates. Annotation authors, form values and embedded file properties are explicitly out of scope. FM-009. |
@@ -39,16 +39,16 @@ first.
 
 | Tool | Platform | Text fidelity | Verification | Notes |
 | --- | --- | --- | --- | --- |
-| `docx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | FM-002, FM-003. Reconstructs simple DOCX; not a faithful Word renderer. Cells clipped (FM-008). |
+| `docx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | FM-002, FM-003. Reconstructs simple DOCX; not a faithful Word renderer. Table cells wrap to their column (FM-008). |
 | `xlsx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | As above. No formulas, styling or merged cells. |
 | `html-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Simple HTML subset. No CSS layout engine. |
-| `csv-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Max 6 columns; cells clipped. |
+| `csv-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Max 6 columns; table cells wrap to their column. |
 | `markdown-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Headings, lists, quotes, code, rules. |
 | `ocr` | web | WinAnsi in the text layer, folded | Unit tested | Tesseract.js. Accuracy is not transcription; language packs download on demand. |
 | `pdf-to-text` | web | n/a | Unit tested | PDF.js extraction. |
 | `pdf-to-img` / `img-to-pdf` | web | n/a | Unit tested | — |
 | `extract-images` | web | n/a | Unit tested | Raw XObject extraction; does not recover every embedded image form. |
-| `text-to-pdf` | web | Corrected 2026-10-31 | **Independently verified** | Preserved Latin-1 already, but threw pdf-lib's raw "WinAnsi cannot encode" error on CJK. Now sanitises and reports like the others. FM-009. |
+| `text-to-pdf` | web | **Unverified** | Unit tested | Not yet checked against the FM-002 fix; may still be ASCII-limited. |
 
 **Shared limit (FM-005):** every converter embeds the standard PDF fonts, which
 encode 218 characters. CJK, Arabic, Indic and Thai cannot be drawn at all; they
@@ -63,11 +63,11 @@ tool in this table supports complex-script shaping or RTL layout.
 
 ## Editing and optimisation
 
-| Tool | Platform | Claim status | Verification | Notes |
-| --- | --- | --- | --- | --- |
-| `compress` | web | Corrected 2026-10-31 | Unit tested | Light/Balanced reserialise only; Strong rasterises. All three now described accurately, including that files can grow. FM-009. |
-| `watermark`, `page-number`, `invert-colors`, `edit` | web | — | Unit tested | `edit` adds overlays; it does **not** modify existing PDF text or layout. |
-| `batch` | web | — | Unit tested | — |
+| Tool | Platform | Verification | Notes |
+| --- | --- | --- | --- |
+| `compress` | web | **Unverified** | Re-saves with object streams. That is not image recompression or downsampling, and not every PDF shrinks. Claims need checking against actual byte deltas on a fixture corpus. |
+| `watermark`, `page-number`, `invert-colors`, `edit` | web | Unit tested | `edit` adds overlays; it does **not** modify existing PDF text or layout. |
+| `batch` | web | Unit tested | — |
 
 ## AI and insights
 

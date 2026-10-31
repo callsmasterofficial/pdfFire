@@ -56,16 +56,20 @@ export function RedactPiiScanner({
   };
 
   const handleApplyAllFindings = () => {
-    const areas: RedactionArea[] = findings.map((f) => ({
-      id: `redact-${f.id}`,
-      pageNumber: f.pageNumber,
-      x: Math.max(0, f.bbox.x - 2),
-      y: Math.max(0, f.bbox.y - 2),
-      width: f.bbox.width + 4,
-      height: f.bbox.height + 4,
-      fillColor,
-      overlayText,
-    }));
+    // A match split across text runs needs one box per run, since each run has
+    // its own position and size. The boxes already carry outward slack.
+    const areas: RedactionArea[] = findings.flatMap((f) =>
+      f.boxes.map((box, index) => ({
+        id: `redact-${f.id}-${index}`,
+        pageNumber: f.pageNumber,
+        x: Math.max(0, box.x),
+        y: Math.max(0, box.y),
+        width: box.width,
+        height: box.height,
+        fillColor,
+        overlayText,
+      }))
+    );
     onAddRedactions(areas);
   };
 

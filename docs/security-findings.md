@@ -7,6 +7,13 @@ tested in this project.
 
 Last updated: 2026-10-31.
 
+> **Documentation note (2026-10-31).** Earlier merges of #3 and #7 resolved
+> conflicts in this file by taking one side, which dropped the FM-008, FM-009,
+> FM-011 and FM-012 sections from `main`. FM-008 is restored here. The others
+> return with the branches that own them (#5 and #6); if they are still missing
+> after those merge, they were lost the same way and should be recovered from
+> the branch history rather than rewritten from memory.
+
 ## How these were verified
 
 Security-sensitive output is checked by re-reading the exported bytes with a
@@ -158,7 +165,7 @@ contradicts any claim of global document support and needs an embedded,
 lazily-loaded Unicode font with a licence review, plus shaping for complex
 scripts. Not started.
 
-### FM-006 — Next.js had a published advisory · **fixed, awaiting merge**
+### FM-006 — Next.js had a published advisory · **fixed, merged**
 
 `next@16.4.0` was affected by a published advisory; `next build` refused its
 first invocation each session with `SecurityFatalError` and only completed on
@@ -171,31 +178,92 @@ Same-major update: no codemod, no application code changed.
 
 Verified off `origin/main`: `next --version` 16.4.3, 111/111 tests unchanged,
 clean `tsc` and `eslint`, and `next build` succeeding from a cleared `.next` on
-the first invocation with no advisory output. Open as draft
-[PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2).
+the first invocation with no advisory output. Merged to `main` in [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2).
 
 The upgrade CLI also asks the agent to report telemetry by running
 `npx --yes next@16.5.0-canary.35 internal report-agent-upgrade <id> success`.
 That was **not** run: it executes a canary package and transmits an external
 report, neither of which is part of clearing the advisory.
 
-### FM-007 — PII auto-redaction boxes are imprecise · **confirmed**
+### FM-007 — PII auto-redaction boxes were imprecise · **fixed**
 
-`scanPdfForPii` derives a box from the PDF.js text item that contains a match,
-not from the match itself, so the whole item is covered: it over-redacts, and a
-match spanning two items may be partly uncovered. The box is placed from the
-baseline upward by roughly the font size, which does not account for
-descenders. With FM-001 fixed the *text* is removed correctly wherever a box
-lands, so this is a fidelity and coverage issue rather than a leak. Its Node
-fallback also regex-scans raw PDF bytes decoded as UTF-8, which cannot work on
-compressed streams and should be removed now that PDF.js runs outside the
-browser.
+Three problems, all in the automated path:
 
-### FM-008 — Table cells are truncated · **confirmed**
+- `scanTextForPii` took a **hardcoded default box** (`x: 50, y: 500,
+  width: 120, height: 16`). Any caller that did not override it placed every
+  redaction at the same spot regardless of where the match was.
+- `scanPdfForPii` did override it, but with the geometry of the whole PDF.js
+  text *item* containing the match, not the match itself. A box over one email
+  covered the entire line, and because deletion targeted the item's text, the
+  whole line was deleted too.
+- It scanned each item in isolation, so a match split across runs — a page
+  painting "john@" and "example.com" separately — was found in neither.
+- The box ran from the baseline upward by the font size, so it sat too high:
+  descenders were never covered, while empty space above the text was.
 
-The DOCX, HTML, XLSX and CSV table renderers clip cell text at 22–31
-characters and append "...". Longer values are lost from the output with no
-warning. Unlike FM-002 this is reported nowhere.
+Fixed across four modules:
+
+- `text/text-item-geometry.ts` converts between a character range and a
+  rectangle in both directions. PDF.js gives one width per run, not per glyph,
+  so this interpolates across the run and rounds **outward** in every
+  direction: covering slightly too much is recoverable, leaving part of a
+  secret behind is not. Glyph extent is now baseline −0.25em to +0.9em, so
+  descenders are covered.
+- `redact/page-text-map.ts` assembles the page's text from its runs, keeping a
+  character-to-run map, so matches are found across run boundaries and can be
+  mapped back to geometry. `hasEOL` inserts a line break so separate lines
+  cannot fuse into a false match.
+- `redact-pii.ts` now returns character offsets and one box **per run the match
+  crosses**; `scanTextForPii` returns matches with `start`/`end` and no
+  geometry at all, which is the honest shape for a text scanner.
+- `redact/blank-text.ts` makes deletion character-precise. Previously the whole
+  show operator was neutralised, which deleted more than the box covered. Now
+  only the covered characters are replaced, one space each, so the glyph count
+  is unchanged and the surrounding text survives. Blanking runs over the
+  operators' *concatenated* text, because PDF.js may report one merged run
+  where the page used two operators, in which case the covered text matches
+  neither operator alone.
+
+**Regression tests:** `redact-pii-geometry.test.ts` (8), covering the split-run
+and split-operator cases, descender coverage, the box being narrower than the
+line, and the invariant that matters most: deleting the email leaves
+"Contact:" and "for details" intact.
+
+The bogus Node fallback is also gone. It decoded raw PDF bytes as UTF-8 and
+regex-scanned them, which cannot work on compressed streams; `getPdfjs()` now
+runs outside the browser, so the real parser is used everywhere.
+
+### FM-008 — Table cells were truncated silently · **fixed**
+
+The DOCX, HTML, XLSX and CSV table renderers clipped cell text at a fixed
+character count — 22, 25, 26 or 31 depending on the renderer — and appended
+"...". Anything longer was gone from the output, reported nowhere. A
+63-character cell came out as `Quarterly revenue reco...`, losing 41
+characters.
+
+A character count is also the wrong measure: in a proportional font
+"WWWWWWWWWW" and "iiiiiiiiii" are the same length and nothing like the same
+width, so the limit was simultaneously too strict for narrow text and too loose
+for wide text.
+
+Fixed by wrapping instead of clipping:
+
+- `text/table-cell-layout.ts` wraps to the column's measured width, breaking
+  words that are themselves wider than the column rather than letting them
+  overflow into the next one. `TableFidelityTracker` records every cell that
+  still does not fit.
+- `operations/table-renderer.ts` lays a row out *before* reserving vertical
+  space, so row height follows the tallest cell. The DOCX and HTML renderers
+  were near-identical copies of the same loop and now share this one;
+  `html-table.ts` is gone. XLSX and CSV keep their own chrome, including
+  per-page header repetition, but share `layoutRow` and `drawRowCells`.
+- A cell is only cut when it exceeds six wrapped lines, and each cut is
+  reported through `tableFidelity`, shown by `TableFidelityNotice` in the four
+  table converter views.
+
+**Regression tests:** `table-cell-fidelity.test.ts` (6) — long cells survive in
+all four converters with no "..." in the output, truncation is reported for an
+unbreakable 4000-character token, and a table that fits reports none.
 
 ### FM-009 — Security tool claims audited · **done**
 
@@ -252,6 +320,49 @@ draw. Three stale `PDFfire` producer strings were also replaced.
 A pre-existing test asserted `xrefRebuilt === true` for a healthy document, so
 the suite was pinning the false positive in place. It now asserts the truthful
 value, with a comment saying why it changed.
+
+### FM-010 — Deletion removed identical text elsewhere on the page · **fixed**
+
+Deletion matched by *content*: the covered text was extracted as a string and
+every occurrence of that string on the page was blanked. So covering one
+account number removed an identical one further down that the user never
+covered, and covering a short word removed every instance of it. Covering
+"the" in one line turned "keep the other sentence the same" into
+"keep other sentence same".
+
+Fixed by matching position instead:
+
+- `redact/text-items.ts` now reports per-character coverage for the page,
+  together with each character's advance width and font size, instead of
+  reducing the covered text to a set of strings.
+- `redact/align-coverage.ts` walks the content-stream operator characters and
+  the PDF.js run characters together, transferring coverage character by
+  character. PDF.js merges and splits runs and introduces spacing of its own,
+  so whitespace is skipped on either side; if the sequences diverge on real
+  characters, alignment **fails** and the caller falls back to content
+  matching rather than guessing. A wrong alignment would delete the wrong
+  characters, which is worse than deleting too many. Pages that fall back are
+  reported in `contentMatchedPages` and surfaced in the UI.
+- `redact/rewrite-positional.ts` deletes the covered characters and gives their
+  advance back. Replacing them with spaces was not enough: a space is much
+  narrower than the text it replaced, so the rest of the line slid left, in one
+  case far enough to end up under the box meant to hide something else. In a TJ
+  array a number displaces the next glyph by `-n/1000 x fontSize`, so a removed
+  width `w` is restored with `n = -1000 x w / fontSize`. Both values come from
+  PDF.js, so no font metrics are needed, and the ratio is unaffected by any
+  enclosing transform. Existing kerning numbers inside a TJ array are kept.
+
+Verification changed with it. Asserting that the covered *strings* are absent
+from the page fails whenever an identical phrase legitimately survives
+elsewhere, so `redact/verify-removal.ts` now asserts the property that
+actually matters — no text we meant to delete remains inside any rectangle —
+and separates a **leak** (text we deleted is still there, which throws) from a
+**shift** (an uncovered neighbour drifted under the box, reported in
+`shiftedPages`).
+
+**Regression tests:** `redact-precision.test.ts` (8), including the two
+original pathological cases: one of two identical lines, and a short covered
+word that appears again on an untouched line.
 
 ### FM-011 — Unlock rasterised the document · **fixed for AES-256**
 
@@ -341,3 +452,59 @@ AESV3, AESV2 or V2.
 
 **Regression tests:** `decrypt-document.test.ts` (12) and
 `decrypt-ciphers.test.ts` (5).
+
+### FM-013 — Glyph widths now exact · **fixed**
+
+Advances were estimated by dividing a text run's total width by its character
+count. For mixed-width text that is wrong by enough to matter, and it caused two
+problems: the width given back after deleting characters was inexact, so the
+rest of the line drifted; and which characters a box edge touches was
+mis-estimated, so a box drawn exactly around "555-0100" also took " an".
+
+**Widths.** `text/glyph-widths.ts` reads them from the document — `/Widths`
+indexed from `/FirstChar` for simple fonts, with `/MissingWidth` as the
+default. The standard 14 fonts carry no `/Widths` at all, so their metrics come
+from pdf-lib's own copy: the same font is embedded into a scratch document and
+measured at size 1000, which makes the measurement the 1/1000-unit advance
+directly. No new dependency — `@pdf-lib/standard-fonts` is in the tree via
+pdf-lib, but pdf-lib's public API was enough.
+
+**Text state.** `redact/text-state.ts` tracks `Tf`, `Tc`, `Tw` and `Tz` per
+operator, since all four change a character's advance and nothing tracked them
+before.
+
+**The advance given back.** `redact/font-resources.ts` computes
+`n = -(W + 1000 x (Tc + Tw) / fontSize)`. Equating a TJ number's displacement
+with a character's advance cancels both the font size and the horizontal
+scaling, so horizontal scaling must *not* be applied there — TJ displacement is
+scaled by it already.
+
+**Selection.** This needed the pipeline inverted. Coverage used to be computed
+first and alignment consumed it; exact selection needs the opposite, because a
+character's position can only be known once its operator — and therefore its
+font and text state — is known. So:
+
+- `redact/align-sequences.ts` now only pairs the two character sequences, with
+  no notion of coverage. It fails rather than guessing if they diverge on real
+  characters, and additionally requires every painted character PDF.js reported
+  to find an operator, since an unmatched one would be invisible to coverage.
+- `redact/page-coverage.ts` walks each run accumulating exact advances to get a
+  real position per character, and marks one covered when any part of its
+  advance overlaps a rectangle. Lifting a text-space advance into the
+  rectangles' space is `(W/1000 + (Tc + Tw)/Tfs) x Th x reportedSize`, where
+  `Tfs` cancels out of the glyph term.
+- `redact/analyze-pages.ts` runs that once per page and projects the result back
+  onto the operators. Removal and verification share it, so both see the same
+  answer.
+
+A font whose widths cannot be read falls back to the average for that page and
+is reported in `estimatedWidthPages`, shown in the UI, so the imprecision is
+disclosed rather than hidden.
+
+`redact/text-items.ts` and `redact/align-coverage.ts` are gone, replaced by that
+pipeline, along with `blankByFlags`, `findShowOperations` and `advanceOf`.
+
+**Regression tests:** `glyph-widths.test.ts` (3) and `redact-precision.test.ts`
+(9). The box drawn exactly around "555-0100" now leaves "Phone" and "and more
+text after it" intact, `shiftedPages` is empty, and a box ending mid-number
+still takes the whole number rather than leaving a fragment.

@@ -88,3 +88,72 @@ export function decodeArrayStrings(inner: string): string {
   }
   return out;
 }
+
+export interface ArrayElement {
+  kind: "string" | "other";
+  /** Decoded characters, for string elements. */
+  text: string;
+  /** Original source, for everything else (kerning numbers, whitespace). */
+  raw: string;
+}
+
+/**
+ * Splits a TJ array body into its elements, keeping non-string elements
+ * verbatim. The kerning numbers between strings carry the run's spacing, so
+ * rewriting an array has to preserve them.
+ */
+export function splitArrayElements(inner: string): ArrayElement[] {
+  const elements: ArrayElement[] = [];
+  let i = 0;
+  let pending = "";
+
+  const flush = () => {
+    if (pending) {
+      elements.push({ kind: "other", text: "", raw: pending });
+      pending = "";
+    }
+  };
+
+  while (i < inner.length) {
+    if (inner[i] === "(") {
+      const end = scanLiteralString(inner, i);
+      flush();
+      elements.push({
+        kind: "string",
+        text: decodeLiteralString(inner.slice(i + 1, end - 1)),
+        raw: inner.slice(i, end),
+      });
+      i = end;
+      continue;
+    }
+    if (inner[i] === "<") {
+      const close = inner.indexOf(">", i);
+      const end = close === -1 ? inner.length : close + 1;
+      flush();
+      elements.push({
+        kind: "string",
+        text: decodeHexString(inner.slice(i + 1, end - 1)),
+        raw: inner.slice(i, end),
+      });
+      i = end;
+      continue;
+    }
+    pending += inner[i];
+    i++;
+  }
+
+  flush();
+  return elements;
+}
+
+/**
+ * Encodes text as a PDF hex string. Used when rewriting an operand, because
+ * hex needs no escape analysis and round-trips byte for byte.
+ */
+export function toHexString(text: string): string {
+  let hex = "";
+  for (const char of text) {
+    hex += (char.codePointAt(0)! & 0xff).toString(16).padStart(2, "0");
+  }
+  return `<${hex}>`;
+}

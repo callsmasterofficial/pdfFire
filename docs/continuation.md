@@ -6,66 +6,80 @@ Last updated: 2026-10-31.
 
 ## Where the work is
 
-| Repository | Branch | Head | Pushed |
+Rebuilt from live GitHub state and git ancestry. Every version of this section
+written on a branch is stale about whatever merged after it, so it is rebuilt
+rather than merged.
+
+Website `main` is `f39301c`.
+
+Merged to website `main`:
+
+| PR | What |
+| --- | --- |
+| #10 | production dependency audit remediation |
+| #9 | quality-gate CI workflow |
+| #2 | Next.js 16.4.3 for the published advisory (FM-006) |
+| #1 | redaction leak, Unicode loss, pagination loss (FM-001 to FM-003) |
+| #11 | revalidate stacked PRs when their base moves |
+| #3 | PII box geometry (FM-007) |
+| #7 | positional redaction and exact font metrics (FM-010, FM-013) |
+| #13 | integration of #5's security audit and decryption (FM-009, FM-011) |
+| #5 | closed as integrated by #13 |
+| #4 | table cell wrapping (FM-008) |
+
+Still open on the website:
+
+| PR | Branch | Base | State |
 | --- | --- | --- | --- |
-| `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
-| `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) |
-| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | `a55948b` | [PR #3](https://github.com/callsmasterofficial/pdfFire/pull/3) (on #1) |
-| `callsmasterofficial/pdfFire` | `fix/table-cell-truncation` | `f12790d` | [PR #4](https://github.com/callsmasterofficial/pdfFire/pull/4) (on #1) |
-| `callsmasterofficial/pdfFire` | `audit/security-tool-claims` | `34241fe` | [PR #5](https://github.com/callsmasterofficial/pdfFire/pull/5) (on #1) — FM-009 audit **and** FM-011 decrypt |
-| `callsmasterofficial/pdfFire` | `feat/legacy-pdf-decryption` | `9646e79` | [PR #6](https://github.com/callsmasterofficial/pdfFire/pull/6) (on #5) |
-| `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
-| `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
+| #6 | `feat/legacy-pdf-decryption` | `main` | legacy RC4/AES-128 decryption (FM-012); being integrated |
+| #8 | `feat/unicode-language-packs` | `main` | CJK and other language packs (FM-005); retargeted from #1's branch |
 
-#1 and #2 are cut from `main`. #3, #4 and #5 are all cut from #1's branch and
-are siblings of one another — #3 touches `redact*`, #4 the table renderers, #5
-the security operations — so they can merge in any order. Nothing has been
-merged, deployed or submitted to any store.
+Then, once both #4 and #8 are on `main`: migrate the DOCX, HTML, XLSX and CSV
+converters onto the language packs. They still use the WinAnsi sanitiser,
+because #4 rewrote their text drawing and #8 could not migrate them at the same
+time without conflicting.
 
-This file is edited on several branches at once, so it conflicts on merge.
-Resolve by keeping whichever version lists more PRs; none of the rows
-contradict each other.
+Other repositories:
 
-### Commits
+- `pdfFire-extension` `main` is `36c86b8`; PRs #1 (branding, resource exposure)
+  and #2 (CI) are merged. The extension has not been loaded in a browser.
+- `pdfFire-app` has PR #1 open, whose production dependency audit genuinely
+  fails. That must be fixed before the branch is release-ready.
 
-**pdfFire** (website/PWA)
+A merge is not a deployment. Nothing has been deployed, submitted to a store or
+made publicly live; that is verified separately from GitHub state.
 
-1. `91907a8` — redaction removes covered text and is verified on export; false
-   security claims corrected.
-2. `76f7dd9` — converters stop replacing non-ASCII text with `?`.
-3. `68b1a9d` — overflow content draws on the current page instead of a stale one.
-4. `f1c5bf2` — security findings, capability matrix and this checkpoint.
+### Documentation drift to watch
 
-**pdfFire** (`chore/next-security-upgrade`, cut separately from `origin/main`)
+Integrating #5 through #13 kept `main`'s documentation and archived the audit
+branch's copies under `docs/archives/pr5/`. The code landed but the live
+`docs/security-findings.md` lost FM-009, FM-011 and FM-012, and
+`docs/tool-capability-matrix.md` still called `protect`, `unlock`, `metadata`,
+`flatten`, `sign` and `repair` unverified after their tests had merged. Both
+are reconciled in this merge. When integrating the remaining branches, check
+that the live documents describe the code that is actually on `main`.
 
-1. `b5170e0` — Next.js 16.4.0 → 16.4.3 for the published advisory (FM-006).
-   Touches only `package.json`, `package-lock.json` and `next.config.ts`, so it
-   is disjoint from the fix branch and merge order does not matter.
+### Resolving conflicts in this file
 
-**pdfFire-extension**
-
-1. `41a2c85` — competitor references removed, stale FreePDF branding replaced,
-   `web_accessible_resources` dropped.
+This file is edited on several branches at once. Resolve by rebuilding the
+current-state section above from live PR metadata and git ancestry. Do **not**
+resolve it by keeping the longer version, the one listing more PRs, or a
+blanket "ours"/"theirs": every version written on a branch is stale about
+whatever merged after it. Earlier merges of #3 and #7 resolved documentation
+conflicts that way and dropped four findings sections from
+`docs/security-findings.md`.
 
 ## Verified state
 
-Run from `pdfFire/`:
+Run from `pdfFire/`, which is what the CI workflow runs:
 
 ```bash
-npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
+npm ci && npm test && npx tsc --noEmit && npm run lint && npm run build && npm audit --omit=dev --audit-level=high
 ```
 
-- Vitest, per branch: **140 / 140** on `fix/redaction-truth-and-unicode`
-  (28 files), **148 / 148** on `fix/pii-redaction-geometry`,
-  **146 / 146** on `fix/table-cell-truncation`,
-  **159 / 159** on `audit/security-tool-claims` (30 files),
-  **169 / 169** on `feat/legacy-pdf-decryption` (31 files).
-  Baseline on `main` was 111 in 24 files.
-- `tsc --noEmit`: clean.
-- `eslint`: clean, 0 warnings.
-- `next build`: succeeds, 48 routes. On this branch it still halts once per
-  invocation with the Next.js advisory notice and completes on retry; that is
-  fixed on `chore/next-security-upgrade` (FM-006), not here.
+Per-branch test counts are not additive and no single historical figure is
+release evidence. The only figure that counts is the suite run on the exact
+release SHA after the stack is integrated.
 
 `npx vitest run` needs `vitest.setup.ts`, which shims `Promise.try` and
 `Uint8Array.prototype.toHex` for `pdfjs-dist@6` on Node 22. Those shims are
@@ -99,24 +113,22 @@ test-only. Node in use: v22.23.4.
 
 ## Next task
 
-All four PRs are open and awaiting review. `docs/security-findings.md` has no
-open items that are both confirmed and unstarted except:
+Both PRs are open and awaiting review. Then pick up
+`docs/security-findings.md` in order:
 
-1. **FM-010** — deletion still matches text by content, so covering one
-   instance of a string removes identical text elsewhere on the page. Needs
-   positional matching: PDF.js runs aligned to content-stream operators.
-2. **FM-011** — `unlock` rasterises. A real fix needs a decrypting writer;
-   pdf-lib cannot open an encrypted document and PDF.js cannot re-serialise.
-   Disclosed in the meantime.
-
-Beyond those, the brief's phases 4 onwards are untouched: accounts, sandbox
-billing, entitlements, Teams, the extension's four store builds, mobile and
-desktop, localisation, and the cost register.
+1. **FM-008** — table cell truncation: either wrap cells or report the loss the
+   way `textFidelity` reports font coverage. Currently silent.
+2. **FM-009** — apply the FM-001 method (claim versus independently verified
+   behaviour) to compress, repair, protect/unlock, flatten, sign and metadata
+   removal. Expect more false claims; `docs/tool-capability-matrix.md` is the
+   place to record the outcome.
 
 Blocked on an owner decision:
 
 - **FM-005** — embedding a Unicode font: needs a licence decision and a view on
   bundle size versus lazily downloaded subsets.
+- **FM-010** — positional rather than substring matching when deleting text, so
+  identical text elsewhere on the page is left alone.
 - Whether to report upgrade telemetry to Vercel via the canary package the
   Next.js upgrade CLI names (see FM-006). Not run.
 
