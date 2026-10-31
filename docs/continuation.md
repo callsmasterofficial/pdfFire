@@ -14,7 +14,7 @@ Last updated: 2026-10-31.
 | `callsmasterofficial/pdfFire` | `fix/table-cell-truncation` | `f12790d` | [PR #4](https://github.com/callsmasterofficial/pdfFire/pull/4) (on #1) |
 | `callsmasterofficial/pdfFire` | `audit/security-tool-claims` | `34241fe` | [PR #5](https://github.com/callsmasterofficial/pdfFire/pull/5) (on #1) |
 | `callsmasterofficial/pdfFire` | `feat/legacy-pdf-decryption` | `9646e79` | [PR #6](https://github.com/callsmasterofficial/pdfFire/pull/6) (on #5) |
-| `callsmasterofficial/pdfFire` | `fix/redaction-positional-matching` | `c618c04` | [PR #7](https://github.com/callsmasterofficial/pdfFire/pull/7) (on #3) |
+| `callsmasterofficial/pdfFire` | `fix/redaction-positional-matching` | `3871a8f` | [PR #7](https://github.com/callsmasterofficial/pdfFire/pull/7) (on #3) — FM-010 **and** FM-013 part 1 |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
@@ -62,7 +62,7 @@ npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
   **146 / 146** on `fix/table-cell-truncation`,
   **159 / 159** on `audit/security-tool-claims`,
   **169 / 169** on `feat/legacy-pdf-decryption`,
-  **156 / 156** on `fix/redaction-positional-matching`.
+  **160 / 160** on `fix/redaction-positional-matching`.
   Baseline on `main` was 111 in 24 files.
 - `tsc --noEmit`: clean.
 - `eslint`: clean, 0 warnings.
