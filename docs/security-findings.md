@@ -157,13 +157,66 @@ behaviour after these edits is untested.
 
 ## Open findings
 
-### FM-005 — No Unicode font, so most scripts cannot be rendered · **confirmed**
+### FM-005 — Unicode language packs · **fixed for the shipped scripts**
 
-The converters can only draw the 218 WinAnsi characters. CJK, Arabic, Indic and
-Thai text is reported as unrepresentable (FM-002) rather than drawn. This
-contradicts any claim of global document support and needs an embedded,
-lazily-loaded Unicode font with a licence review, plus shaping for complex
-scripts. Not started.
+The converters could only draw the standard PDF fonts' 218 characters, so
+Chinese, Arabic, Hebrew, Thai and Indic text was reported as unrepresentable
+and replaced. Rendering it needs an embedded font, which was a licence and
+bundle-size decision rather than a coding one.
+
+Six Noto packs are now served from `/fonts` and fetched only when a document
+needs one, so a Latin-only conversion downloads nothing. All are SIL OFL 1.1
+and the licence ships alongside them in `public/fonts/OFL.txt`.
+
+| Pack | Covers | Size | Text copies back out |
+| --- | --- | --- | --- |
+| Noto Sans | Latin Extended, Greek, Cyrillic, Vietnamese | 621 KB | exactly |
+| Noto Sans Hebrew | Hebrew | 27 KB | exactly |
+| Noto Sans Thai | Thai | 38 KB | exactly |
+| Noto Sans Arabic | Arabic | 235 KB | approximately |
+| Noto Sans Devanagari | Devanagari | 244 KB | approximately |
+| Noto Sans SC | Chinese, Japanese, Korean | 8.3 MB | exactly |
+
+Three findings from testing this rather than assuming it:
+
+**Shaping works, but only with a regenerator runtime.** fontkit's Indic and
+Universal shapers are transpiled with generators and throw
+`regeneratorRuntime is not defined` without one. With it, shaping is genuinely
+correct: `क्ष` collapses to a single conjunct glyph and `हिन्दी` to five
+glyphs. `regenerator-runtime` (MIT, 28 KB) is therefore a direct dependency.
+
+**Subsetting is essential.** Embedded whole, the CJK pack makes an 8 MB
+document; with `subset: true` the same document is about 43 KB. A test asserts
+the output stays under 300 KB so this cannot regress unnoticed.
+
+**Extraction is not exact for Arabic and Devanagari.** Correct shaping reorders
+and merges glyphs, and a PDF's glyph-to-character mapping cannot fully invert
+that, so copying Devanagari out returns visually-ordered text and Arabic
+returns stray control codes. The rendering is right; the copy is not. Both
+packs are marked `approximate` and the UI says so. This is still far better
+than the previous behaviour, which neither rendered nor extracted.
+
+`@pdf-lib/fontkit` (MIT) is required for any non-standard font and is behind a
+dynamic import, so it is emitted as its own ~885 KB chunk that no route loads
+initially — confirmed absent from the build manifests.
+
+**Decision (owner, 2026-10-31).** The CJK pack is kept, so `public/fonts`
+carries 9.1 MB of which 8.3 MB is Noto Sans SC. Self-hosting was chosen over a
+font CDN deliberately: fetching a pack from a third party would reveal which
+documents a user converts and would break the offline promise. The weight sits
+in the repository and in Cloudflare's cache, not in any user's download unless
+they convert CJK text.
+
+**Scope.** `text-to-pdf` and `markdown-to-pdf` use the packs. The DOCX, HTML,
+XLSX and CSV converters still use the WinAnsi sanitiser, because their text
+drawing is being rewritten in the table-wrapping work (FM-008) and migrating
+both at once would conflict; they adopt the packs after that merges. Characters
+no pack covers, such as emoji, are still reported and replaced.
+
+**Regression tests:** `unicode-language-packs.test.ts` (10), covering CJK,
+Greek/Cyrillic/Vietnamese, Hebrew, Thai, Devanagari shaping, Arabic reporting,
+mixed-script lines that switch font mid-string, the subsetted output size, and
+that Latin-only text downloads no pack at all.
 
 ### FM-006 — Next.js had a published advisory · **fixed, merged**
 
