@@ -9,12 +9,21 @@ Last updated: 2026-10-31.
 | Repository | Branch | Head | Pushed |
 | --- | --- | --- | --- |
 | `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
-| `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) (draft) |
+| `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) |
+| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | `a55948b` | [PR #3](https://github.com/callsmasterofficial/pdfFire/pull/3) (on #1) |
+| `callsmasterofficial/pdfFire` | `fix/table-cell-truncation` | `f12790d` | [PR #4](https://github.com/callsmasterofficial/pdfFire/pull/4) (on #1) |
+| `callsmasterofficial/pdfFire` | `audit/security-tool-claims` | `6afa24d` | [PR #5](https://github.com/callsmasterofficial/pdfFire/pull/5) (on #1) |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
-Both branches are cut from `main`. Nothing has been merged, deployed or
-submitted to any store.
+#1 and #2 are cut from `main`. #3, #4 and #5 are all cut from #1's branch and
+are siblings of one another — #3 touches `redact*`, #4 the table renderers, #5
+the security operations — so they can merge in any order. Nothing has been
+merged, deployed or submitted to any store.
+
+This file is edited on several branches at once, so it conflicts on merge.
+Resolve by keeping whichever version lists more PRs; none of the rows
+contradict each other.
 
 ### Commits
 
@@ -45,8 +54,11 @@ Run from `pdfFire/`:
 npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
 ```
 
-- Vitest: **140 passed / 140**, 28 files. Baseline on `main` was 111 in 24 files;
-  29 tests were added.
+- Vitest, per branch: **140 / 140** on `fix/redaction-truth-and-unicode`
+  (28 files), **148 / 148** on `fix/pii-redaction-geometry`,
+  **146 / 146** on `fix/table-cell-truncation`,
+  **152 / 152** on `audit/security-tool-claims` (29 files each).
+  Baseline on `main` was 111 in 24 files.
 - `tsc --noEmit`: clean.
 - `eslint`: clean, 0 warnings.
 - `next build`: succeeds, 48 routes. On this branch it still halts once per
