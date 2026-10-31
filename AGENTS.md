@@ -19,7 +19,8 @@ After completing EVERY task point, feature, or milestone:
   - Next Planned Step
 
 ## 3. Strict Architectural Guardrails
-- **100% Client-Side:** No server APIs, no Next.js API routes, no server actions for document processing, no server database, and no cloud document uploads.
+- **100% Client-Side for documents:** No server APIs, no Next.js API routes, no server actions for document processing, no server database for document contents, and no cloud document uploads.
+- **Narrow scope change, 2026-10-31 (owner-authorized):** paid Pro and Teams add accounts, subscription verification and minimal records for account, billing, membership, entitlement and consent. Documents remain client-side only on every plan. See "Core Architectural Guardrails" in `process.md`.
 - **Privacy-First:** User files must never leave the browser.
 - **Sequential Phase Execution:** Work phase-by-phase (Phase 0 -> Phase 1 -> Phase 2 -> ...). Never jump ahead or build placeholder non-functional tools.
 
