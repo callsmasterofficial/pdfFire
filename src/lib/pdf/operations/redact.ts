@@ -1,6 +1,7 @@
-import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
+import { PDFDocument, PDFName } from "pdf-lib";
+import { drawRedactionBoxes } from "./redact/draw-boxes";
 import { removeTextInRects, RedactionVerificationError } from "./redact/remove-text";
-import type { Rect } from "./redact/text-items";
+import type { Rect } from "../text/text-item-geometry";
 
 export { RedactionVerificationError };
 
@@ -36,17 +37,27 @@ export interface RedactionResult {
    * confirmed gone. Always false in `cover-only`.
    */
   textRemovalVerified: boolean;
+  /**
+   * Pages where the two views of the page could not be aligned, so deletion
+   * fell back to removing every occurrence of the covered text. Identical text
+   * elsewhere on those pages may also have gone.
+   */
+  contentMatchedPages: number[];
+  /**
+   * Pages where uncovered text shifted slightly under a box. Nothing leaked;
+   * the box just hides a little more than intended.
+   */
+  shiftedPages: number[];
+  /**
+   * Pages carrying a font whose widths could not be read, so which characters
+   * the box edges take was estimated rather than measured.
+   */
+  estimatedWidthPages: number[];
 }
 
 export interface RedactionOptions {
   sanitizeMetadata?: boolean;
   mode?: RedactionMode;
-}
-
-function resolveColor(fill: RedactionArea["fillColor"]) {
-  if (fill === "white") return rgb(1, 1, 1);
-  if (fill === "charcoal") return rgb(0.12, 0.12, 0.12);
-  return rgb(0, 0, 0); // default black
 }
 
 function rectsByPage(redactions: RedactionArea[], totalPages: number): Map<number, Rect[]> {
@@ -85,51 +96,22 @@ export async function applyRedactions(
   let workingBytes = pdfBytes;
   let removedTextOperations = 0;
   let textRemovalVerified = false;
+  let contentMatchedPages: number[] = [];
+  let shiftedPages: number[] = [];
+  let estimatedWidthPages: number[] = [];
 
   if (mode === "remove-text") {
     const removal = await removeTextInRects(pdfBytes, rectsByPage(redactions, totalPages));
     workingBytes = removal.pdfBytes;
     removedTextOperations = removal.removedOperations;
     textRemovalVerified = removal.verified;
+    contentMatchedPages = removal.contentMatchedPages;
+    shiftedPages = removal.shiftedPages;
+    estimatedWidthPages = removal.estimatedWidthPages;
   }
 
   const doc = await PDFDocument.load(workingBytes);
-  const font = await doc.embedFont(StandardFonts.HelveticaBold);
-  const affectedPagesSet = new Set<number>();
-  let redactedCount = 0;
-
-  for (const r of redactions) {
-    if (r.pageNumber < 1 || r.pageNumber > totalPages) continue;
-    const page = doc.getPage(r.pageNumber - 1);
-    affectedPagesSet.add(r.pageNumber);
-    redactedCount++;
-
-    const fillRgb = resolveColor(r.fillColor);
-    page.drawRectangle({
-      x: r.x,
-      y: r.y,
-      width: Math.max(1, r.width),
-      height: Math.max(1, r.height),
-      color: fillRgb,
-    });
-
-    if (r.overlayText && r.width >= 40 && r.height >= 10) {
-      const fontSize = Math.min(10, Math.max(6, r.height * 0.55));
-      const textWidth = font.widthOfTextAtSize(r.overlayText, fontSize);
-      if (textWidth <= r.width) {
-        const textX = r.x + (r.width - textWidth) / 2;
-        const textY = r.y + (r.height - fontSize) / 2;
-        const textColor = r.fillColor === "white" ? rgb(0, 0, 0) : rgb(0.9, 0.9, 0.9);
-        page.drawText(r.overlayText, {
-          x: textX,
-          y: textY,
-          size: fontSize,
-          font,
-          color: textColor,
-        });
-      }
-    }
-  }
+  const { redactedCount, pagesAffected } = await drawRedactionBoxes(doc, redactions, totalPages);
 
   if (sanitizeMetadata) {
     doc.setTitle("");
@@ -150,10 +132,13 @@ export async function applyRedactions(
   return {
     pdfBytes: outBytes,
     redactedCount,
-    pagesAffected: affectedPagesSet.size,
+    pagesAffected,
     totalPages,
     mode,
     removedTextOperations,
     textRemovalVerified,
+    contentMatchedPages,
+    shiftedPages,
+    estimatedWidthPages,
   };
 }
