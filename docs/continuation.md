@@ -178,12 +178,10 @@ checkout that would point at nothing.
    are captured, so trim before upload.
 3. **Native store identifiers.** `pdfFire-app` has no `ios.bundleIdentifier`
    and no `android.package`, so neither store build is possible yet.
-4. **Device QA for the mobile app.** Expo SDK 58 is merged (`e1b612f`):
-   React Native 0.88, zero high-severity advisories, no overrides, and all
-   three platform bundles build. But no native binary has been run — the
-   `pod install` for a simulator build failed with `No space left on device`
-   (the machine is at 100% with ~500 MiB free and a 13 GB CocoaPods cache).
-   That is an environment limit, not a code problem.
+4. **Android device QA.** iOS is done: the app was built and run on an
+   iPhone 15 Pro simulator on SDK 58, and JPG to PDF was exercised end to end
+   — native photo picker, `expo-file-system/legacy`, `pdf-lib`, written to
+   disk, output verified as a 1-page A4 PDF. Android has not been run.
 5. **Native-language review** of the store copy. 55 locales are drafted and
    none is reviewed; every record says so in its own status field.
 
@@ -222,4 +220,15 @@ checkout that would point at nothing.
   change just retired.
 - **Do not let `expo prebuild` choose the bundle identifier.** On this machine
   it invented `com.thethaitourism.filemelo`, from an unrelated project's
-  namespace. The value is permanent once it reaches App Store Connect.
+  namespace, on both prebuild runs. The value is permanent once it reaches App
+  Store Connect.
+- **A brand rename needs a rendered check, not a grep.** Three codebases have
+  now hidden the old wordmark by splitting it across two elements — the
+  website twice (`PDF<span>fire</span>`), and the mobile header
+  (`<Text>pdf</Text><Text>Fire</Text>`). The brand name never appears as a
+  single token, so no search finds it. Each was caught by looking at a
+  screenshot.
+- `pod install` needs a UTF-8 locale on this machine: CocoaPods 1.17 on Ruby
+  4.0 throws `Unicode Normalization not appropriate for ASCII-8BIT` otherwise,
+  and `expo run:ios` re-runs it, so the locale has to be set for the whole
+  command.
