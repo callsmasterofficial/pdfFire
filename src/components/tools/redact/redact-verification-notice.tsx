@@ -43,6 +43,29 @@ export function RedactVerificationNotice({ result }: { result: RedactionResult }
         </p>
       </div>
 
+      {result.contentMatchedPages.length > 0 && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-sm text-amber-700 dark:text-amber-400">
+          <ShieldAlert className="size-4 mt-0.5 shrink-0" aria-hidden="true" />
+          <p>
+            On page{result.contentMatchedPages.length === 1 ? "" : "s"}{" "}
+            {result.contentMatchedPages.join(", ")} the covered text could not be matched by
+            position, so every copy of it on th{result.contentMatchedPages.length === 1 ? "at" : "ose"}{" "}
+            page was removed. Identical text you did not cover may also be gone.
+          </p>
+        </div>
+      )}
+
+      {result.shiftedPages.length > 0 && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground">
+          <Info className="size-4 mt-0.5 shrink-0" aria-hidden="true" />
+          <p>
+            On page{result.shiftedPages.length === 1 ? "" : "s"} {result.shiftedPages.join(", ")}{" "}
+            nearby text shifted slightly and now sits under a box. Nothing extra was deleted, but
+            the box hides a little more than you marked.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground">
         <Info className="size-4 mt-0.5 shrink-0" aria-hidden="true" />
         <p>

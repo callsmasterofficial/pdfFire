@@ -227,31 +227,64 @@ The bogus Node fallback is also gone. It decoded raw PDF bytes as UTF-8 and
 regex-scanned them, which cannot work on compressed streams; `getPdfjs()` now
 runs outside the browser, so the real parser is used everywhere.
 
-### FM-010 — Deletion removes identical text elsewhere on the page · **confirmed**
+### FM-010 — Deletion removed identical text elsewhere on the page · **fixed**
 
-Blanking matches by substring over the page's concatenated operator text, so
-covering one instance of a string also blanks every other instance of it on
-that page. Covering a short string makes this worse: a box over a single "e"
-blanks every "e" in that page's text.
+Deletion matched by *content*: the covered text was extracted as a string and
+every occurrence of that string on the page was blanked. So covering one
+account number removed an identical one further down that the user never
+covered, and covering a short word removed every instance of it. Covering
+"the" in one line turned "keep the other sentence the same" into
+"keep other sentence same".
 
-This fails safe — it removes too much, never too little — and the redaction
-boxes are drawn only where the user put them, so the output can look as though
-unrelated text vanished without being covered. Fixing it properly means
-matching by position rather than by content, which requires aligning PDF.js
-runs to content-stream operators. Worth doing; not started.
+Fixed by matching position instead:
 
-### FM-008 — Table cells are truncated · **confirmed**
+- `redact/text-items.ts` now reports per-character coverage for the page,
+  together with each character's advance width and font size, instead of
+  reducing the covered text to a set of strings.
+- `redact/align-coverage.ts` walks the content-stream operator characters and
+  the PDF.js run characters together, transferring coverage character by
+  character. PDF.js merges and splits runs and introduces spacing of its own,
+  so whitespace is skipped on either side; if the sequences diverge on real
+  characters, alignment **fails** and the caller falls back to content
+  matching rather than guessing. A wrong alignment would delete the wrong
+  characters, which is worse than deleting too many. Pages that fall back are
+  reported in `contentMatchedPages` and surfaced in the UI.
+- `redact/rewrite-positional.ts` deletes the covered characters and gives their
+  advance back. Replacing them with spaces was not enough: a space is much
+  narrower than the text it replaced, so the rest of the line slid left, in one
+  case far enough to end up under the box meant to hide something else. In a TJ
+  array a number displaces the next glyph by `-n/1000 x fontSize`, so a removed
+  width `w` is restored with `n = -1000 x w / fontSize`. Both values come from
+  PDF.js, so no font metrics are needed, and the ratio is unaffected by any
+  enclosing transform. Existing kerning numbers inside a TJ array are kept.
 
-The DOCX, HTML, XLSX and CSV table renderers clip cell text at 22–31
-characters and append "...". Longer values are lost from the output with no
-warning. Unlike FM-002 this is reported nowhere.
+Verification changed with it. Asserting that the covered *strings* are absent
+from the page fails whenever an identical phrase legitimately survives
+elsewhere, so `redact/verify-removal.ts` now asserts the property that
+actually matters — no text we meant to delete remains inside any rectangle —
+and separates a **leak** (text we deleted is still there, which throws) from a
+**shift** (an uncovered neighbour drifted under the box, reported in
+`shiftedPages`).
 
-### FM-009 — Other tools' claims are not independently verified · **unverified**
+**Regression tests:** `redact-precision.test.ts` (8), including the two
+original pathological cases: one of two identical lines, and a short covered
+word that appears again on an untouched line.
 
-FM-001 was found because a claim was checked against behaviour. The same
-exercise has not been done for compress, repair, protect/unlock, flatten,
-sign, metadata removal or the summary and retrieval features. The brief lists
-exactly the distinctions to test (a drawn signature is not a certificate-backed
-signature; re-saving is not compression; clearing a few fields is not
-sanitisation). Treat their marketing copy as unverified until each has a test
-like the ones above.
+### FM-013 — Character selection at box edges is approximate · **confirmed**
+
+PDF.js reports one width per text run, not per glyph, so which characters a
+box edge touches is estimated from an average character width. For a run of
+mixed-width text that estimate can be out by a character or two: a box drawn
+exactly around "555-0100" removed "555-0100 an".
+
+Selection rounds outward deliberately, so a partially covered character is
+removed rather than left as a fragment, and nothing covered is ever left
+behind. The cost is that a few characters beside the box may also go, and the
+same approximation makes the restored advance inexact, which is what produces
+the `shiftedPages` reports.
+
+Exact widths would need the font dictionaries — `/Widths` and `/FirstChar` for
+simple fonts, `/W` and `/DW` for CID fonts — plus the encoding needed to map
+PDF.js's Unicode back to character codes. That is a real piece of work and is
+tracked here rather than implied away. A test records the current edge
+behaviour so it cannot change unnoticed.

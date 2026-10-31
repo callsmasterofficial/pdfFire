@@ -22,6 +22,17 @@ export interface PageTargets {
   pageNumber: number;
   /** Distinct strings to delete from this page, longest first. */
   strings: string[];
+  /** Concatenated run text for this page, in content order. */
+  text: string;
+  /** Per character of `text`: does it lie inside a redaction rectangle. */
+  covered: boolean[];
+  /**
+   * Per character of `text`: its advance width and the font size it was drawn
+   * at. Deleting a character removes its advance, so the width has to be given
+   * back explicitly or the rest of the line slides into the redaction box.
+   */
+  advances: number[];
+  fontSizes: number[];
 }
 
 export async function findTargetStrings(
@@ -38,33 +49,73 @@ export async function findTargetStrings(
       if (pageNumber < 1 || pageNumber > doc.numPages || rects.length === 0) continue;
       const page = await doc.getPage(pageNumber);
       const content = await page.getTextContent();
-      const strings = new Set<string>();
+
+      let text = "";
+      const covered: boolean[] = [];
+      const advances: number[] = [];
+      const fontSizes: number[] = [];
 
       for (const raw of content.items) {
         const item = toTextItemGeometry(raw as Parameters<typeof toTextItemGeometry>[0]);
-        if (!item || !item.str.trim()) continue;
+        if (!item) continue;
 
+        // Mark the characters of this run that any rectangle covers. Positions
+        // are what drives deletion, so they are tracked per character rather
+        // than reduced to a set of strings.
+        const flags = new Array<boolean>(item.str.length).fill(false);
         for (const rect of rects) {
           const range = rectToCharRange(item, rect);
           if (!range) continue;
-          const covered = item.str.slice(range[0], range[1]);
-          if (covered.trim()) strings.add(covered);
+          for (let i = range[0]; i < range[1]; i++) flags[i] = true;
+        }
+
+        text += item.str;
+        covered.push(...flags);
+        const perChar = item.width / item.str.length;
+        for (let i = 0; i < item.str.length; i++) {
+          advances.push(perChar);
+          fontSizes.push(item.fontSize);
         }
       }
 
-      if (strings.size > 0) {
+      const strings = coveredRuns(text, covered);
+      if (strings.length === 0) continue;
+
+      results.push({
+        pageNumber,
         // Longest first, so a wider match is blanked before any substring of it.
-        results.push({
-          pageNumber,
-          strings: [...strings].sort((a, b) => b.length - a.length),
-        });
-      }
+        strings: strings.sort((a, b) => b.length - a.length),
+        text,
+        covered,
+        advances,
+        fontSizes,
+      });
     }
   } finally {
     await task.destroy();
   }
 
   return results;
+}
+
+/** Distinct contiguous stretches of covered text, for verification and fallback. */
+function coveredRuns(text: string, covered: boolean[]): string[] {
+  const runs = new Set<string>();
+  let start = -1;
+
+  for (let i = 0; i <= covered.length; i++) {
+    if (i < covered.length && covered[i]) {
+      if (start === -1) start = i;
+      continue;
+    }
+    if (start !== -1) {
+      const run = text.slice(start, i);
+      if (run.trim()) runs.add(run);
+      start = -1;
+    }
+  }
+
+  return [...runs];
 }
 
 /** Text still recoverable from `bytes`, as an independent parser reads it. */

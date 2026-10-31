@@ -25,7 +25,7 @@ first.
 
 | Tool | Platform | Claim status | Verification | Notes |
 | --- | --- | --- | --- | --- |
-| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams and the export is re-parsed; fails closed. Non-text content is covered only. FM-001. |
+| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams by position, the advance is restored so the line does not reflow, and the export is re-parsed; fails closed. Edge character selection is approximate (FM-013). Non-text content is covered only. FM-001, FM-010. |
 | `protect` | web | **Unverified** | Unit tested | Uses `@pdfsmaller/pdf-encrypt`. No test confirms an independent reader enforces the password, nor which algorithm is applied. |
 | `unlock` | web | **Unverified** | Unit tested | Needs a user-supplied password; authorised-use wording not reviewed. |
 | `metadata` | web | **Unverified** | Unit tested | "Strip metadata" must be checked against XMP, object-stream copies, incremental revisions and embedded thumbnails before it can be called sanitisation. |
