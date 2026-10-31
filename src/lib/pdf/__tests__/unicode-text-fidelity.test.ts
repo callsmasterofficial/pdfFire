@@ -140,12 +140,13 @@ describe("Converter text fidelity", () => {
     expect(result.fileName.endsWith(".pdf")).toBe(true);
   });
 
-  it("converts plain text with unsupported scripts instead of throwing", async () => {
-    // Previously pdf-lib's own "WinAnsi cannot encode" error reached the user.
+  it("preserves Chinese text with the on-demand CJK pack", async () => {
     const result = await convertTextToPdf("Hello 中文 world", { title: "Notes" });
-
-    expect(result.textFidelity.droppedCharacters).toContain("中");
-    expect(await extractPdfText(result.pdfBytes)).toContain("Hello");
+    expect(result.textFidelity.packsUsed.map((pack) => pack.id)).toContain("cjk");
+    expect(result.textFidelity.unsupportedCharacters).not.toContain("中");
+    const extracted = await extractPdfText(result.pdfBytes);
+    expect(extracted).toContain("Hello");
+    expect(extracted).toContain("中文");
   });
 
   it("preserves WinAnsi-encodable text through plain text conversion", async () => {
