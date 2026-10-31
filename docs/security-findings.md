@@ -193,6 +193,13 @@ than the previous behaviour, which neither rendered nor extracted.
 dynamic import, so it is emitted as its own ~885 KB chunk that no route loads
 initially — confirmed absent from the build manifests.
 
+**Decision (owner, 2026-10-31).** The CJK pack is kept, so `public/fonts`
+carries 9.1 MB of which 8.3 MB is Noto Sans SC. Self-hosting was chosen over a
+font CDN deliberately: fetching a pack from a third party would reveal which
+documents a user converts and would break the offline promise. The weight sits
+in the repository and in Cloudflare's cache, not in any user's download unless
+they convert CJK text.
+
 **Scope.** `text-to-pdf` and `markdown-to-pdf` use the packs. The DOCX, HTML,
 XLSX and CSV converters still use the WinAnsi sanitiser, because their text
 drawing is being rewritten in the table-wrapping work (FM-008) and migrating
