@@ -13,6 +13,7 @@ import { parseXlsxBytes, convertXlsxToPdf, XlsxToPdfResult, ParsedXlsx } from "@
 import { downloadPdfBytes } from "@/lib/pdf/download";
 import { zipSync, strToU8 } from "fflate";
 import { TextFidelityNotice } from "@/components/tools/text-fidelity-notice";
+import { TableFidelityNotice } from "@/components/tools/table-fidelity-notice";
 
 export function XlsxToPdfToolView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +128,8 @@ export function XlsxToPdfToolView() {
 
         {error && <div className="flex gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive"><AlertCircle className="size-4 shrink-0" />{error}</div>}
         {result?.textFidelity && <TextFidelityNotice report={result.textFidelity} />}
+
+            {result?.tableFidelity && <TableFidelityNotice report={result.tableFidelity} />}
 
         {result && (
           <ResultPreviewSection

@@ -1,7 +1,8 @@
 import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import { parseHtml } from "./html-parser";
 import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
-import { drawHtmlTable as drawTable } from "./html-table";
+import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
+import { drawTableRows } from "./table-renderer";
 
 export interface HtmlToPdfResult {
   pdfBytes: Uint8Array;
@@ -10,6 +11,8 @@ export interface HtmlToPdfResult {
   metrics: { elementCount: number; wordCount: number; tableCount: number };
   /** Which characters the embedded fonts could not draw as authored. */
   textFidelity: TextFidelityReport;
+  /** Table cells whose text did not fit their column, even wrapped. */
+  tableFidelity: TableFidelityReport;
 }
 
 const PAGE = { width: 595.28, height: 841.89, margin: 54 };
@@ -36,6 +39,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
   const mono = await doc.embedFont(StandardFonts.Courier);
   const sanitizer = new FontTextSanitizer([regular, bold, mono]);
   const safe = (value: string) => sanitizer.sanitize(value);
+  const tableTracker = new TableFidelityTracker();
 
   let page = doc.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - PAGE.margin;
@@ -109,7 +113,11 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
       continue;
     }
     if (block.kind === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, safe, regular, bold, () => page, () => y, (newY) => { y = newY; }, ensure);
+      drawTableRows(
+        block.tableRows,
+        { safe, regular, bold, getPage: () => page, getY: () => y, setY: (newY) => { y = newY; }, ensure, tracker: tableTracker },
+        { pageWidth: PAGE.width, margin: PAGE.margin, maxCols: 6, headerFill: rgb(.92, .94, .97) }
+      );
       y -= 6;
     }
   }
@@ -124,7 +132,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
 
   const title = parsed.title && parsed.title !== "HTML Document" ? parsed.title : fallbackTitle;
   doc.setTitle(title);
-  doc.setCreator("PDFfire Pure-Client Converter");
+  doc.setCreator("FileMelo Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
   const fileName = `${toFileSlug(title)}.pdf`;
@@ -135,5 +143,6 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
     fileName,
     metrics: { elementCount: parsed.elementCount, wordCount: parsed.wordCount, tableCount: parsed.tableCount },
     textFidelity: sanitizer.report(),
+    tableFidelity: tableTracker.report(),
   };
 }

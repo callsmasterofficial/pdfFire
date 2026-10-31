@@ -94,10 +94,17 @@ export const ADVANCED_SEO_DATA: ToolSeoData[] = [
       { step: 2, title: "Run Diagnostic Repair", description: "PDFfire scans for missing EOF trailers, header anomalies, and broken object streams." },
       { step: 3, title: "Download Salvaged PDF", description: "Export the repaired document with a reconstructed xref index." },
     ],
-    features: ["Rebuilds broken xref cross-reference tables", "Terminates missing %%EOF trailers", "Comprehensive diagnostic report card"],
-    limitations: ["Severely truncated files missing essential page content streams cannot be fully restored"],
+    features: [
+      "Strips junk before the %PDF- header and appends a missing %%EOF trailer",
+      "Reserialises the document, rebuilding the cross-reference table when the original cannot be parsed",
+      "Diagnostic report showing only the repairs that were actually needed",
+    ],
+    limitations: [
+      "Severely truncated files missing essential page content streams cannot be fully restored",
+      "When no page content can be salvaged the download is an empty placeholder, which the report states plainly \u2014 keep your original",
+    ],
     faqs: [
-      { question: "Can all corrupted PDFs be repaired?", answer: "PDFfire repairs structural flaws (xref corruption, broken trailers, header issues). If the raw text or page streams were completely overwritten or zeroed out, content cannot be synthesized." },
+      { question: "Can all corrupted PDFs be repaired?", answer: "No. FileMelo repairs structural flaws \u2014 header junk, missing trailers, and a cross-reference table that cannot be parsed. If the page streams themselves were overwritten or zeroed, the content is gone and cannot be synthesised. The report says when nothing was recovered instead of presenting an empty file as a repair." },
     ],
     relatedToolIds: ["compare", "metadata", "hash", "flatten"],
   },

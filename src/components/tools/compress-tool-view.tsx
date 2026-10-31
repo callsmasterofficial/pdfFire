@@ -59,7 +59,7 @@ export function CompressToolView() {
   return (
     <ToolLayout
       title="Compress PDF"
-      description="Optimize PDF structure, compress object streams, and reduce file sizes with honest metrics."
+      description="Reserialize object streams, or rasterize pages for a bigger cut \u2014 with honest before and after metrics, including when a file does not shrink."
       icon={Zap}
       category="Optimize"
     >
