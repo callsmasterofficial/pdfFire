@@ -58,11 +58,11 @@ describe("Automated SEO Validation Suite", () => {
 
   it("verifies canonical URLs are well-formed and do not point to localhost in default config", () => {
     const rootCanonical = getCanonicalUrl("/");
-    expect(rootCanonical).toBe("https://pdffire.com/");
+    expect(rootCanonical).toBe("https://filemelo.com/");
     expect(rootCanonical.includes("localhost")).toBe(false);
 
     const toolCanonical = getCanonicalUrl("/tool/merge");
-    expect(toolCanonical).toBe("https://pdffire.com/tool/merge");
+    expect(toolCanonical).toBe("https://filemelo.com/tool/merge");
   });
 
   it("verifies sitemap generates eligible, unique, and valid public URLs", () => {
@@ -71,7 +71,7 @@ describe("Automated SEO Validation Suite", () => {
 
     const seenUrls = new Set<string>();
     for (const entry of sitemapEntries) {
-      expect(entry.url.startsWith("https://pdffire.com")).toBe(true);
+      expect(entry.url.startsWith("https://filemelo.com")).toBe(true);
       expect(seenUrls.has(entry.url)).toBe(false);
       seenUrls.add(entry.url);
       expect(entry.priority).toBeDefined();
@@ -81,7 +81,7 @@ describe("Automated SEO Validation Suite", () => {
 
   it("verifies robots.txt allows public routes and points to sitemap", () => {
     const robots = generateRobots();
-    expect(robots.sitemap).toBe("https://pdffire.com/sitemap.xml");
+    expect(robots.sitemap).toBe("https://filemelo.com/sitemap.xml");
     const rules = Array.isArray(robots.rules) ? robots.rules[0] : robots.rules;
     expect(rules.allow).toBe("/");
     expect(rules.userAgent).toBe("*");
