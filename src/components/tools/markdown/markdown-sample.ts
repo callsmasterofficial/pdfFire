@@ -1,0 +1,21 @@
+/** Starter document shown in the Markdown to PDF editor. */
+export const MARKDOWN_SAMPLE = [
+  "# Project brief",
+  "",
+  "Turn ideas into a polished document entirely in your browser.",
+  "",
+  "## Highlights",
+  "",
+  "- Vector text stays crisp at every zoom level",
+  "- Headings, lists, quotes, and code are typeset automatically",
+  "",
+  "> Your Markdown never leaves this device.",
+  "",
+  "```",
+  'const privacy = "local-first";',
+  "```",
+  "",
+  "---",
+  "",
+  "Ready to export.",
+].join("\n");

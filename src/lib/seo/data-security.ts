@@ -104,7 +104,7 @@ export const SECURITY_SEO_DATA: ToolSeoData[] = [
   {
     id: "redact",
     title: "Redact PDF Online — Permanently Remove Sensitive PII & Text",
-    metaDescription: "Permanently redact confidential text, SSNs, credit cards, emails, and sensitive patterns. True vector stream removal with zero server uploads.",
+    metaDescription: "Redact confidential text, SSNs, credit cards and emails. Covered text is deleted from the PDF content streams and the export is verified, with zero server uploads.",
     h1: "Redact PDF Confidential Content Online",
     category: "Security",
     primaryIntent: "Permanently black out and remove sensitive text from a PDF",
@@ -112,12 +112,22 @@ export const SECURITY_SEO_DATA: ToolSeoData[] = [
     instructions: [
       { step: 1, title: "Upload PDF", description: "Load the confidential document into the redaction studio." },
       { step: 2, title: "Auto-Scan or Draw Boxes", description: "Run automated PII detection (SSNs, emails, cards) or draw custom redaction rectangles." },
-      { step: 3, title: "Burn Redactions & Download", description: "Permanently purge underlying vector text and metadata from the document file." },
+      { step: 3, title: "Apply Redactions & Download", description: "Delete the covered text from the page content streams, draw the boxes, and strip document metadata." },
     ],
-    features: ["True irreversible vector deletion (not visual overlay)", "Automated regex PII scanner for emails, phone numbers, and SSNs", "Automatic metadata and XMP stripping"],
-    limitations: ["Text embedded inside flat raster images must be redacted visually; run OCR first if digital text search is required"],
+    features: [
+      "Covered text is deleted from the page content streams, not just painted over",
+      "Every export is re-parsed to confirm the covered text is no longer extractable",
+      "Automated regex PII scanner for emails, phone numbers, and SSNs",
+      "Automatic metadata and XMP stripping",
+    ],
+    limitations: [
+      "Text inside raster images is covered but not removed; rasterised text is not detected as text",
+      "Images, vector artwork, annotations and form fields under a box are covered, not deleted",
+      "If the covered text cannot be confirmed removed, the redaction fails and no file is produced rather than returning a document that still leaks",
+    ],
     faqs: [
-      { question: "Can someone uncover the redacted text?", answer: "No. PDFfire uses true redaction, permanently deleting the underlying text stream characters from the document object tree before export." },
+      { question: "Can someone uncover the redacted text?", answer: "Text that FileMelo detects under a redaction box is deleted from the page content streams, and the exported file is re-parsed to confirm it can no longer be extracted. If that check does not pass, no file is produced. Content that is not text \u2014 images, vector artwork, annotations and form fields \u2014 is covered by the box but not removed, so review the output before sharing it." },
+      { question: "What about text inside a scanned image?", answer: "A scan is a picture, so there is no text to delete. The box hides it visually, but the pixels underneath remain. Flatten the page to an image or run OCR and redact the text layer if the underlying content must be destroyed." },
     ],
     relatedToolIds: ["protect", "metadata", "flatten", "edit"],
   },

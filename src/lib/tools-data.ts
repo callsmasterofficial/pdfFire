@@ -155,7 +155,7 @@ export const TOOL_ITEMS: ToolCardProps[] = [
   },
   {
     id: "redact", title: "Redact PDF", category: "Security", icon: ShieldAlert, badge: "Phase 13", isAvailable: true,
-    description: "Permanently redact sensitive PII patterns, black out confidential text, and strip metadata.",
+    description: "Delete sensitive text from the PDF content streams, cover it, and strip metadata.",
   },
 ];
 

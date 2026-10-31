@@ -1,18 +1,21 @@
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import { parseHtml } from "./html-parser";
+import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
+import { drawHtmlTable as drawTable } from "./html-table";
 
 export interface HtmlToPdfResult {
   pdfBytes: Uint8Array;
   pageCount: number;
   fileName: string;
   metrics: { elementCount: number; wordCount: number; tableCount: number };
+  /** Which characters the embedded fonts could not draw as authored. */
+  textFidelity: TextFidelityReport;
 }
 
 const PAGE = { width: 595.28, height: 841.89, margin: 54 };
-const safe = (s: string) => s.replace(/[^\x20-\x7E\n\t]/g, "?");
 
 function wrap(text: string, font: PDFFont, size: number, maxW: number): string[] {
-  const words = safe(text).split(/\s+/);
+  const words = text.split(/\s+/);
   const lines: string[] = [];
   let line = "";
   for (const w of words) {
@@ -31,6 +34,8 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const mono = await doc.embedFont(StandardFonts.Courier);
+  const sanitizer = new FontTextSanitizer([regular, bold, mono]);
+  const safe = (value: string) => sanitizer.sanitize(value);
 
   let page = doc.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - PAGE.margin;
@@ -49,7 +54,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
       const leading = size * 1.4;
       ensure(leading + 10);
       y -= 6;
-      for (const line of wrap(block.text, bold, size, PAGE.width - PAGE.margin * 2)) {
+      for (const line of wrap(safe(block.text), bold, size, PAGE.width - PAGE.margin * 2)) {
         ensure(leading);
         page.drawText(line, { x: PAGE.margin, y, size, font: bold, color: rgb(.1, .12, .18) });
         y -= leading;
@@ -60,7 +65,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
     if (block.kind === "bullet" || block.kind === "ordered") {
       const size = 10.5; const leading = 15;
       const isBullet = block.kind === "bullet";
-      const lines = wrap(block.text, regular, size, PAGE.width - PAGE.margin * 2 - 18);
+      const lines = wrap(safe(block.text), regular, size, PAGE.width - PAGE.margin * 2 - 18);
       for (let i = 0; i < lines.length; i++) {
         ensure(leading);
         if (i === 0 && isBullet) page.drawText("•", { x: PAGE.margin + 4, y, size, font: bold, color: rgb(.2, .4, .7) });
@@ -72,7 +77,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
     if (block.kind === "code") {
       const size = 9; const leading = 13;
       for (const rawLine of block.text.split("\n")) {
-        for (const line of wrap(rawLine || " ", mono, size, PAGE.width - PAGE.margin * 2 - 20)) {
+        for (const line of wrap(safe(rawLine) || " ", mono, size, PAGE.width - PAGE.margin * 2 - 20)) {
           ensure(leading);
           page.drawRectangle({ x: PAGE.margin, y: y - 2, width: PAGE.width - PAGE.margin * 2, height: leading, color: rgb(.95, .96, .97) });
           page.drawText(line, { x: PAGE.margin + 10, y, size, font: mono, color: rgb(.18, .22, .28) });
@@ -84,7 +89,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
     }
     if (block.kind === "quote") {
       const size = 10; const leading = 15;
-      for (const line of wrap(block.text, regular, size, PAGE.width - PAGE.margin * 2 - 20)) {
+      for (const line of wrap(safe(block.text), regular, size, PAGE.width - PAGE.margin * 2 - 20)) {
         ensure(leading);
         page.drawLine({ start: { x: PAGE.margin + 4, y: y + leading - 2 }, end: { x: PAGE.margin + 4, y: y - 2 }, thickness: 2, color: rgb(.8, .4, .2) });
         page.drawText(line, { x: PAGE.margin + 16, y, size, font: regular, color: rgb(.35, .35, .38) });
@@ -95,7 +100,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
     }
     if (block.kind === "paragraph") {
       const size = 10.5; const leading = 15;
-      for (const line of wrap(block.text, regular, size, PAGE.width - PAGE.margin * 2)) {
+      for (const line of wrap(safe(block.text), regular, size, PAGE.width - PAGE.margin * 2)) {
         ensure(leading);
         page.drawText(line, { x: PAGE.margin, y, size, font: regular, color: rgb(.14, .14, .16) });
         y -= leading;
@@ -104,7 +109,7 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
       continue;
     }
     if (block.kind === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, regular, bold, page, () => y, (newY) => { y = newY; }, ensure);
+      drawTable(block.tableRows, safe, regular, bold, () => page, () => y, (newY) => { y = newY; }, ensure);
       y -= 6;
     }
   }
@@ -118,51 +123,17 @@ export async function convertHtmlToPdf(html: string, fallbackTitle = "HTML Docum
   }
 
   const title = parsed.title && parsed.title !== "HTML Document" ? parsed.title : fallbackTitle;
-  doc.setTitle(safe(title));
+  doc.setTitle(title);
   doc.setCreator("PDFfire Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
-  const fileName = `${safe(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "document"}.pdf`;
+  const fileName = `${toFileSlug(title)}.pdf`;
 
   return {
     pdfBytes,
     pageCount: totalPages,
     fileName,
     metrics: { elementCount: parsed.elementCount, wordCount: parsed.wordCount, tableCount: parsed.tableCount },
+    textFidelity: sanitizer.report(),
   };
-}
-
-function drawTable(
-  rows: string[][],
-  regular: PDFFont,
-  bold: PDFFont,
-  page: PDFPage,
-  getY: () => number,
-  setY: (y: number) => void,
-  ensure: (h: number) => void
-) {
-  const maxCols = Math.min(Math.max(...rows.map((r) => r.length), 1), 6);
-  const tableWidth = PAGE.width - PAGE.margin * 2;
-  const colWidth = tableWidth / maxCols;
-  const rowHeight = 22;
-
-  for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-    ensure(rowHeight);
-    const rowY = getY();
-    const isHeader = rIdx === 0;
-    if (isHeader) {
-      page.drawRectangle({ x: PAGE.margin, y: rowY - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.92, .94, .97) });
-    } else if (rIdx % 2 === 1) {
-      page.drawRectangle({ x: PAGE.margin, y: rowY - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.98, .98, .99) });
-    }
-    const cols = rows[rIdx];
-    for (let cIdx = 0; cIdx < maxCols; cIdx++) {
-      const cellText = safe(cols[cIdx] || "");
-      const font = isHeader ? bold : regular;
-      const x = PAGE.margin + cIdx * colWidth;
-      const clipped = cellText.length > 25 ? `${cellText.slice(0, 22)}...` : cellText;
-      page.drawText(clipped, { x: x + 6, y: rowY - 11, size: 8.5, font, color: rgb(.15, .15, .18) });
-    }
-    setY(rowY - rowHeight);
-  }
 }

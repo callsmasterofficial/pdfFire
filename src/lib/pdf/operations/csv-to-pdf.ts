@@ -1,7 +1,12 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
 
 export interface CsvTable { headers: string[]; rows: string[][]; }
-export interface CsvToPdfResult { pdfBytes: Uint8Array; pageCount: number; fileName: string; rowCount: number; }
+export interface CsvToPdfResult {
+  pdfBytes: Uint8Array; pageCount: number; fileName: string; rowCount: number;
+  /** Which characters the embedded fonts could not draw as authored. */
+  textFidelity: TextFidelityReport;
+}
 
 /** Parses RFC 4180-style quoted cells without sending tabular data anywhere. */
 export function parseCsv(source: string): CsvTable {
@@ -21,7 +26,6 @@ export function parseCsv(source: string): CsvTable {
   return { headers, rows: data };
 }
 
-const safe = (value: string) => value.replace(/[^\x20-\x7E]/g, "?");
 const clipped = (value: string, max: number) => value.length > max ? `${value.slice(0, max - 3)}...` : value;
 
 export async function convertCsvToPdf(csv: string, title = "Data table"): Promise<CsvToPdfResult> {
@@ -30,6 +34,8 @@ export async function convertCsvToPdf(csv: string, title = "Data table"): Promis
   const columns = Math.min(table.headers.length, 6);
   const doc = await PDFDocument.create();
   const regular = await doc.embedFont(StandardFonts.Helvetica); const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const sanitizer = new FontTextSanitizer([regular, bold]);
+  const safe = (value: string) => sanitizer.sanitize(value);
   const width = 841.89; const height = 595.28; const margin = 36; const tableWidth = width - margin * 2;
   const columnWidth = tableWidth / columns; const rowHeight = 22;
   let page = doc.addPage([width, height]); let y = height - margin;
@@ -52,8 +58,9 @@ export async function convertCsvToPdf(csv: string, title = "Data table"): Promis
     }
     y -= rowHeight;
   }
-  doc.setTitle(safe(title)); doc.setCreator("PDFfire Client");
-  return { pdfBytes: await doc.save(), pageCount: doc.getPageCount(), rowCount: table.rows.length, fileName: `${slug(title)}.pdf` };
+  doc.setTitle(title); doc.setCreator("FileMelo Client");
+  return {
+    pdfBytes: await doc.save(), pageCount: doc.getPageCount(), rowCount: table.rows.length,
+    fileName: `${toFileSlug(title, "csv-table")}.pdf`, textFidelity: sanitizer.report(),
+  };
 }
-
-function slug(value: string) { return safe(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "csv-table"; }

@@ -1,15 +1,17 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { parseXlsxBytes, XlsxSheet } from "./xlsx-parser";
+import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
 
 export interface XlsxToPdfResult {
   pdfBytes: Uint8Array;
   pageCount: number;
   fileName: string;
   metrics: { sheetCount: number; rowCount: number; cellCount: number };
+  /** Which characters the embedded fonts could not draw as authored. */
+  textFidelity: TextFidelityReport;
 }
 
 const PAGE = { width: 841.89, height: 595.28, margin: 40 };
-const safe = (s: string) => s.replace(/[^\x20-\x7E\n\t]/g, "?");
 const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 3)}...` : s);
 
 export async function convertXlsxToPdf(
@@ -21,6 +23,8 @@ export async function convertXlsxToPdf(
   const doc = await PDFDocument.create();
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const sanitizer = new FontTextSanitizer([regular, bold]);
+  const safe = (value: string) => sanitizer.sanitize(value);
 
   const sheetsToRender =
     selectedSheetIndex !== undefined && parsed.sheets[selectedSheetIndex]
@@ -32,7 +36,7 @@ export async function convertXlsxToPdf(
   }
 
   for (const sheet of sheetsToRender) {
-    renderSheetToPages(sheet, doc, regular, bold);
+    renderSheetToPages(sheet, doc, safe, regular, bold);
   }
 
   const totalPages = doc.getPageCount();
@@ -45,21 +49,22 @@ export async function convertXlsxToPdf(
   }
 
   const title = sheetsToRender.length === 1 ? sheetsToRender[0].name : fallbackTitle;
-  doc.setTitle(safe(title));
+  doc.setTitle(title);
   doc.setCreator("PDFfire Pure-Client Converter");
 
   const pdfBytes = await doc.save({ useObjectStreams: true });
-  const fileName = `${safe(title).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "spreadsheet"}.pdf`;
+  const fileName = `${toFileSlug(title, "spreadsheet")}.pdf`;
 
   return {
     pdfBytes,
+    textFidelity: sanitizer.report(),
     pageCount: totalPages,
     fileName,
     metrics: { sheetCount: parsed.sheetCount, rowCount: parsed.rowCount, cellCount: parsed.cellCount },
   };
 }
 
-function renderSheetToPages(sheet: XlsxSheet, doc: PDFDocument, regular: PDFFont, bold: PDFFont) {
+function renderSheetToPages(sheet: XlsxSheet, doc: PDFDocument, safe: (value: string) => string, regular: PDFFont, bold: PDFFont) {
   const rows = sheet.rows;
   if (!rows.length) return;
 

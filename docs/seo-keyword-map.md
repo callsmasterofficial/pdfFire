@@ -349,11 +349,11 @@
 - **Primary Search Intent:** Permanently delete confidential PII and text without leaving hidden layers.
 - **Main Target Query:** `redact pdf online permanently remove sensitive text`
 - **Secondary Queries:** `redact pdf online`, `black out text in pdf`, `remove confidential info from pdf`, `auto redact pii pdf`
-- **Page Title:** `Redact PDF Online — Permanently Remove Sensitive PII & Text | PDFfire`
-- **Meta Description:** Permanently redact confidential text, SSNs, credit cards, emails, and sensitive patterns. True vector stream removal with zero server uploads.
+- **Page Title:** `Redact PDF Online — Permanently Remove Sensitive PII & Text | FileMelo`
+- **Meta Description:** Redact confidential text, SSNs, credit cards and emails. Covered text is deleted from the PDF content streams and the export is verified, with zero server uploads.
 - **Recommended H1:** Redact PDF Confidential Content Online
 - **Related Tools:** Protect PDF (`/tool/protect`), Edit & Strip Metadata (`/tool/metadata`), Fill & Flatten Form (`/tool/flatten`), Edit & Annotate (`/tool/edit`)
-- **FAQ Topics:** True irreversible stream deletion vs cosmetic black rectangles, automated regex scanning.
+- **FAQ Topics:** Content-stream text deletion and its verification vs cosmetic black rectangles, what is not removed (images, annotations, form fields, scanned text), automated regex scanning.
 - **Index Status:** `index, follow`
 
 ---
