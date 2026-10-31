@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+    // Keep `next build` surfacing published security advisories for this app.
+    agentUpgrade: "security",
   },
 };
 
