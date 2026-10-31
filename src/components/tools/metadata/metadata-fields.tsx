@@ -31,8 +31,8 @@ export function MetadataFields({ metadata, stripAll, onChange }: MetadataFieldsP
     { id: "author", label: "Author", placeholder: "e.g. Jane Doe" },
     { id: "subject", label: "Subject / Topic", placeholder: "e.g. Q4 Executive Summary" },
     { id: "keywords", label: "Keywords (comma separated)", placeholder: "finance, 2026, report" },
-    { id: "creator", label: "Creator Application", placeholder: "e.g. PDFfire Local" },
-    { id: "producer", label: "Producer Engine", placeholder: "e.g. PDFfire Browser Client" },
+    { id: "creator", label: "Creator Application", placeholder: "e.g. FileMelo Local" },
+    { id: "producer", label: "Producer Engine", placeholder: "e.g. FileMelo Browser Client" },
   ];
 
   return (

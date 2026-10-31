@@ -8,7 +8,7 @@ import { getCanonicalUrl } from "@/lib/seo/site-config";
 export const metadata: Metadata = {
   title: "Privacy Policy — Zero Server Uploads Architectural Guarantee",
   description:
-    "Read PDFfire's Privacy Policy. 100% in-browser processing with zero document uploads, zero remote tracking, and complete user confidentiality.",
+    "Read FileMelo's Privacy Policy. 100% in-browser processing with zero document uploads, zero remote tracking, and complete user confidentiality.",
   alternates: {
     canonical: getCanonicalUrl("/privacy"),
   },
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
             Privacy Policy & Data Handling
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Effective Date: October 19, 2026 • PDFfire Architectural Specification
+            Effective Date: October 19, 2026 • FileMelo Architectural Specification
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
             <span>Core Privacy Principle: Zero Document Uploads</span>
           </h2>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            When you use PDFfire to merge, split, compress, edit, convert, or protect PDF files, your documents remain strictly on your local computer or phone. PDFfire does not operate document processing servers, cloud storage buckets, or remote file analysis endpoints.
+            When you use FileMelo to merge, split, compress, edit, convert, or protect PDF files, your documents remain strictly on your local computer or phone. FileMelo does not operate document processing servers, cloud storage buckets, or remote file analysis endpoints.
           </p>
         </div>
 
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
               <span>2. Local Storage & Client Cookies</span>
             </h2>
             <p className="leading-relaxed">
-              PDFfire does not track you across the internet or use tracking cookies. We utilize browser <code>localStorage</code> strictly for non-sensitive interface preferences:
+              FileMelo does not track you across the internet or use tracking cookies. We utilize browser <code>localStorage</code> strictly for non-sensitive interface preferences:
             </p>
             <ul className="list-disc pl-5 space-y-1 mt-2 text-xs">
               <li>Theme preference (Paper light theme vs. Charcoal dark theme)</li>
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
               <span>3. AI & Natural Language Processing</span>
             </h2>
             <p className="leading-relaxed">
-              Unlike cloud services that transmit your document text to OpenAI or external cloud LLMs, PDFfire’s summarization (TextRank) and Q&A (BM25) tools run 100% on-device using local algorithms. Zero words or passages are ever transmitted across a network.
+              Unlike cloud services that transmit your document text to OpenAI or external cloud LLMs, FileMelo’s summarization (TextRank) and Q&A (BM25) tools run 100% on-device using local algorithms. Zero words or passages are ever transmitted across a network.
             </p>
           </section>
 
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
               <span>4. Technical Inquiries & Contact</span>
             </h2>
             <p className="leading-relaxed">
-              If you have questions regarding PDFfire’s client-side security architecture or wish to review the open implementation, you can inspect network activity via your browser’s Developer Tools Network Tab to independently verify that zero document packets leave your device.
+              If you have questions regarding FileMelo’s client-side security architecture or wish to review the open implementation, you can inspect network activity via your browser’s Developer Tools Network Tab to independently verify that zero document packets leave your device.
             </p>
           </section>
         </div>

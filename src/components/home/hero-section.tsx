@@ -8,7 +8,7 @@ export function HeroSection() {
       <div className="inline-flex items-center gap-2 mb-4">
         <Badge variant="secondary" className="px-3 py-1 text-xs font-medium border-border/80 text-foreground">
           <span className="size-2 rounded-full bg-primary inline-block mr-1.5 animate-pulse" />
-          PDFfire • Privacy-First Client Toolkit
+          FileMelo • Privacy-First Client Toolkit
         </Badge>
       </div>
 

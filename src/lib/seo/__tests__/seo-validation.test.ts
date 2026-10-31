@@ -115,9 +115,9 @@ describe("Automated SEO Validation Suite", () => {
   it("verifies critical branding and Open Graph assets exist on disk", () => {
     const publicDir = path.resolve(process.cwd(), "public");
     const requiredFiles = [
-      "brand/pdffire-og.png",
-      "brand/pdffire-mark-light.svg",
-      "brand/pdffire-mark-dark.svg",
+      "brand/filemelo-og.png",
+      "brand/filemelo-mark-light.svg",
+      "brand/filemelo-mark-dark.svg",
       "icon.svg",
       "icons/icon-512.png",
       "icons/favicon.ico",

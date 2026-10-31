@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
       type: "website",
       images: [
         {
-          url: "/brand/pdffire-og.png",
+          url: "/brand/filemelo-og.png",
           width: 1200,
           height: 630,
           alt: `${seo.h1} — ${SITE_CONFIG.name}`,
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: ToolPageProps): Promise<Metad
       card: "summary_large_image",
       title: `${seo.h1} — ${SITE_CONFIG.name}`,
       description: seo.metaDescription,
-      images: ["/brand/pdffire-og.png"],
+      images: ["/brand/filemelo-og.png"],
     },
   };
 }

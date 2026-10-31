@@ -37,7 +37,7 @@ export const CONVERT_SEO_DATA: ToolSeoData[] = [
     features: ["Crisp HiDPI canvas rendering", "PNG lossless or JPEG compressed output", "One-click ZIP bundle download", "Zero server uploads"],
     limitations: ["Rendering 500+ pages may require several seconds of CPU processing"],
     faqs: [
-      { question: "Can I download all pages at once?", answer: "Yes, PDFfire automatically generates an in-memory ZIP archive containing all rendered pages." },
+      { question: "Can I download all pages at once?", answer: "Yes, FileMelo automatically generates an in-memory ZIP archive containing all rendered pages." },
     ],
     relatedToolIds: ["img-to-pdf", "extract-images", "crop", "ocr"],
   },
@@ -57,7 +57,7 @@ export const CONVERT_SEO_DATA: ToolSeoData[] = [
     features: ["Parses raw DCT/JPEG and FlateDecode streams", "Includes soft-mask alpha channel transparency", "ZIP archive export"],
     limitations: ["Cannot extract images flattened into non-standard vector drawing paths"],
     faqs: [
-      { question: "Does this re-render or extract original image files?", answer: "PDFfire extracts the exact embedded binary streams stored inside the PDF objects, preserving original quality." },
+      { question: "Does this re-render or extract original image files?", answer: "FileMelo extracts the exact embedded binary streams stored inside the PDF objects, preserving original quality." },
     ],
     relatedToolIds: ["pdf-to-img", "img-to-pdf", "extract", "compress"],
   },

@@ -7,9 +7,9 @@ import { ShieldCheck, Cpu, Lock, ArrowRight, Zap } from "lucide-react";
 import { getCanonicalUrl } from "@/lib/seo/site-config";
 
 export const metadata: Metadata = {
-  title: "About PDFfire — Privacy-First Client-Side PDF Toolkit",
+  title: "About FileMelo — Privacy-First Client-Side PDF Toolkit",
   description:
-    "Learn about PDFfire's architecture. Process PDFs locally in your browser with zero server uploads, complete privacy, and high performance.",
+    "Learn about FileMelo's architecture. Process PDFs locally in your browser with zero server uploads, complete privacy, and high performance.",
   alternates: {
     canonical: getCanonicalUrl("/about"),
   },
@@ -22,13 +22,13 @@ export default function AboutPage() {
       <main className="flex-1 max-w-4xl mx-auto px-4 py-12 sm:py-16 w-full">
         <div className="mb-10 text-center sm:text-left">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
-            <span>About PDFfire</span>
+            <span>About FileMelo</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground">
             PDF tools designed with <span className="text-primary">privacy by architecture.</span>
           </h1>
           <p className="mt-3 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-            PDFfire is a modern browser-based document utility suite. Unlike traditional cloud converters, your documents never leave your computer.
+            FileMelo is a modern browser-based document utility suite. Unlike traditional cloud converters, your documents never leave your computer.
           </p>
         </div>
 
@@ -61,18 +61,18 @@ export default function AboutPage() {
             <ShieldCheck className="size-6 text-primary mb-3" />
             <h2 className="text-base font-bold text-foreground mb-1.5">Offline Capable (PWA)</h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              PDFfire is installable as a Progressive Web App. Once assets are cached, core tools function even without an active internet connection.
+              FileMelo is installable as a Progressive Web App. Once assets are cached, core tools function even without an active internet connection.
             </p>
           </div>
         </div>
 
         <section className="space-y-6 text-sm text-muted-foreground border-t border-border pt-8 mb-12">
-          <h2 className="text-xl font-bold text-foreground">Why We Built PDFfire</h2>
+          <h2 className="text-xl font-bold text-foreground">Why We Built FileMelo</h2>
           <p className="leading-relaxed">
             Most online PDF tools upload your sensitive tax documents, contracts, medical records, and legal files to unknown remote servers. Even when servers promise to delete files, transmitting confidential records over the internet exposes users to interception, data breaches, and unauthorized retention.
           </p>
           <p className="leading-relaxed">
-            Modern web standards — specifically WebAssembly, HTML5 Canvas, and modern JavaScript engines — have made it entirely possible to manipulate, render, and compile PDF files directly inside the client browser. PDFfire was built to prove that document productivity can be fast, powerful, and completely private without compromise.
+            Modern web standards — specifically WebAssembly, HTML5 Canvas, and modern JavaScript engines — have made it entirely possible to manipulate, render, and compile PDF files directly inside the client browser. FileMelo was built to prove that document productivity can be fast, powerful, and completely private without compromise.
           </p>
         </section>
 

@@ -55,8 +55,8 @@ export function PwaInstallButton() {
       size="sm"
       onClick={handleInstallClick}
       className="h-8 px-2.5 text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10 transition-colors shadow-xs"
-      title="Install PDFfire as a standalone desktop or mobile application"
-      aria-label="Install PDFfire as standalone application"
+      title="Install FileMelo as a standalone desktop or mobile application"
+      aria-label="Install FileMelo as standalone application"
     >
       <Download className="size-3.5" />
       <span className="hidden sm:inline">Install App</span>

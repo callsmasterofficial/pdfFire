@@ -65,7 +65,7 @@ describe("Phase 10: Release Readiness & Quality Gates", () => {
       type: "application/pdf",
     });
 
-    const titleWithSpecialChars = "PDFfire ™ — Über & Accents «100%» 🚀";
+    const titleWithSpecialChars = "FileMelo ™ — Über & Accents «100%» 🚀";
     const updated = await updatePdfMetadata(file, {
       title: titleWithSpecialChars,
       author: "René François — 小明",
@@ -102,7 +102,7 @@ describe("Phase 10: Release Readiness & Quality Gates", () => {
     const unusualText = `
       --- SECTION 1 ---
       Invoice Number: #INV-2026-999!!!   Amount Due: $1,450.00.
-      Contact: support.desk+urgent@pdffire.internal.
+      Contact: support.desk+urgent@filemelo.internal.
       
       --- SECTION 2 ---
       Terms: Net 30 days... All rights reserved (C) 2026.

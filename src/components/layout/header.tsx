@@ -18,8 +18,8 @@ export function Header() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/brand/pdffire-mark-light.svg"
-              alt="PDFfire Logo"
+              src="/brand/filemelo-mark-light.svg"
+              alt="FileMelo Logo"
               width={32}
               height={32}
               className="size-8 rounded-lg shrink-0 dark:hidden"
@@ -27,7 +27,7 @@ export function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/icon.svg"
-              alt="PDFfire Logo"
+              alt="FileMelo Logo"
               width={32}
               height={32}
               className="size-8 rounded-lg shadow-xs shrink-0 hidden dark:block"

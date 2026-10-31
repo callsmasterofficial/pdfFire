@@ -17,7 +17,7 @@ export const ADVANCED_SEO_DATA: ToolSeoData[] = [
     features: ["Per-file progress and error isolation", "AbortController background task cancellation", "One-click ZIP archive bundling"],
     limitations: ["Processing dozens of 100MB+ files concurrently may challenge devices with low memory"],
     faqs: [
-      { question: "What happens if one file in the batch fails?", answer: "PDFfire uses isolated worker execution; failures in one document do not interrupt other files in the queue." },
+      { question: "What happens if one file in the batch fails?", answer: "FileMelo uses isolated worker execution; failures in one document do not interrupt other files in the queue." },
     ],
     relatedToolIds: ["merge", "compress", "rotate", "protect"],
   },
@@ -37,7 +37,7 @@ export const ADVANCED_SEO_DATA: ToolSeoData[] = [
     features: ["100% on-device extractive TextRank algorithm", "Zero data transmitted to cloud AI services", "Includes top entity discovery"],
     limitations: ["Requires digital text layer; run OCR first on scanned image documents"],
     faqs: [
-      { question: "Is my document sent to OpenAI or cloud servers?", answer: "No. PDFfire uses a local JavaScript TextRank algorithmic engine inside your browser; no document text is ever transmitted externally." },
+      { question: "Is my document sent to OpenAI or cloud servers?", answer: "No. FileMelo uses a local JavaScript TextRank algorithmic engine inside your browser; no document text is ever transmitted externally." },
     ],
     relatedToolIds: ["chat", "pdf-to-text", "ocr", "metadata"],
   },
@@ -77,7 +77,7 @@ export const ADVANCED_SEO_DATA: ToolSeoData[] = [
     features: ["Myers LCS word-level text difference engine", "Side-by-side and unified diff views", "Canvas pixel overlay heatmap for visual changes"],
     limitations: ["Comparing 100+ page documents visually may require several seconds of canvas rasterization"],
     faqs: [
-      { question: "Can it compare layout shifts as well as text?", answer: "Yes! PDFfire includes both a text diff viewer and a visual pixel heatmap that highlights modified graphic elements." },
+      { question: "Can it compare layout shifts as well as text?", answer: "Yes! FileMelo includes both a text diff viewer and a visual pixel heatmap that highlights modified graphic elements." },
     ],
     relatedToolIds: ["repair", "metadata", "hash", "edit"],
   },
@@ -91,7 +91,7 @@ export const ADVANCED_SEO_DATA: ToolSeoData[] = [
     secondaryKeywords: ["repair corrupted pdf", "fix damaged pdf file", "rebuild pdf xref table", "salvage broken pdf pages"],
     instructions: [
       { step: 1, title: "Upload Damaged PDF", description: "Select the unreadable or corrupted document." },
-      { step: 2, title: "Run Diagnostic Repair", description: "PDFfire scans for missing EOF trailers, header anomalies, and broken object streams." },
+      { step: 2, title: "Run Diagnostic Repair", description: "FileMelo scans for missing EOF trailers, header anomalies, and broken object streams." },
       { step: 3, title: "Download Salvaged PDF", description: "Export the repaired document with a reconstructed xref index." },
     ],
     features: [

@@ -25,8 +25,8 @@ export function ToolSidebarHeader({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand/pdffire-mark-light.svg"
-            alt="PDFfire Logo"
+            src="/brand/filemelo-mark-light.svg"
+            alt="FileMelo Logo"
             width={26}
             height={26}
             className="size-6.5 rounded-md shrink-0 dark:hidden"
@@ -34,7 +34,7 @@ export function ToolSidebarHeader({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icon.svg"
-            alt="PDFfire Logo"
+            alt="FileMelo Logo"
             width={26}
             height={26}
             className="size-6.5 rounded-md shadow-xs shrink-0 hidden dark:block"

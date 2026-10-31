@@ -12,7 +12,7 @@ describe("Phase 9: Optional Local AI Capabilities", () => {
     The company achieved total revenue of $1,450,000 across digital operations.
     Net profit margins improved by 14% compared to the previous fiscal quarter.
     Security audits were concluded on 2026-09-30 by the compliance committee.
-    For questions regarding these financial figures, contact audit-lead@pdffire.org.
+    For questions regarding these financial figures, contact audit-lead@filemelo.org.
     The primary milestone achieved was the full migration to client-side in-memory document processing.
     This architecture eliminated cloud server document transmission and prevented external data leaks.
   `;
@@ -38,7 +38,7 @@ describe("Phase 9: Optional Local AI Capabilities", () => {
     expect(dates.some((d) => d.value.includes("2026-09-30"))).toBe(true);
 
     const emails = entities.filter((e) => e.type === "email");
-    expect(emails.some((m) => m.value.includes("audit-lead@pdffire.org"))).toBe(true);
+    expect(emails.some((m) => m.value.includes("audit-lead@filemelo.org"))).toBe(true);
   });
 
   it("Document Q&A: answers questions with accurate page citations and confidence", () => {

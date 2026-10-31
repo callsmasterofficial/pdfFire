@@ -17,7 +17,7 @@ export const ORGANIZE_SEO_DATA: ToolSeoData[] = [
     features: ["Drag-and-drop visual reordering", "Instant client-side assembly via pdf-lib", "Zero file uploads to remote servers", "Supports mixed orientations and page sizes"],
     limitations: ["Password-encrypted PDFs must be unlocked prior to merging", "Available system RAM bounds maximum queue size"],
     faqs: [
-      { question: "Are my merged PDF files uploaded to a server?", answer: "No. PDFfire merges all documents directly in your browser's local memory using WebAssembly and pdf-lib. No document data leaves your device." },
+      { question: "Are my merged PDF files uploaded to a server?", answer: "No. FileMelo merges all documents directly in your browser's local memory using WebAssembly and pdf-lib. No document data leaves your device." },
       { question: "Is there a limit on how many PDFs I can combine?", answer: "There is no arbitrary software limit. You can combine dozens of files as long as your device has sufficient RAM." },
     ],
     relatedToolIds: ["split", "reorder", "compress", "alternate-mix"],
@@ -39,7 +39,7 @@ export const ORGANIZE_SEO_DATA: ToolSeoData[] = [
     limitations: ["Encrypted documents require entering the password first"],
     faqs: [
       { question: "How does the custom range syntax work?", answer: "Enter page numbers separated by commas or hyphens (for example '1-3, 5, 8-12'). Each specified interval creates a distinct PDF." },
-      { question: "Will splitting decrease text or image quality?", answer: "No. PDFfire preserves the original vector streams and image definitions without re-compression." },
+      { question: "Will splitting decrease text or image quality?", answer: "No. FileMelo preserves the original vector streams and image definitions without re-compression." },
     ],
     relatedToolIds: ["merge", "extract", "reorder", "crop"],
   },
@@ -59,7 +59,7 @@ export const ORGANIZE_SEO_DATA: ToolSeoData[] = [
     features: ["90°, 180°, and 270° rotation angles", "Target all pages, odd pages, or even pages", "Instant preview of rotation results", "Zero server roundtrips"],
     limitations: ["Only modifies page rotation dictionary metadata; does not crop content"],
     faqs: [
-      { question: "Is the rotation permanent when downloaded?", answer: "Yes. PDFfire updates the native PDF /Rotate attributes so pages render correctly in any reader." },
+      { question: "Is the rotation permanent when downloaded?", answer: "Yes. FileMelo updates the native PDF /Rotate attributes so pages render correctly in any reader." },
       { question: "Can I rotate only odd or even pages?", answer: "Yes, you can target specific subsets to fix alternating scanner orientations." },
     ],
     relatedToolIds: ["flip", "crop", "extract", "merge"],
