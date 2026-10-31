@@ -6,42 +6,58 @@ Last updated: 2026-10-31.
 
 ## Where the work is
 
-Rebuilt from live GitHub state and git ancestry on 2026-10-31, not from the
-previous contents of this file, which claimed nothing had merged.
+Rebuilt from live GitHub state and git ancestry. Every version of this section
+written on a branch is stale about whatever merged after it, so it is rebuilt
+rather than merged.
 
-Website `main` is `8db8410`.
+Website `main` is `f39301c`.
 
-Merged to website `main`, in the order it happened:
+Merged to website `main`:
 
-| PR | Branch | What |
-| --- | --- | --- |
-| #10 | `fix/production-dependency-audit` | production audit remediation (into #2's branch) |
-| #9 | `release/ci-gates-2026-10-31` | quality-gate CI workflow (into #2's branch) |
-| #2 | `chore/next-security-upgrade` | Next.js 16.4.3 for the published advisory |
-| #1 | `fix/redaction-truth-and-unicode` | redaction leak, Unicode loss, pagination loss |
-| #11 | `ci/validate-retargeted-prs` | revalidate stacked PRs when their base moves |
-| #3 | `fix/pii-redaction-geometry` | PII box geometry |
-| #7 | `fix/redaction-positional-matching` | positional redaction and exact font metrics |
+| PR | What |
+| --- | --- |
+| #10 | production dependency audit remediation |
+| #9 | quality-gate CI workflow |
+| #2 | Next.js 16.4.3 for the published advisory (FM-006) |
+| #1 | redaction leak, Unicode loss, pagination loss (FM-001 to FM-003) |
+| #11 | revalidate stacked PRs when their base moves |
+| #3 | PII box geometry (FM-007) |
+| #7 | positional redaction and exact font metrics (FM-010, FM-013) |
+| #13 | integration of #5's security audit and decryption (FM-009, FM-011) |
+| #5 | closed as integrated by #13 |
+| #4 | table cell wrapping (FM-008) |
 
 Still open on the website:
 
 | PR | Branch | Base | State |
 | --- | --- | --- | --- |
-| #4 | `fix/table-cell-truncation` | `main` | retargeted from #1's branch; being integrated |
-| #5 | `audit/security-tool-claims` | `main` | conflicts with `main` |
-| #6 | `feat/legacy-pdf-decryption` | `audit/security-tool-claims` | waits on #5 |
-| #8 | `feat/unicode-language-packs` | `main` | retargeted from #1's branch; conflicts |
+| #6 | `feat/legacy-pdf-decryption` | `main` | legacy RC4/AES-128 decryption (FM-012); being integrated |
+| #8 | `feat/unicode-language-packs` | `main` | CJK and other language packs (FM-005); retargeted from #1's branch |
+
+Then, once both #4 and #8 are on `main`: migrate the DOCX, HTML, XLSX and CSV
+converters onto the language packs. They still use the WinAnsi sanitiser,
+because #4 rewrote their text drawing and #8 could not migrate them at the same
+time without conflicting.
 
 Other repositories:
 
 - `pdfFire-extension` `main` is `36c86b8`; PRs #1 (branding, resource exposure)
-  and #2 (CI) are merged.
-- `pdfFire-app` has PR #1 open, a CI workflow whose production dependency audit
-  fails. That failure is real and must be fixed before the branch is treated as
-  release-ready.
+  and #2 (CI) are merged. The extension has not been loaded in a browser.
+- `pdfFire-app` has PR #1 open, whose production dependency audit genuinely
+  fails. That must be fixed before the branch is release-ready.
 
-A merge is not a deployment. Nothing has been deployed, submitted to a store,
-or made publicly live, and that is verified separately from GitHub state.
+A merge is not a deployment. Nothing has been deployed, submitted to a store or
+made publicly live; that is verified separately from GitHub state.
+
+### Documentation drift to watch
+
+Integrating #5 through #13 kept `main`'s documentation and archived the audit
+branch's copies under `docs/archives/pr5/`. The code landed but the live
+`docs/security-findings.md` lost FM-009, FM-011 and FM-012, and
+`docs/tool-capability-matrix.md` still called `protect`, `unlock`, `metadata`,
+`flatten`, `sign` and `repair` unverified after their tests had merged. Both
+are reconciled in this merge. When integrating the remaining branches, check
+that the live documents describe the code that is actually on `main`.
 
 ### Resolving conflicts in this file
 

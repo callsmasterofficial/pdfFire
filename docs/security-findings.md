@@ -265,6 +265,62 @@ Fixed by wrapping instead of clipping:
 all four converters with no "..." in the output, truncation is reported for an
 unbreakable 4000-character token, and a table that fits reports none.
 
+### FM-009 — Security tool claims audited · **done**
+
+Each tool's public copy was turned into a test. `security-tool-claims.test.ts`
+(10 tests) is written from `src/lib/seo/`, not from the implementation.
+
+**Claims that held:**
+
+- **protect** — genuinely writes an AES-256 encryption dictionary (`/R 6`,
+  `/V 5`), not a silent RC4 fallback, and an independent reader refuses the
+  file without the password. The only change was dropping "military-grade",
+  which means nothing, and saying plainly that password strength is what
+  actually decides the outcome.
+- **flatten** — `form.flatten()` really does leave no interactive fields
+  behind. "Static vector page paths" became an accurate description of drawing
+  the field's appearance into the page, and "tamper-proof" is gone.
+
+**Claims that were false, now fixed:**
+
+- **metadata** — "Strip All Metadata for instant privacy sanitization" cleared
+  only the six Info dictionary fields. The XMP packet, which normally repeats
+  the same author and title, survived untouched, as did the creation date; the
+  author's name was still readable in the exported bytes. `stripAll` now also
+  deletes the XMP stream (and the orphaned object, not just the catalog
+  reference, since pdf-lib still writes unreferenced objects), clears both
+  dates, and loads with `updateMetadata: false` so pdf-lib does not stamp a
+  fresh Producer and ModDate back on. The copy now also says what is *not*
+  covered: annotation authors, form values, embedded file properties.
+- **repair** — `xrefRebuilt` was hardcoded `true`, so every document was told
+  its cross-reference table had been rebuilt, and the report card rendered a
+  green "Pristine Rebuilt" unconditionally. It now reflects a strict-parse
+  probe of the source. Worse, an unsalvageable file produced a blank page and
+  reported `pagesRecovered: 1`: a fabricated page presented as recovered
+  content. That is now `0` with `recoverySucceeded: false`, and the card shows
+  a warning that the download is an empty placeholder.
+- **compress** — the FAQ answered "Will compression blur my document text?"
+  with "No. Vector text streams are never rasterized", while the Strong preset
+  rasterises every page to JPEG. The copy now describes each preset honestly,
+  including that Light and Balanced do not recompress images and so may barely
+  shrink a well-compressed file, and that some files come out larger.
+- **unlock** — see FM-011. The listing claimed "Decrypts document streams
+  locally"; it does not.
+- **sign** — "stamped directly into PDF vector streams" was wrong for a drawn
+  or uploaded signature, which is an image. Reworded. Its limitation about not
+  being a PKI certificate was already correct and stayed.
+
+**Also found while auditing:** `text-to-pdf` never had the ASCII-stripping bug,
+so Latin-1 text was safe, but it passed text straight to `drawText` with no
+sanitiser. On CJK input pdf-lib's own error — `WinAnsi cannot encode "中"
+(0x4e2d)` — reached the user as the failure message. It now uses
+`FontTextSanitizer` like the other converters and reports what it could not
+draw. Three stale `PDFfire` producer strings were also replaced.
+
+A pre-existing test asserted `xrefRebuilt === true` for a healthy document, so
+the suite was pinning the false positive in place. It now asserts the truthful
+value, with a comment saying why it changed.
+
 ### FM-010 — Deletion removed identical text elsewhere on the page · **fixed**
 
 Deletion matched by *content*: the covered text was extracted as a string and
@@ -307,6 +363,95 @@ and separates a **leak** (text we deleted is still there, which throws) from a
 **Regression tests:** `redact-precision.test.ts` (8), including the two
 original pathological cases: one of two identical lines, and a short covered
 word that appears again on an untouched line.
+
+### FM-011 — Unlock rasterised the document · **fixed for AES-256**
+
+`unlockPdfWithPassword` opened the file with PDF.js and re-rendered every page
+to a JPEG, then rebuilt a PDF from those images. The output opened without a
+password but had no text layer: nothing selectable, searchable or screen-reader
+readable, and usually a much larger file. The listing called this "Decrypts
+document streams locally".
+
+The gap was real — pdf-lib cannot open an encrypted document, and PDF.js can
+decrypt but cannot write one back out — but it turned out to be bridgeable.
+pdf-lib *will* parse the structure with `ignoreEncryption: true`, leaving every
+stream and string as ciphertext; decrypting those in place and dropping
+`/Encrypt` lets pdf-lib reserialise, recomputing lengths and the
+cross-reference table.
+
+Implemented in `crypto/` and `operations/decrypt/`:
+
+- `crypto/aes-cbc.ts` — PDF uses CBC two ways. Stream and string data is
+  PKCS#7 padded, which `crypto.subtle.decrypt` handles. Recovering the file key
+  from `/UE` or `/OE` is unpadded, which WebCrypto refuses, so one extra
+  ciphertext block is appended, crafted to decrypt to a full padding block.
+  Crafting it needs only AES block *encryption*, which the existing encryption
+  dependency already exports — no new dependency, and no hand-rolled cipher.
+- `crypto/standard-security.ts` — Algorithm 2.A password validation and key
+  recovery for revision 6, accepting either the user or the owner password,
+  using the dependency's exported `computeHash2B`.
+- `operations/decrypt/decrypt-document.ts` — walks every indirect object,
+  decrypts streams and strings, removes `/Encrypt`, and reserialises.
+
+Two details worth recording because they were wrong first time:
+`PDFRawStream.contents` is read-only, so streams are replaced rather than
+mutated; and decrypted strings must go back as hex, byte for byte, because
+`PDFHexString.fromText()` would re-encode plaintext that is already UTF-16BE
+with a byte order mark and corrupt the title.
+
+**Scope and fallback.** Only AES-256 (V5 R6) is decrypted in place. RC4 and
+AES-128 use MD5-based derivation and are declined rather than guessed at, and
+documents holding objects inside encrypted object streams are declined too,
+since pdf-lib parses those during load before anything can be decrypted. Both
+cases fall back to the image path, which still works; the result reports
+`method: "decrypted" | "rasterized"` and `UnlockMethodNotice` states which
+happened. A wrong password raises `WrongPasswordError` and never silently
+falls back.
+
+**Regression tests:** `decrypt-document.test.ts` (7) — the document is
+genuinely encrypted to begin with, the output opens without a password, the
+text is still extractable by an independent parser, metadata survives, the
+owner password works, a wrong password is refused, and an unsupported revision
+is declined rather than mangled.
+
+### FM-012 — Legacy encryption · **fixed for RC4; AES-128 implemented**
+
+Revisions 2 to 4 derive the file key with MD5 and encrypt with RC4 or AES-128.
+Both are weak ciphers, but documents using them are common and the alternative
+for a user who holds the password was losing the text to a rasterised copy.
+
+`crypto/legacy-security.ts` implements the relevant algorithms from
+ISO 32000-1 7.6.3: the 32-byte password padding and MD5 key derivation
+(Algorithm 2, including the `/EncryptMetadata` false case), the expected `/U`
+value (Algorithms 4 and 5), user validation (Algorithm 6), recovery of the user
+password from `/O` with the owner password (Algorithm 7), and the per-object key
+(Algorithm 1, with the AESV2 `sAlT` suffix).
+
+`crypto/document-cipher.ts` turns a validated file key into a cipher, so the
+object walker no longer needs to know which revision it is rewriting:
+AES-256 uses the file key directly, while revisions 2 to 4 derive a key per
+object and use RC4 or AES-128.
+
+**Evidence, and the difference between the two paths.** RC4 (V2 R3, 128-bit) is
+validated end to end against documents produced by the encryption dependency:
+the text is recoverable afterwards, metadata survives, the owner password works,
+and a wrong password is refused. That also validates the shared Algorithm 2
+derivation against a third-party producer.
+
+AES-128 (V4, AESV2) is **not** validated that way, because the dependency cannot
+produce such a document. Its revision-specific parts — the salted per-object key
+and the leading initialisation vector — are covered by direct unit tests, and
+the `/CF` to `/CFM` resolution by a parser test. That is weaker evidence than a
+real fixture and the capability matrix records it as such. A third-party AES-128
+fixture would settle it.
+
+Still declined, and still falling back to the disclosed image path: documents
+holding objects inside encrypted object streams, since pdf-lib parses those
+during load before anything can be decrypted; and any crypt filter other than
+AESV3, AESV2 or V2.
+
+**Regression tests:** `decrypt-document.test.ts` (12) and
+`decrypt-ciphers.test.ts` (5).
 
 ### FM-013 — Glyph widths now exact · **fixed**
 
