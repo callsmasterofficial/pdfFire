@@ -1,14 +1,17 @@
 export const SITE_CONFIG = {
-  name: "PDFfire",
-  tagline: "PDF tools that just work.",
-  defaultTitle: "PDFfire — PDF Tools That Just Work",
-  titleTemplate: "%s | PDFfire",
+  name: "FileMelo",
+  tagline: "Convert. Create. Simplify.",
+  defaultTitle: "FileMelo — Private PDF Tools",
+  titleTemplate: "%s | FileMelo",
   defaultDescription:
     "Fast, private in-browser PDF manipulation. Merge, split, compress, convert, edit, and protect documents with zero server uploads.",
   locale: "en_US",
-  author: "PDFfire Team",
+  author: "Callsmaster Services LLP",
   themeColor: "#FF7047",
-  twitterHandle: "@pdffire",
+  // No social handle is set: inventing one would point readers and
+  // structured data at an account that may belong to someone else. Add the
+  // real handle here once an account exists.
+  twitterHandle: undefined as string | undefined,
 } as const;
 
 export function getSiteUrl(): string {
@@ -16,7 +19,7 @@ export function getSiteUrl(): string {
   if (envUrl && envUrl.trim().length > 0) {
     return envUrl.trim().replace(/\/+$/, "");
   }
-  return "https://pdffire.com";
+  return "https://filemelo.com";
 }
 
 export function getCanonicalUrl(path: string = ""): string {
