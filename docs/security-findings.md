@@ -191,11 +191,37 @@ fallback also regex-scans raw PDF bytes decoded as UTF-8, which cannot work on
 compressed streams and should be removed now that PDF.js runs outside the
 browser.
 
-### FM-008 — Table cells are truncated · **confirmed**
+### FM-008 — Table cells were truncated silently · **fixed**
 
-The DOCX, HTML, XLSX and CSV table renderers clip cell text at 22–31
-characters and append "...". Longer values are lost from the output with no
-warning. Unlike FM-002 this is reported nowhere.
+The DOCX, HTML, XLSX and CSV table renderers clipped cell text at a fixed
+character count — 22, 25, 26 or 31 depending on the renderer — and appended
+"...". Anything longer was gone from the output, reported nowhere. A
+63-character cell came out as `Quarterly revenue reco...`, losing 41
+characters.
+
+A character count is also the wrong measure: in a proportional font
+"WWWWWWWWWW" and "iiiiiiiiii" are the same length and nothing like the same
+width, so the limit was simultaneously too strict for narrow text and too loose
+for wide text.
+
+Fixed by wrapping instead of clipping:
+
+- `text/table-cell-layout.ts` wraps to the column's measured width, breaking
+  words that are themselves wider than the column rather than letting them
+  overflow into the next one. `TableFidelityTracker` records every cell that
+  still does not fit.
+- `operations/table-renderer.ts` lays a row out *before* reserving vertical
+  space, so row height follows the tallest cell. The DOCX and HTML renderers
+  were near-identical copies of the same loop and now share this one;
+  `html-table.ts` is gone. XLSX and CSV keep their own chrome, including
+  per-page header repetition, but share `layoutRow` and `drawRowCells`.
+- A cell is only cut when it exceeds six wrapped lines, and each cut is
+  reported through `tableFidelity`, shown by `TableFidelityNotice` in the four
+  table converter views.
+
+**Regression tests:** `table-cell-fidelity.test.ts` (6) — long cells survive in
+all four converters with no "..." in the output, truncation is reported for an
+unbreakable 4000-character token, and a table that fits reports none.
 
 ### FM-009 — Other tools' claims are not independently verified · **unverified**
 

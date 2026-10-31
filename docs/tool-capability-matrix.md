@@ -39,10 +39,10 @@ first.
 
 | Tool | Platform | Text fidelity | Verification | Notes |
 | --- | --- | --- | --- | --- |
-| `docx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | FM-002, FM-003. Reconstructs simple DOCX; not a faithful Word renderer. Cells clipped (FM-008). |
+| `docx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | FM-002, FM-003. Reconstructs simple DOCX; not a faithful Word renderer. Table cells wrap to their column (FM-008). |
 | `xlsx-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | As above. No formulas, styling or merged cells. |
 | `html-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Simple HTML subset. No CSS layout engine. |
-| `csv-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Max 6 columns; cells clipped. |
+| `csv-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Max 6 columns; table cells wrap to their column. |
 | `markdown-to-pdf` | web | WinAnsi + accent folding, reported | **Independently verified** | Headings, lists, quotes, code, rules. |
 | `ocr` | web | WinAnsi in the text layer, folded | Unit tested | Tesseract.js. Accuracy is not transcription; language packs download on demand. |
 | `pdf-to-text` | web | n/a | Unit tested | PDF.js extraction. |

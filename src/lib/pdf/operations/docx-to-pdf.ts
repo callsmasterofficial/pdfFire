@@ -5,6 +5,8 @@ import {
   toFileSlug,
   type TextFidelityReport,
 } from "../text/font-safe-text";
+import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
+import { drawTableRows } from "./table-renderer";
 
 export interface DocxToPdfResult {
   pdfBytes: Uint8Array;
@@ -13,6 +15,8 @@ export interface DocxToPdfResult {
   metrics: { paragraphCount: number; wordCount: number; tableCount: number };
   /** Which characters the embedded fonts could not draw as authored. */
   textFidelity: TextFidelityReport;
+  /** Table cells whose text did not fit their column, even wrapped. */
+  tableFidelity: TableFidelityReport;
 }
 
 const PAGE = { width: 595.28, height: 841.89, margin: 54 };
@@ -39,6 +43,7 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
   const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
   const sanitizer = new FontTextSanitizer([regular, bold, italic]);
   const safe = (text: string) => sanitizer.sanitize(text);
+  const tableTracker = new TableFidelityTracker();
 
   let page = doc.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - PAGE.margin;
@@ -74,7 +79,11 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
       continue;
     }
     if (block.type === "table" && block.tableRows?.length) {
-      drawTable(block.tableRows, safe, regular, bold, () => page, () => y, (newY) => { y = newY; }, ensure);
+      drawTableRows(
+        block.tableRows,
+        { safe, regular, bold, getPage: () => page, getY: () => y, setY: (newY) => { y = newY; }, ensure, tracker: tableTracker },
+        { pageWidth: PAGE.width, margin: PAGE.margin, maxCols: 6, headerFill: rgb(.93, .94, .96) }
+      );
       y -= 8;
     }
   }
@@ -101,6 +110,7 @@ export async function convertDocxToPdf(bytes: Uint8Array, fallbackTitle = "Word 
     fileName,
     metrics: { paragraphCount: parsed.paragraphCount, wordCount: parsed.wordCount, tableCount: parsed.tableCount },
     textFidelity: sanitizer.report(),
+    tableFidelity: tableTracker.report(),
   };
 }
 
@@ -125,42 +135,5 @@ function drawParagraph(
     ensure(leading);
     getPage().drawText(line, { x: PAGE.margin, y: getY(), size, font, color: rgb(.14, .14, .16) });
     setY(getY() - leading);
-  }
-}
-
-function drawTable(
-  rows: string[][],
-  safe: (text: string) => string,
-  regular: PDFFont,
-  bold: PDFFont,
-  getPage: () => PDFPage,
-  getY: () => number,
-  setY: (y: number) => void,
-  ensure: (h: number) => void
-) {
-  const maxCols = Math.min(Math.max(...rows.map((r) => r.length), 1), 6);
-  const tableWidth = PAGE.width - PAGE.margin * 2;
-  const colWidth = tableWidth / maxCols;
-  const rowHeight = 22;
-
-  for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-    ensure(rowHeight);
-    const page = getPage();
-    const rowY = getY();
-    const isHeader = rIdx === 0;
-    if (isHeader) {
-      page.drawRectangle({ x: PAGE.margin, y: rowY - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.93, .94, .96) });
-    } else if (rIdx % 2 === 1) {
-      page.drawRectangle({ x: PAGE.margin, y: rowY - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.98, .98, .99) });
-    }
-    const cols = rows[rIdx];
-    for (let cIdx = 0; cIdx < maxCols; cIdx++) {
-      const cellText = safe(cols[cIdx] || "");
-      const font = isHeader ? bold : regular;
-      const x = PAGE.margin + cIdx * colWidth;
-      const clipped = cellText.length > 25 ? `${cellText.slice(0, 22)}...` : cellText;
-      page.drawText(clipped, { x: x + 6, y: rowY - 11, size: 8.5, font, color: rgb(.15, .15, .18) });
-    }
-    setY(rowY - rowHeight);
   }
 }

@@ -1,6 +1,8 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import { parseXlsxBytes, XlsxSheet } from "./xlsx-parser";
 import { FontTextSanitizer, toFileSlug, type TextFidelityReport } from "../text/font-safe-text";
+import { TableFidelityTracker, type TableFidelityReport } from "../text/table-cell-layout";
+import { CELL_PADDING, drawRowCells, layoutRow } from "./table-renderer";
 
 export interface XlsxToPdfResult {
   pdfBytes: Uint8Array;
@@ -9,10 +11,11 @@ export interface XlsxToPdfResult {
   metrics: { sheetCount: number; rowCount: number; cellCount: number };
   /** Which characters the embedded fonts could not draw as authored. */
   textFidelity: TextFidelityReport;
+  /** Table cells whose text did not fit their column, even wrapped. */
+  tableFidelity: TableFidelityReport;
 }
 
 const PAGE = { width: 841.89, height: 595.28, margin: 40 };
-const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 3)}...` : s);
 
 export async function convertXlsxToPdf(
   bytes: Uint8Array,
@@ -25,6 +28,7 @@ export async function convertXlsxToPdf(
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const sanitizer = new FontTextSanitizer([regular, bold]);
   const safe = (value: string) => sanitizer.sanitize(value);
+  const tableTracker = new TableFidelityTracker();
 
   const sheetsToRender =
     selectedSheetIndex !== undefined && parsed.sheets[selectedSheetIndex]
@@ -36,7 +40,7 @@ export async function convertXlsxToPdf(
   }
 
   for (const sheet of sheetsToRender) {
-    renderSheetToPages(sheet, doc, safe, regular, bold);
+    renderSheetToPages(sheet, doc, safe, regular, bold, tableTracker);
   }
 
   const totalPages = doc.getPageCount();
@@ -58,20 +62,29 @@ export async function convertXlsxToPdf(
   return {
     pdfBytes,
     textFidelity: sanitizer.report(),
+    tableFidelity: tableTracker.report(),
     pageCount: totalPages,
     fileName,
     metrics: { sheetCount: parsed.sheetCount, rowCount: parsed.rowCount, cellCount: parsed.cellCount },
   };
 }
 
-function renderSheetToPages(sheet: XlsxSheet, doc: PDFDocument, safe: (value: string) => string, regular: PDFFont, bold: PDFFont) {
+function renderSheetToPages(
+  sheet: XlsxSheet,
+  doc: PDFDocument,
+  safe: (value: string) => string,
+  regular: PDFFont,
+  bold: PDFFont,
+  tracker: TableFidelityTracker
+) {
   const rows = sheet.rows;
   if (!rows.length) return;
 
   const maxCols = Math.min(Math.max(...rows.map((r) => r.length), 1), 8);
   const tableWidth = PAGE.width - PAGE.margin * 2;
   const colWidth = tableWidth / maxCols;
-  const rowHeight = 22;
+  const textWidth = colWidth - CELL_PADDING * 2;
+  const columnX = (column: number) => PAGE.margin + column * colWidth + CELL_PADDING;
 
   let page: PDFPage = doc.addPage([PAGE.width, PAGE.height]);
   let y = PAGE.height - PAGE.margin;
@@ -80,33 +93,30 @@ function renderSheetToPages(sheet: XlsxSheet, doc: PDFDocument, safe: (value: st
     page.drawText(safe(sheet.name), { x: PAGE.margin, y: y - 2, size: 15, font: bold, color: rgb(.1, .12, .18) });
     y -= 26;
 
-    const headers = rows[0] || [];
-    page.drawRectangle({ x: PAGE.margin, y: y - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.18, .24, .36) });
-    for (let c = 0; c < maxCols; c++) {
-      const headerText = headers[c] || `Col ${c + 1}`;
-      page.drawText(clip(safe(headerText), 22), { x: PAGE.margin + c * colWidth + 5, y: y - 11, size: 8.5, font: bold, color: rgb(1, 1, 1) });
-    }
-    y -= rowHeight;
+    const headers = Array.from({ length: maxCols }, (_, c) => (rows[0] || [])[c] || `Col ${c + 1}`);
+    const row = layoutRow(headers, maxCols, safe, tracker, bold, 8.5, textWidth);
+    page.drawRectangle({ x: PAGE.margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.18, .24, .36) });
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8.5, font: bold, color: rgb(1, 1, 1) });
+    y -= row.height;
   };
 
   drawHeader();
 
   for (let r = 1; r < rows.length; r++) {
-    if (y - rowHeight < PAGE.margin + 20) {
+    // Lay the row out first: its height depends on how much its cells wrap.
+    const row = layoutRow(rows[r], maxCols, safe, tracker, regular, 8, textWidth);
+
+    if (y - row.height < PAGE.margin + 20) {
       page = doc.addPage([PAGE.width, PAGE.height]);
       y = PAGE.height - PAGE.margin;
       drawHeader();
     }
 
     if (r % 2 === 1) {
-      page.drawRectangle({ x: PAGE.margin, y: y - rowHeight + 4, width: tableWidth, height: rowHeight, color: rgb(.96, .96, .97) });
+      page.drawRectangle({ x: PAGE.margin, y: y - row.height + 4, width: tableWidth, height: row.height, color: rgb(.96, .96, .97) });
     }
 
-    const rowData = rows[r];
-    for (let c = 0; c < maxCols; c++) {
-      const val = rowData[c] || "";
-      page.drawText(clip(safe(val), 26), { x: PAGE.margin + c * colWidth + 5, y: y - 11, size: 8, font: regular, color: rgb(.15, .15, .17) });
-    }
-    y -= rowHeight;
+    drawRowCells(page, row, { rowTop: y, columnX, size: 8, font: regular, color: rgb(.15, .15, .17) });
+    y -= row.height;
   }
 }
