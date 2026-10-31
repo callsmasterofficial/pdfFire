@@ -18,7 +18,10 @@ Last updated: 2026-10-31.
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
-Both branches are cut from `main`. Nothing has been merged, deployed or
+#1 and #2 are cut from `main`. The rest stack: #3, #4 and #5 on #1, #6 on #5,
+and #7 on #3. Siblings on the same base touch different files — #3 and #7 the
+redaction engine, #4 the table renderers, #5 and #6 the security operations —
+so each group can merge in any order. Nothing has been merged, deployed or
 submitted to any store.
 
 This file is edited on several branches at once, so it conflicts on merge.
