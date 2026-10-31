@@ -13,6 +13,7 @@ Last updated: 2026-10-31.
 | `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | `a55948b` | [PR #3](https://github.com/callsmasterofficial/pdfFire/pull/3) (on #1) |
 | `callsmasterofficial/pdfFire` | `fix/table-cell-truncation` | `f12790d` | [PR #4](https://github.com/callsmasterofficial/pdfFire/pull/4) (on #1) |
 | `callsmasterofficial/pdfFire` | `audit/security-tool-claims` | `34241fe` | [PR #5](https://github.com/callsmasterofficial/pdfFire/pull/5) (on #1) — FM-009 audit **and** FM-011 decrypt |
+| `callsmasterofficial/pdfFire` | `feat/legacy-pdf-decryption` | `9646e79` | [PR #6](https://github.com/callsmasterofficial/pdfFire/pull/6) (on #5) |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
 
@@ -57,7 +58,8 @@ npm ci && npx vitest run && npx tsc --noEmit && npx eslint && npx next build
 - Vitest, per branch: **140 / 140** on `fix/redaction-truth-and-unicode`
   (28 files), **148 / 148** on `fix/pii-redaction-geometry`,
   **146 / 146** on `fix/table-cell-truncation`,
-  **159 / 159** on `audit/security-tool-claims` (30 files).
+  **159 / 159** on `audit/security-tool-claims` (30 files),
+  **169 / 169** on `feat/legacy-pdf-decryption` (31 files).
   Baseline on `main` was 111 in 24 files.
 - `tsc --noEmit`: clean.
 - `eslint`: clean, 0 warnings.
