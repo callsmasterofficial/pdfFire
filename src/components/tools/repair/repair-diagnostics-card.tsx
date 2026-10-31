@@ -14,16 +14,23 @@ export function RepairDiagnosticsCard({ diagnostics }: RepairDiagnosticsCardProp
 
   const origKb = (diagnostics.originalSizeBytes / 1024).toFixed(1);
   const repKb = (diagnostics.repairedSizeBytes / 1024).toFixed(1);
+  const recovered = diagnostics.recoverySucceeded;
 
   return (
     <div className="rounded-xl border border-border bg-surface-elevated/40 p-5 space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-border/80">
         <div className="flex items-center gap-2">
-          <FileCheck className="size-5 text-emerald-500" />
+          <FileCheck className={`size-5 ${recovered ? "text-emerald-500" : "text-amber-500"}`} />
           <h3 className="text-sm font-semibold text-foreground">Diagnostic Repair Report</h3>
         </div>
-        <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full font-medium">
-          Structural Integrity Restored
+        <span
+          className={`text-xs font-mono px-2.5 py-0.5 rounded-full font-medium ${
+            recovered
+              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+              : "text-amber-700 dark:text-amber-400 bg-amber-500/10"
+          }`}
+        >
+          {recovered ? "Pages Recovered" : "No Content Recovered"}
         </span>
       </div>
 
@@ -57,18 +64,38 @@ export function RepairDiagnosticsCard({ diagnostics }: RepairDiagnosticsCardProp
 
         <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/60">
           <span className="text-muted-foreground">Cross-Reference (xref)</span>
-          <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="size-3.5" /> Pristine Rebuilt
-          </span>
+          {diagnostics.xrefRebuilt ? (
+            <span className="flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="size-3.5" /> Rebuilt
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="size-3.5" /> Valid
+            </span>
+          )}
         </div>
 
         <div className="flex items-center justify-between p-3 rounded-lg bg-background border border-border/60">
           <span className="text-muted-foreground">Recovered Pages</span>
-          <span className="font-semibold text-foreground font-mono">
-            {diagnostics.pagesRecovered} page{diagnostics.pagesRecovered > 1 ? "s" : ""}
+          <span
+            className={`font-semibold font-mono ${
+              recovered ? "text-foreground" : "text-amber-600 dark:text-amber-400"
+            }`}
+          >
+            {diagnostics.pagesRecovered} page{diagnostics.pagesRecovered === 1 ? "" : "s"}
           </span>
         </div>
       </div>
+
+      {!recovered && (
+        <p className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 text-xs text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="size-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+          <span>
+            No page content could be salvaged from this file. The download is an empty placeholder,
+            not your recovered document — keep the original.
+          </span>
+        </p>
+      )}
 
       {/* Byte Metrics */}
       <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-background border border-border/60 text-xs">
