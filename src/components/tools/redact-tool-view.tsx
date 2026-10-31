@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ShieldAlert, RotateCcw } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { ToolLayout } from "@/components/tools/tool-layout";
 import { ToolActionBar } from "@/components/tools/tool-action-bar";
 import { SharedDropzone } from "@/components/file-handling/shared-dropzone";
@@ -9,6 +9,8 @@ import { RedactPiiScanner } from "@/components/tools/redact/redact-pii-scanner";
 import { RedactPageCanvas } from "@/components/tools/redact/redact-page-canvas";
 import { RedactControls } from "@/components/tools/redact/redact-controls";
 import { applyRedactions, RedactionArea, RedactionResult } from "@/lib/pdf/operations/redact";
+import { RedactVerificationNotice } from "@/components/tools/redact/redact-verification-notice";
+import { RedactFileSummary } from "@/components/tools/redact/redact-file-summary";
 import { ResultPreviewSection } from "@/components/preview/result-preview-section";
 import { PDFDocument } from "pdf-lib";
 
@@ -83,7 +85,7 @@ export function RedactToolView() {
   return (
     <ToolLayout
       title="Redact PDF"
-      description="Permanently redact sensitive PII patterns, black out confidential text, and strip document metadata 100% locally."
+      description="Delete sensitive text from the PDF content streams, cover it, and strip document metadata — 100% in your browser."
       category="Security"
       icon={ShieldAlert}
     >
@@ -96,21 +98,12 @@ export function RedactToolView() {
           />
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-3.5 bg-card border border-border rounded-xl">
-              <div>
-                <span className="font-semibold text-sm text-foreground">{file.name}</span>
-                <span className="text-xs text-muted-foreground ml-3">
-                  {pageCount} {pageCount === 1 ? "page" : "pages"} ({(file.size / 1024).toFixed(1)} KB)
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 font-mono"
-              >
-                <RotateCcw className="size-3.5" /> Choose another file
-              </button>
-            </div>
+            <RedactFileSummary
+              fileName={file.name}
+              pageCount={pageCount}
+              sizeBytes={file.size}
+              onReset={handleReset}
+            />
 
             <RedactPiiScanner
               pdfBytes={pdfBytes}
@@ -139,6 +132,8 @@ export function RedactToolView() {
               fillColor={fillColor}
               overlayText={overlayText}
             />
+
+            {result && <RedactVerificationNotice result={result} />}
 
             {result && (
               <ResultPreviewSection

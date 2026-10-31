@@ -1,4 +1,8 @@
 import { PDFDocument, rgb, StandardFonts, PDFName } from "pdf-lib";
+import { removeTextInRects, RedactionVerificationError } from "./redact/remove-text";
+import type { Rect } from "./redact/text-items";
+
+export { RedactionVerificationError };
 
 export interface RedactionArea {
   id: string;
@@ -11,11 +15,32 @@ export interface RedactionArea {
   overlayText?: string;
 }
 
+/**
+ * `remove-text` deletes the covered characters from the page content streams
+ * and verifies the export, so the text cannot be extracted afterwards.
+ * `cover-only` draws the boxes without touching the underlying content: the
+ * text stays recoverable and must never be described as redacted.
+ */
+export type RedactionMode = "remove-text" | "cover-only";
+
 export interface RedactionResult {
   pdfBytes: Uint8Array;
   redactedCount: number;
   pagesAffected: number;
   totalPages: number;
+  mode: RedactionMode;
+  /** Show operators deleted from content streams (0 in `cover-only`). */
+  removedTextOperations: number;
+  /**
+   * True only when the exported bytes were re-parsed and the covered text was
+   * confirmed gone. Always false in `cover-only`.
+   */
+  textRemovalVerified: boolean;
+}
+
+export interface RedactionOptions {
+  sanitizeMetadata?: boolean;
+  mode?: RedactionMode;
 }
 
 function resolveColor(fill: RedactionArea["fillColor"]) {
@@ -24,15 +49,51 @@ function resolveColor(fill: RedactionArea["fillColor"]) {
   return rgb(0, 0, 0); // default black
 }
 
+function rectsByPage(redactions: RedactionArea[], totalPages: number): Map<number, Rect[]> {
+  const map = new Map<number, Rect[]>();
+  for (const area of redactions) {
+    if (area.pageNumber < 1 || area.pageNumber > totalPages) continue;
+    const list = map.get(area.pageNumber) ?? [];
+    list.push({
+      x: area.x,
+      y: area.y,
+      width: Math.max(1, area.width),
+      height: Math.max(1, area.height),
+    });
+    map.set(area.pageNumber, list);
+  }
+  return map;
+}
+
 export async function applyRedactions(
   pdfBytes: Uint8Array,
   redactions: RedactionArea[],
-  sanitizeMetadata = true
+  optionsOrSanitize: RedactionOptions | boolean = true
 ): Promise<RedactionResult> {
-  const doc = await PDFDocument.load(pdfBytes);
-  const totalPages = doc.getPageCount();
+  const options: RedactionOptions =
+    typeof optionsOrSanitize === "boolean"
+      ? { sanitizeMetadata: optionsOrSanitize }
+      : optionsOrSanitize;
+  const { sanitizeMetadata = true, mode = "remove-text" } = options;
+
+  const probe = await PDFDocument.load(pdfBytes);
+  const totalPages = probe.getPageCount();
   if (totalPages === 0) throw new Error("Document has no pages.");
 
+  // Delete the covered characters before anything is drawn over them, so the
+  // filled boxes cannot be mistaken for the removal itself.
+  let workingBytes = pdfBytes;
+  let removedTextOperations = 0;
+  let textRemovalVerified = false;
+
+  if (mode === "remove-text") {
+    const removal = await removeTextInRects(pdfBytes, rectsByPage(redactions, totalPages));
+    workingBytes = removal.pdfBytes;
+    removedTextOperations = removal.removedOperations;
+    textRemovalVerified = removal.verified;
+  }
+
+  const doc = await PDFDocument.load(workingBytes);
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
   const affectedPagesSet = new Set<number>();
   let redactedCount = 0;
@@ -75,8 +136,8 @@ export async function applyRedactions(
     doc.setAuthor("");
     doc.setSubject("");
     doc.setKeywords([]);
-    doc.setProducer("PDFfire");
-    doc.setCreator("PDFfire");
+    doc.setProducer("FileMelo");
+    doc.setCreator("FileMelo");
 
     // Remove XMP metadata stream from catalog if present
     const catalog = doc.catalog;
@@ -91,5 +152,8 @@ export async function applyRedactions(
     redactedCount,
     pagesAffected: affectedPagesSet.size,
     totalPages,
+    mode,
+    removedTextOperations,
+    textRemovalVerified,
   };
 }
