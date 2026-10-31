@@ -1,0 +1,30 @@
+name: Diagnose remaining PR conflicts
+on:
+  push:
+    branches: [diagnostics/remaining-release-conflicts]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Evaluate remaining PR branches against current main
+        shell: bash
+        run: |
+          git config user.name "merge-diagnostic"
+          git config user.email "merge-diagnostic@users.noreply.github.com"
+          git fetch origin main fix/table-cell-truncation feat/legacy-pdf-decryption feat/unicode-language-packs --no-tags
+          for branch in feat/legacy-pdf-decryption fix/table-cell-truncation feat/unicode-language-packs; do
+            git reset --hard origin/main
+            git clean -fd
+            echo "BEGIN_CONFLICTS:$branch"
+            git merge --no-commit --no-ff "origin/$branch" || true
+            git diff --name-only --diff-filter=U
+            echo "END_CONFLICTS:$branch"
+            git merge --abort || true
+          done
