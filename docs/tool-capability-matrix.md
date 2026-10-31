@@ -50,10 +50,12 @@ first.
 | `extract-images` | web | n/a | Unit tested | Raw XObject extraction; does not recover every embedded image form. |
 | `text-to-pdf` | web | **Unverified** | Unit tested | Not yet checked against the FM-002 fix; may still be ASCII-limited. |
 
-**Shared limit (FM-005):** every converter embeds the standard PDF fonts, which
-encode 218 characters. CJK, Arabic, Indic and Thai cannot be drawn at all; they
-are reported to the user through `textFidelity`, never silently replaced. No
-tool in this table supports complex-script shaping or RTL layout.
+**Scripts (FM-005):** `text-to-pdf` and `markdown-to-pdf` render CJK, Arabic,
+Hebrew, Thai, Devanagari, Greek and Cyrillic from on-demand Noto packs, with
+correct shaping. Copying Arabic and Devanagari back out of the PDF is
+approximate, which the UI states. The DOCX, HTML, XLSX and CSV converters still
+embed only the standard fonts and report what they cannot draw; they adopt the
+packs after the table-wrapping work merges.
 
 ## Organisation
 

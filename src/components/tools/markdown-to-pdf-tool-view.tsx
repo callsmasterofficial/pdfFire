@@ -13,7 +13,7 @@ import {
   parseMarkdown,
 } from "@/lib/pdf/operations";
 import { downloadPdfBytes } from "@/lib/pdf/download";
-import { TextFidelityNotice } from "@/components/tools/text-fidelity-notice";
+import { UnicodeFidelityNotice } from "@/components/tools/unicode-fidelity-notice";
 import { MARKDOWN_SAMPLE as SAMPLE } from "@/components/tools/markdown/markdown-sample";
 export function MarkdownToPdfToolView() {
   const [title, setTitle] = useState("Project brief");
@@ -111,7 +111,7 @@ export function MarkdownToPdfToolView() {
             {error}
           </div>
         )}
-        {result?.textFidelity && <TextFidelityNotice report={result.textFidelity} />}
+        {result?.textFidelity && <UnicodeFidelityNotice report={result.textFidelity} />}
 
         {result && (
           <ResultPreviewSection

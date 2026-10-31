@@ -138,3 +138,26 @@ export function toFileSlug(title: string, fallback = "document"): string {
     .toLowerCase();
   return slug || fallback;
 }
+
+/**
+ * A test for whether the given fonts can draw a character between them.
+ *
+ * Used to decide what needs a language pack: anything the document's own fonts
+ * already handle keeps using them, so a Latin document downloads nothing.
+ */
+export function canEncodeWith(fonts: PDFFont[]): (char: string) => boolean {
+  const charsets = fonts.map((font) => new Set(font.getCharacterSet()));
+  const shared = new Set(charsets[0] ?? []);
+  for (const other of charsets.slice(1)) {
+    for (const code of [...shared]) {
+      if (!other.has(code)) shared.delete(code);
+    }
+  }
+
+  return (char: string) => {
+    const code = char.codePointAt(0);
+    // Newlines and tabs are layout, not glyphs; callers handle them.
+    if (char === "\n" || char === "\r" || char === "\t") return true;
+    return code !== undefined && shared.has(code);
+  };
+}
