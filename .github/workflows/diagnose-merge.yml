@@ -1,0 +1,30 @@
+name: Diagnose PR5 merge conflicts
+on:
+  push:
+    branches: [diagnostics/pr5-main-conflict]
+permissions:
+  contents: read
+jobs:
+  identify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Simulate non-committing merge with main
+        shell: bash
+        run: |
+          set +e
+          git fetch origin main --no-tags
+          git merge --no-commit --no-ff origin/main
+          result=$?
+          echo "MERGE_EXIT_CODE=$result"
+          echo "CONFLICTED_FILES_BEGIN"
+          git diff --name-only --diff-filter=U
+          echo "CONFLICTED_FILES_END"
+          echo "GIT_STATUS_BEGIN"
+          git status --short
+          echo "GIT_STATUS_END"
+          exit 0
