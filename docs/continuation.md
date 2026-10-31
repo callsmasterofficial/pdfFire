@@ -9,6 +9,7 @@ Last updated: 2026-10-31.
 | Repository | Branch | Head | Pushed |
 | --- | --- | --- | --- |
 | `callsmasterofficial/pdfFire` | `fix/redaction-truth-and-unicode` | `f1c5bf2` | [PR #1](https://github.com/callsmasterofficial/pdfFire/pull/1) |
+| `callsmasterofficial/pdfFire` | `fix/pii-redaction-geometry` | see PR table | stacked on the fix branch |
 | `callsmasterofficial/pdfFire` | `chore/next-security-upgrade` | `b5170e0` | [PR #2](https://github.com/callsmasterofficial/pdfFire/pull/2) (draft) |
 | `callsmasterofficial/pdfFire-extension` | `fix/brand-and-attack-surface` | `41a2c85` | [PR #1](https://github.com/callsmasterofficial/pdfFire-extension/pull/1) |
 | `callsmasterofficial/pdfFire-app` | — | untouched | n/a |
@@ -88,12 +89,9 @@ test-only. Node in use: v22.23.4.
 Both PRs are open and awaiting review. Then pick up
 `docs/security-findings.md` in order:
 
-1. **FM-007** — rebuild PII box geometry from the matched substring rather than
-   the whole PDF.js text item, and delete the raw-bytes Node fallback in
-   `scanPdfForPii` now that `getPdfjs()` works outside the browser.
-2. **FM-008** — table cell truncation: either wrap cells or report the loss the
+1. **FM-008** — table cell truncation: either wrap cells or report the loss the
    way `textFidelity` reports font coverage. Currently silent.
-3. **FM-009** — apply the FM-001 method (claim versus independently verified
+2. **FM-009** — apply the FM-001 method (claim versus independently verified
    behaviour) to compress, repair, protect/unlock, flatten, sign and metadata
    removal. Expect more false claims; `docs/tool-capability-matrix.md` is the
    place to record the outcome.
@@ -102,6 +100,8 @@ Blocked on an owner decision:
 
 - **FM-005** — embedding a Unicode font: needs a licence decision and a view on
   bundle size versus lazily downloaded subsets.
+- **FM-010** — positional rather than substring matching when deleting text, so
+  identical text elsewhere on the page is left alone.
 - Whether to report upgrade telemetry to Vercel via the canary package the
   Next.js upgrade CLI names (see FM-006). Not run.
 

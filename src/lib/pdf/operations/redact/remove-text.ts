@@ -9,7 +9,8 @@
  */
 import { PDFDocument } from "pdf-lib";
 import { readPageContent, writePageContent } from "./page-content";
-import { findShowOperations, type ShowOperation } from "./show-operators";
+import { blankAcrossOperations, rewriteShowOperation } from "./blank-text";
+import { findShowOperations } from "./show-operators";
 import { findTargetStrings, readPageText, type Rect } from "./text-items";
 
 export class RedactionVerificationError extends Error {
@@ -26,7 +27,7 @@ export class RedactionVerificationError extends Error {
 
 export interface TextRemovalResult {
   pdfBytes: Uint8Array;
-  /** Show operators deleted from content streams. */
+  /** Show operators rewritten to drop covered characters. */
   removedOperations: number;
   /** Pages whose content streams were rewritten. */
   pagesChanged: number[];
@@ -37,40 +38,27 @@ export interface TextRemovalResult {
   verified: boolean;
 }
 
-/** Replacement that keeps byte length, so later offsets stay valid. */
-function neutralize(operation: ShowOperation): string {
-  const span = operation.end - operation.start;
-
-  if (operation.operator === "'") {
-    return padTo("T*", span);
-  }
-
-  if (operation.operator === '"' && operation.quoteSpacing) {
-    const [wordSpacing, charSpacing] = operation.quoteSpacing;
-    const preserved = `${wordSpacing} Tw ${charSpacing} Tc T*`;
-    if (preserved.length <= span) return padTo(preserved, span);
-    return padTo("T*", span);
-  }
-
-  return " ".repeat(span);
-}
-
-function padTo(text: string, span: number): string {
-  return text.length >= span ? text.slice(0, span) : text + " ".repeat(span - text.length);
-}
-
 function rewriteContent(content: string, targets: string[]): { content: string; removed: number } {
   const operations = findShowOperations(content);
   if (operations.length === 0) return { content, removed: 0 };
 
+  // Blank over the operators' combined text, so a target that spans two of
+  // them is still removed.
+  const blankedTexts = blankAcrossOperations(
+    operations.map((operation) => operation.text),
+    targets
+  );
+
   let next = content;
   let removed = 0;
 
-  // Offsets stay valid because every replacement keeps the original length.
-  for (const operation of operations) {
-    if (!targets.some((target) => operation.text.includes(target))) continue;
-    next =
-      next.slice(0, operation.start) + neutralize(operation) + next.slice(operation.end);
+  // Reverse order, because a replacement may differ in length from what it
+  // replaces and earlier offsets must stay valid.
+  for (let i = operations.length - 1; i >= 0; i--) {
+    const operation = operations[i];
+    const replacement = rewriteShowOperation(content, operation, blankedTexts[i]);
+    if (replacement === null) continue;
+    next = next.slice(0, operation.start) + replacement + next.slice(operation.end);
     removed++;
   }
 

@@ -179,17 +179,66 @@ The upgrade CLI also asks the agent to report telemetry by running
 That was **not** run: it executes a canary package and transmits an external
 report, neither of which is part of clearing the advisory.
 
-### FM-007 — PII auto-redaction boxes are imprecise · **confirmed**
+### FM-007 — PII auto-redaction boxes were imprecise · **fixed**
 
-`scanPdfForPii` derives a box from the PDF.js text item that contains a match,
-not from the match itself, so the whole item is covered: it over-redacts, and a
-match spanning two items may be partly uncovered. The box is placed from the
-baseline upward by roughly the font size, which does not account for
-descenders. With FM-001 fixed the *text* is removed correctly wherever a box
-lands, so this is a fidelity and coverage issue rather than a leak. Its Node
-fallback also regex-scans raw PDF bytes decoded as UTF-8, which cannot work on
-compressed streams and should be removed now that PDF.js runs outside the
-browser.
+Three problems, all in the automated path:
+
+- `scanTextForPii` took a **hardcoded default box** (`x: 50, y: 500,
+  width: 120, height: 16`). Any caller that did not override it placed every
+  redaction at the same spot regardless of where the match was.
+- `scanPdfForPii` did override it, but with the geometry of the whole PDF.js
+  text *item* containing the match, not the match itself. A box over one email
+  covered the entire line, and because deletion targeted the item's text, the
+  whole line was deleted too.
+- It scanned each item in isolation, so a match split across runs — a page
+  painting "john@" and "example.com" separately — was found in neither.
+- The box ran from the baseline upward by the font size, so it sat too high:
+  descenders were never covered, while empty space above the text was.
+
+Fixed across four modules:
+
+- `text/text-item-geometry.ts` converts between a character range and a
+  rectangle in both directions. PDF.js gives one width per run, not per glyph,
+  so this interpolates across the run and rounds **outward** in every
+  direction: covering slightly too much is recoverable, leaving part of a
+  secret behind is not. Glyph extent is now baseline −0.25em to +0.9em, so
+  descenders are covered.
+- `redact/page-text-map.ts` assembles the page's text from its runs, keeping a
+  character-to-run map, so matches are found across run boundaries and can be
+  mapped back to geometry. `hasEOL` inserts a line break so separate lines
+  cannot fuse into a false match.
+- `redact-pii.ts` now returns character offsets and one box **per run the match
+  crosses**; `scanTextForPii` returns matches with `start`/`end` and no
+  geometry at all, which is the honest shape for a text scanner.
+- `redact/blank-text.ts` makes deletion character-precise. Previously the whole
+  show operator was neutralised, which deleted more than the box covered. Now
+  only the covered characters are replaced, one space each, so the glyph count
+  is unchanged and the surrounding text survives. Blanking runs over the
+  operators' *concatenated* text, because PDF.js may report one merged run
+  where the page used two operators, in which case the covered text matches
+  neither operator alone.
+
+**Regression tests:** `redact-pii-geometry.test.ts` (8), covering the split-run
+and split-operator cases, descender coverage, the box being narrower than the
+line, and the invariant that matters most: deleting the email leaves
+"Contact:" and "for details" intact.
+
+The bogus Node fallback is also gone. It decoded raw PDF bytes as UTF-8 and
+regex-scanned them, which cannot work on compressed streams; `getPdfjs()` now
+runs outside the browser, so the real parser is used everywhere.
+
+### FM-010 — Deletion removes identical text elsewhere on the page · **confirmed**
+
+Blanking matches by substring over the page's concatenated operator text, so
+covering one instance of a string also blanks every other instance of it on
+that page. Covering a short string makes this worse: a box over a single "e"
+blanks every "e" in that page's text.
+
+This fails safe — it removes too much, never too little — and the redaction
+boxes are drawn only where the user put them, so the output can look as though
+unrelated text vanished without being covered. Fixing it properly means
+matching by position rather than by content, which requires aligning PDF.js
+runs to content-stream operators. Worth doing; not started.
 
 ### FM-008 — Table cells are truncated · **confirmed**
 
