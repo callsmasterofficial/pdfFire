@@ -109,109 +109,45 @@ Checked directly, not carried over from an earlier session:
 So: the code is integrated, gated and release-tested; nothing is deployed,
 submitted, approved or publicly live.
 
+## Cloudflare: attempted, blocked on sign-in
+
+Attempted on 2026-10-31 through Browser 1, which is connected and was selected
+for the attempt. The zone's DNS page redirected to the Cloudflare login, which
+offered a chooser of saved profiles rather than an authenticated session.
+
+So the session is signed out, not merely unreachable. Completing it means
+entering a password or finishing an authentication flow, which is not something
+to do on the owner's behalf. Most of the offered profiles belong to unrelated
+businesses and it is not evident which owns the FileMelo zone, so picking one
+would sign in to an unrelated account.
+
+**To unblock:** sign in to Cloudflare in Browser 1 on the account that owns
+`filemelo.com`, and confirm which account that is.
+
+**What the fix will be.** `error code: 1014` is Cloudflare's CNAME cross-user
+error: a proxied CNAME in this zone points at a hostname inside a *different*
+Cloudflare account's zone, which has not allowed it. The repair is to replace
+that record with one pointing at this project's own origin. That cannot be
+chosen until the hosting target exists, which is the next decision below.
+
 ## Next phase
 
-1. Cloudflare: resolve the 1014 on `filemelo.com`, choose apex versus www, and
-   configure hosting for a Next.js app. Nothing deploys today.
-2. Replace the `pdffire.com` canonical host in the source with `filemelo.com`.
-3. Dodo Payments: inspect the FileMelo business and products, then build the
-   accounts and entitlement layer against sandbox before any live offer.
-4. Extension: load it unpacked and exercise it; its runtime has never been
+1. **Hosting.** Nothing deploys today and no provider is configured. The app
+   uses `cacheComponents` and `partialPrefetching`, so it needs a server
+   runtime and cannot simply be exported as static files. Decide between a
+   Cloudflare Workers deployment via OpenNext and another provider, then
+   configure it, before the DNS record can point anywhere useful.
+2. **Cloudflare DNS**, once signed in and the origin exists: fix the 1014,
+   choose apex versus www, and set the redirect for the other.
+3. **Dodo Payments**: inspect the FileMelo business and products, then build
+   accounts and entitlements against sandbox before any live offer.
+4. **Extension**: load it unpacked and exercise it. Its runtime has never been
    tested, only its manifest and syntax.
-5. Mobile PR #1: fix the real production dependency audit failure before
-   treating that branch as release-ready.
+5. **Mobile PR #1**: fix the genuine production dependency audit failure.
 
-### Documentation drift to watch
+### Done since the last checkpoint
 
-Integrating #5 through #13 kept `main`'s documentation and archived the audit
-branch's copies under `docs/archives/pr5/`. The code landed but the live
-`docs/security-findings.md` lost FM-009, FM-011 and FM-012, and
-`docs/tool-capability-matrix.md` still called `protect`, `unlock`, `metadata`,
-`flatten`, `sign` and `repair` unverified after their tests had merged. Both
-are reconciled in this merge. When integrating the remaining branches, check
-that the live documents describe the code that is actually on `main`.
-
-### Resolving conflicts in this file
-
-This file is edited on several branches at once. Resolve by rebuilding the
-current-state section above from live PR metadata and git ancestry. Do **not**
-resolve it by keeping the longer version, the one listing more PRs, or a
-blanket "ours"/"theirs": every version written on a branch is stale about
-whatever merged after it. Earlier merges of #3 and #7 resolved documentation
-conflicts that way and dropped four findings sections from
-`docs/security-findings.md`.
-
-## Verified state
-
-Run from `pdfFire/`, which is what the CI workflow runs:
-
-```bash
-npm ci && npm test && npx tsc --noEmit && npm run lint && npm run build && npm audit --omit=dev --audit-level=high
-```
-
-Per-branch test counts are not additive and no single historical figure is
-release evidence. The only figure that counts is the suite run on the exact
-release SHA after the stack is integrated.
-
-`npx vitest run` needs `vitest.setup.ts`, which shims `Promise.try` and
-`Uint8Array.prototype.toHex` for `pdfjs-dist@6` on Node 22. Those shims are
-test-only. Node in use: v22.23.4.
-
-## Not done, and not claimed
-
-- No deployment, no preview URL, no production cutover.
-- No store packaging or submission for any platform.
-- The extension has not been loaded in a browser; its runtime behaviour after
-  the branding and manifest edits is unverified.
-- No work on `pdfFire-app` (mobile), desktop, accounts, billing, entitlements,
-  Teams, pricing, localisation beyond the font-coverage reporting above, or the
-  cost register.
-- Cloudflare and Dodo Payments dashboards were not opened in this session, so
-  domain state, merchant approval and live-mode readiness remain unverified.
-- Rebrand is partial: the website still carries PDFfire identifiers in places,
-  and `pdfFire-app` is untouched. Repository names, bundle IDs and extension
-  IDs are deliberately unchanged.
-
-## Deployment and hosting state (checked 2026-10-31)
-
-- `filemelo.com` resolves to Cloudflare but returns HTTP 403 with Cloudflare
-  error 1014, so it is not serving the application.
-- `pdffire.com` does not resolve. The source still uses it as the canonical
-  host (`https://pdffire.com`), which must change before launch.
-- The repository contains no deployment configuration: no Vercel, Wrangler,
-  Netlify or GitHub Actions workflow. Nothing deploys on merge.
-- `callsmasterofficial/pdfFire` is a **public** repository; the extension and
-  mobile repositories are private.
-
-## Next task
-
-Both PRs are open and awaiting review. Then pick up
-`docs/security-findings.md` in order:
-
-1. **FM-008** — table cell truncation: either wrap cells or report the loss the
-   way `textFidelity` reports font coverage. Currently silent.
-2. **FM-009** — apply the FM-001 method (claim versus independently verified
-   behaviour) to compress, repair, protect/unlock, flatten, sign and metadata
-   removal. Expect more false claims; `docs/tool-capability-matrix.md` is the
-   place to record the outcome.
-
-Blocked on an owner decision:
-
-- **FM-005** — embedding a Unicode font: needs a licence decision and a view on
-  bundle size versus lazily downloaded subsets.
-- **FM-010** — positional rather than substring matching when deleting text, so
-  identical text elsewhere on the page is left alone.
-- Whether to report upgrade telemetry to Vercel via the canary package the
-  Next.js upgrade CLI names (see FM-006). Not run.
-
-## Rollback
-
-Nothing is deployed, so rollback is local. To drop the website work:
-
-```bash
-git -C pdfFire checkout main
-git -C pdfFire branch -D fix/redaction-truth-and-unicode
-```
-
-Reverting only the redaction change restores a feature that leaks the text it
-claims to remove, so revert the claims with it or leave the branch intact.
+- The canonical host is `filemelo.com`, not the unresolvable `pdffire.com`, and
+  `SITE_CONFIG` is FileMelo rather than PDFfire. Without this, repairing DNS
+  would have served a site whose canonical links, sitemap and robots.txt all
+  pointed at a dead domain.
