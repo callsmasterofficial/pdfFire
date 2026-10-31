@@ -1,6 +1,7 @@
 name: Web quality and security gates
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
   workflow_dispatch:
