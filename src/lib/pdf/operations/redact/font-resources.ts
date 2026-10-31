@@ -20,29 +20,40 @@ function fontResources(doc: PDFDocument, page: PDFPage): PDFDict | undefined {
   return doc.context.lookupMaybe(resources?.get(PDFName.of("Font")), PDFDict);
 }
 
+/** Width lookup for each operator, by index. Shared with coverage. */
+export async function buildOperatorLookups(
+  doc: PDFDocument,
+  page: PDFPage,
+  operations: ShowOperationWithState[]
+): Promise<(WidthLookup | undefined)[]> {
+  const fonts = fontResources(doc, page);
+  const byName = new Map<string, WidthLookup>();
+
+  for (const operation of operations) {
+    const name = operation.state.fontName;
+    if (!name || byName.has(name)) continue;
+    const dict = fonts
+      ? doc.context.lookupMaybe(fonts.get(PDFName.of(name)), PDFDict)
+      : undefined;
+    byName.set(
+      name,
+      dict ? await buildWidthLookup(doc, dict) : { widthOf: () => null, exact: false }
+    );
+  }
+
+  return operations.map((operation) => byName.get(operation.state.fontName));
+}
+
 /**
  * Per operator, per character: the TJ units that give its advance back, or null
  * where the font's metrics could not be read.
  */
-export async function exactDisplacements(
-  doc: PDFDocument,
-  page: PDFPage,
-  operations: ShowOperationWithState[]
-): Promise<(number | null)[][]> {
-  const fonts = fontResources(doc, page);
-  const lookups = new Map<string, WidthLookup>();
-
-  for (const operation of operations) {
-    const name = operation.state.fontName;
-    if (!name || lookups.has(name)) continue;
-    const dict = fonts
-      ? doc.context.lookupMaybe(fonts.get(PDFName.of(name)), PDFDict)
-      : undefined;
-    lookups.set(name, dict ? await buildWidthLookup(doc, dict) : { widthOf: () => null, exact: false });
-  }
-
-  return operations.map((operation) => {
-    const lookup = lookups.get(operation.state.fontName);
+export function exactDisplacements(
+  operations: ShowOperationWithState[],
+  lookups: (WidthLookup | undefined)[]
+): (number | null)[][] {
+  return operations.map((operation, operatorIndex) => {
+    const lookup = lookups[operatorIndex];
     const { fontSize, charSpacing, wordSpacing } = operation.state;
 
     return [...operation.text].map((char) => {

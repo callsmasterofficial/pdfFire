@@ -1,7 +1,7 @@
 import { PDFDocument, PDFName } from "pdf-lib";
 import { drawRedactionBoxes } from "./redact/draw-boxes";
 import { removeTextInRects, RedactionVerificationError } from "./redact/remove-text";
-import type { Rect } from "./redact/text-items";
+import type { Rect } from "../text/text-item-geometry";
 
 export { RedactionVerificationError };
 
@@ -48,6 +48,11 @@ export interface RedactionResult {
    * the box just hides a little more than intended.
    */
   shiftedPages: number[];
+  /**
+   * Pages carrying a font whose widths could not be read, so which characters
+   * the box edges take was estimated rather than measured.
+   */
+  estimatedWidthPages: number[];
 }
 
 export interface RedactionOptions {
@@ -93,6 +98,7 @@ export async function applyRedactions(
   let textRemovalVerified = false;
   let contentMatchedPages: number[] = [];
   let shiftedPages: number[] = [];
+  let estimatedWidthPages: number[] = [];
 
   if (mode === "remove-text") {
     const removal = await removeTextInRects(pdfBytes, rectsByPage(redactions, totalPages));
@@ -101,6 +107,7 @@ export async function applyRedactions(
     textRemovalVerified = removal.verified;
     contentMatchedPages = removal.contentMatchedPages;
     shiftedPages = removal.shiftedPages;
+    estimatedWidthPages = removal.estimatedWidthPages;
   }
 
   const doc = await PDFDocument.load(workingBytes);
@@ -132,5 +139,6 @@ export async function applyRedactions(
     textRemovalVerified,
     contentMatchedPages,
     shiftedPages,
+    estimatedWidthPages,
   };
 }

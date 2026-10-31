@@ -15,7 +15,7 @@
  */
 import { splitArrayElements, toHexString } from "./pdf-strings";
 import type { ShowOperation } from "./show-operators";
-import type { CharMetric } from "./align-coverage";
+import type { CharMetric } from "./char-metric";
 
 /** Segments of one string element: kept text and the gaps left behind. */
 type Segment = { kind: "text"; value: string } | { kind: "gap"; units: number };

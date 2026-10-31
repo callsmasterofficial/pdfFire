@@ -135,7 +135,7 @@ describe("Redaction precision", () => {
     expect(result.textRemovalVerified).toBe(true);
   });
 
-  it("keeps the far side of a partly covered line, erring outward at the edges", async () => {
+  it("takes exactly the covered text out of a partly covered line", async () => {
     const doc = await PDFDocument.create();
     const page = doc.addPage([520, 300]);
     const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -159,12 +159,11 @@ describe("Redaction precision", () => {
     const text = await extractPdfText(result.pdfBytes);
 
     expect(text).not.toContain("555-0100");
+    // With real font metrics the box takes the number and nothing else. The
+    // averaging model used to swallow " an" from the following word.
     expect(text).toContain("Phone");
-    // PDF.js reports one width per run, so which characters a box edge touches
-    // is estimated from an average width and can be out by a character or two.
-    // Selection rounds outward, so the far side of the line survives while a
-    // few characters next to the box may not. See FM-013.
-    expect(text).toContain("more text after it");
+    expect(text).toContain("and more text after it");
+    expect(result.estimatedWidthPages).toEqual([]);
   });
 
   it("over-removes at a box edge rather than leaving part of the text", async () => {

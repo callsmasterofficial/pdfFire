@@ -55,6 +55,18 @@ export function RedactVerificationNotice({ result }: { result: RedactionResult }
         </div>
       )}
 
+      {result.estimatedWidthPages.length > 0 && (
+        <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground">
+          <Info className="size-4 mt-0.5 shrink-0" aria-hidden="true" />
+          <p>
+            On page{result.estimatedWidthPages.length === 1 ? "" : "s"}{" "}
+            {result.estimatedWidthPages.join(", ")} a font&apos;s character widths could not be
+            read, so which characters the box edges take was estimated. A character either side of
+            a box may also have gone.
+          </p>
+        </div>
+      )}
+
       {result.shiftedPages.length > 0 && (
         <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground">
           <Info className="size-4 mt-0.5 shrink-0" aria-hidden="true" />

@@ -106,13 +106,3 @@ export function findShowOperationsWithState(stream: string): ShowOperationWithSt
 
   return operations;
 }
-
-/**
- * Advance of one character in the same space PDF.js reports widths, given its
- * width in 1/1000 text-space units.
- */
-export function advanceOf(width: number, code: number, state: TextState): number {
-  const glyph = (width / 1000) * state.fontSize;
-  const spacing = state.charSpacing + (code === 32 ? state.wordSpacing : 0);
-  return (glyph + spacing) * (state.horizontalScale / 100);
-}

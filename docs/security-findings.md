@@ -270,51 +270,58 @@ and separates a **leak** (text we deleted is still there, which throws) from a
 original pathological cases: one of two identical lines, and a short covered
 word that appears again on an untouched line.
 
-### FM-013 — Advance widths now exact; edge selection still approximate · **partly fixed**
+### FM-013 — Glyph widths now exact · **fixed**
 
 Advances were estimated by dividing a text run's total width by its character
 count. For mixed-width text that is wrong by enough to matter, and it caused two
-separate problems: the width given back after deleting characters was inexact,
-so the rest of the line drifted (the `shiftedPages` reports); and which
-characters a box edge touches was mis-estimated, so a box drawn exactly around
-"555-0100" selected "555-0100 an".
+problems: the width given back after deleting characters was inexact, so the
+rest of the line drifted; and which characters a box edge touches was
+mis-estimated, so a box drawn exactly around "555-0100" also took " an".
 
-**Fixed: the advance.** `text/glyph-widths.ts` reads widths from the document
-itself — `/Widths` indexed from `/FirstChar` for simple fonts, with
-`/MissingWidth` as the default. The standard 14 fonts carry no `/Widths` at all,
-so their metrics are taken from pdf-lib's own copy by embedding the same font
-into a scratch document and measuring at size 1000, which makes the measurement
-the 1/1000-unit advance directly. No new dependency: `@pdf-lib/standard-fonts`
-is in the tree via pdf-lib, but pdf-lib's public API was enough.
+**Widths.** `text/glyph-widths.ts` reads them from the document — `/Widths`
+indexed from `/FirstChar` for simple fonts, with `/MissingWidth` as the
+default. The standard 14 fonts carry no `/Widths` at all, so their metrics come
+from pdf-lib's own copy: the same font is embedded into a scratch document and
+measured at size 1000, which makes the measurement the 1/1000-unit advance
+directly. No new dependency — `@pdf-lib/standard-fonts` is in the tree via
+pdf-lib, but pdf-lib's public API was enough.
 
-`redact/text-state.ts` tracks the text state each operator was drawn under —
-`Tf`, `Tc`, `Tw` and `Tz` — since all of them change a character's advance, and
-`redact/font-resources.ts` turns that into the exact TJ displacement:
+**Text state.** `redact/text-state.ts` tracks `Tf`, `Tc`, `Tw` and `Tz` per
+operator, since all four change a character's advance and nothing tracked them
+before.
 
-    n = -(W + 1000 x (Tc + Tw) / fontSize)
+**The advance given back.** `redact/font-resources.ts` computes
+`n = -(W + 1000 x (Tc + Tw) / fontSize)`. Equating a TJ number's displacement
+with a character's advance cancels both the font size and the horizontal
+scaling, so horizontal scaling must *not* be applied there — TJ displacement is
+scaled by it already.
 
-Equating a TJ number's displacement with a character's advance cancels both the
-font size and the horizontal scaling, so horizontal scaling must *not* be
-applied here — TJ displacement is scaled by it already. A test asserts
-`shiftedPages` is empty for a partly covered line, and that the widths are the
-real metrics rather than a silent fallback: in Helvetica "W" measures more than
-three times "i", which an averaging model treats as equal.
+**Selection.** This needed the pipeline inverted. Coverage used to be computed
+first and alignment consumed it; exact selection needs the opposite, because a
+character's position can only be known once its operator — and therefore its
+font and text state — is known. So:
 
-Where a font's metrics cannot be read the lookup reports itself inexact and the
-averaged estimate is used, so an unmeasurable font degrades rather than fails.
+- `redact/align-sequences.ts` now only pairs the two character sequences, with
+  no notion of coverage. It fails rather than guessing if they diverge on real
+  characters, and additionally requires every painted character PDF.js reported
+  to find an operator, since an unmatched one would be invisible to coverage.
+- `redact/page-coverage.ts` walks each run accumulating exact advances to get a
+  real position per character, and marks one covered when any part of its
+  advance overlaps a rectangle. Lifting a text-space advance into the
+  rectangles' space is `(W/1000 + (Tc + Tw)/Tfs) x Th x reportedSize`, where
+  `Tfs` cancels out of the glyph term.
+- `redact/analyze-pages.ts` runs that once per page and projects the result back
+  onto the operators. Removal and verification share it, so both see the same
+  answer.
 
-**Still approximate: selection.** Coverage is still computed from PDF.js run
-geometry with averaged per-character widths, so a box edge can still take a
-character or two either side. Selection rounds outward deliberately — a
-partially covered character goes rather than being left as a fragment, and
-nothing covered is ever left behind — so this over-removes rather than leaks.
+A font whose widths cannot be read falls back to the average for that page and
+is reported in `estimatedWidthPages`, shown in the UI, so the imprecision is
+disclosed rather than hidden.
 
-Making selection exact means computing per-character positions from the exact
-widths instead, which requires coverage to be derived *after* the operator and
-run sequences are aligned rather than before. That is a restructure of the
-redaction pipeline rather than an addition to it, and it is the remaining half
-of this finding. A test records the current edge behaviour so it cannot change
-unnoticed.
+`redact/text-items.ts` and `redact/align-coverage.ts` are gone, replaced by that
+pipeline, along with `blankByFlags`, `findShowOperations` and `advanceOf`.
 
-**Regression tests:** `glyph-widths.test.ts` (3) and the drift test in
-`redact-precision.test.ts`.
+**Regression tests:** `glyph-widths.test.ts` (3) and `redact-precision.test.ts`
+(9). The box drawn exactly around "555-0100" now leaves "Phone" and "and more
+text after it" intact, `shiftedPages` is empty, and a box ending mid-number
+still takes the whole number rather than leaving a fragment.

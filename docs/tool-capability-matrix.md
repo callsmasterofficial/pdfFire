@@ -25,7 +25,7 @@ first.
 
 | Tool | Platform | Claim status | Verification | Notes |
 | --- | --- | --- | --- | --- |
-| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams by position, the advance is restored so the line does not reflow, and the export is re-parsed; fails closed. Deleted characters' advance is restored from the font's own metrics, so lines do not drift; edge character selection is still approximate and errs outward (FM-013). Non-text content is covered only. FM-001, FM-010. |
+| `redact` | web | Corrected 2026-10-31 | **Independently verified** | Covered text is deleted from content streams by position, the advance is restored so the line does not reflow, and the export is re-parsed; fails closed. Character positions and advances come from the fonts' own widths, so selection follows the box and lines do not drift; a font whose widths cannot be read falls back to an average and says so (FM-013). Non-text content is covered only. FM-001, FM-010. |
 | `protect` | web | **Unverified** | Unit tested | Uses `@pdfsmaller/pdf-encrypt`. No test confirms an independent reader enforces the password, nor which algorithm is applied. |
 | `unlock` | web | **Unverified** | Unit tested | Needs a user-supplied password; authorised-use wording not reviewed. |
 | `metadata` | web | **Unverified** | Unit tested | "Strip metadata" must be checked against XMP, object-stream copies, incremental revisions and embedded thumbnails before it can be called sanitisation. |

@@ -22,7 +22,7 @@ export interface WidthLookup {
   readonly exact: boolean;
 }
 
-export const INEXACT_WIDTHS: WidthLookup = { widthOf: () => null, exact: false };
+const INEXACT_WIDTHS: WidthLookup = { widthOf: () => null, exact: false };
 
 /** Subset prefixes look like "ABCDEF+Helvetica" and are not part of the name. */
 function baseFontName(dict: PDFDict): string {

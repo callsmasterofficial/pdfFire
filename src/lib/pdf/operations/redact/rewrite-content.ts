@@ -6,10 +6,9 @@
  * deleting every occurrence of the covered text, which is less precise but
  * never leaves part of a redaction behind.
  */
-import { alignCoverage } from "./align-coverage";
+import type { PageAnalysis } from "./analyze-pages";
 import { blankAcrossOperations, rewriteShowOperation } from "./blank-text";
 import { rewritePositional } from "./rewrite-positional";
-import type { ShowOperationWithState } from "./text-state";
 
 /**
  * `positional` deleted exactly the characters under the rectangles.
@@ -20,39 +19,16 @@ import type { ShowOperationWithState } from "./text-state";
 export type RemovalPrecision = "positional" | "content";
 
 export function rewriteContent(
-  content: string,
-  targets: string[],
-  coverage: {
-    text: string;
-    covered: boolean[];
-    advances: number[];
-    fontSizes: number[];
-  },
-  operations: ShowOperationWithState[],
-  displacements: (number | null)[][]
+  analysis: PageAnalysis
 ): { content: string; removed: number; precision: RemovalPrecision } {
+  const { content, operations, metrics, strings } = analysis;
   if (operations.length === 0) {
     return { content, removed: 0, precision: "positional" };
   }
 
   const operatorTexts = operations.map((operation) => operation.text);
-
-  // Prefer deleting by position. Content matching is the fallback, because it
-  // removes every occurrence of the covered text rather than the covered one.
-  const metrics = alignCoverage(operatorTexts, coverage);
-  // Replace the averaged advance with the font's own metrics where available,
-  // so the width given back after deletion is exact.
-  if (metrics) {
-    metrics.forEach((operatorMetrics, operatorIndex) => {
-      operatorMetrics.forEach((metric, charIndex) => {
-        metric.tjUnits = displacements[operatorIndex]?.[charIndex] ?? null;
-      });
-    });
-  }
   const precision: RemovalPrecision = metrics ? "positional" : "content";
-  const blankedTexts = metrics
-    ? operatorTexts
-    : blankAcrossOperations(operatorTexts, targets);
+  const blankedTexts = metrics ? operatorTexts : blankAcrossOperations(operatorTexts, strings);
 
   let next = content;
   let removed = 0;
@@ -71,4 +47,3 @@ export function rewriteContent(
 
   return { content: next, removed, precision };
 }
-
