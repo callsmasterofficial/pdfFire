@@ -5,6 +5,7 @@ import { UploadCloud, AlertCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { validatePdfFile } from "@/lib/pdf/validator";
 import { ValidationOptions } from "@/types/pdf";
+import { openDocumentsNative } from "@/lib/desktop/bridge";
 
 interface SharedDropzoneProps {
   onFileSelect: (file: File) => void;
@@ -57,6 +58,29 @@ export function SharedDropzone({
     }
   };
 
+  /**
+   * In the desktop shell this opens the OS picker, which gives the user their
+   * real filesystem rather than the browser's sandboxed chooser. In a browser
+   * `openDocumentsNative` returns null and we fall through to the hidden
+   * <input>, so both paths end at the same `processFile`.
+   */
+  const openPicker = async () => {
+    try {
+      const nativeFiles = await openDocumentsNative();
+      if (nativeFiles === null) {
+        inputRef.current?.click();
+        return;
+      }
+      // An empty array means the user dismissed the picker; do nothing.
+      if (nativeFiles.length > 0) {
+        await processFile(nativeFiles[0]);
+      }
+    } catch {
+      // Never strand the user on a broken bridge.
+      inputRef.current?.click();
+    }
+  };
+
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -72,11 +96,11 @@ export function SharedDropzone({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={openPicker}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            inputRef.current?.click();
+            void openPicker();
           }
         }}
         tabIndex={0}
