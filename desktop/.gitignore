@@ -1,0 +1,4 @@
+node_modules/
+# The synced copy of the site's export; produced by `npm run sync-web`.
+web/
+dist/
