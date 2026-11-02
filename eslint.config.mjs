@@ -19,6 +19,20 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  {
+    // The Electron main and preload processes are CommonJS by necessity: a
+    // sandboxed preload cannot be an ES module, and the main process loads
+    // before any bundler. They are Node, not browser code, so the Next/TS
+    // rules written for the site do not apply to them.
+    files: ["desktop/**/*.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    // desktop/web is the site's export copied in by sync-web.
+    ignores: ["desktop/web/**", "desktop/node_modules/**", "desktop/dist/**"],
+  },
 ]);
 
 export default eslintConfig;
