@@ -1,8 +1,26 @@
 import { zipSync } from "fflate";
+import { saveDocumentNative } from "@/lib/desktop/bridge";
 
+/**
+ * Writes the file out.
+ *
+ * In the desktop shell this goes through the OS save dialog, so the user picks
+ * a real location instead of everything landing in Downloads. In a browser it
+ * is the usual anchor download. The signature stays synchronous because every
+ * caller already treats saving as fire-and-forget; the native attempt runs on
+ * its own and falls back to the browser path if it fails or is unavailable.
+ */
 export function triggerBlobDownload(blob: Blob, fileName: string): void {
   if (typeof window === "undefined") return;
 
+  void saveDocumentNative(blob, fileName).then((outcome) => {
+    // Only fall back when the native path is absent or broken. A cancelled
+    // dialog means the user chose not to save, so saving anyway would be wrong.
+    if (outcome === "unavailable") browserDownload(blob, fileName);
+  });
+}
+
+function browserDownload(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
