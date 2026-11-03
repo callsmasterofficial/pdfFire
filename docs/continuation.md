@@ -4,6 +4,59 @@ Resume point for the FileMelo work. Update this after each verified milestone.
 
 Last updated: 2026-10-31.
 
+
+## Checkpoint — 3 November 2026
+
+**Deployed and live.** `npm run deploy` ran from `main` at `0053c75`;
+deployment `5663c26e`, 232 files changed of 480. `/tesseract/worker.min.js`,
+`/tesseract/lang/eng.traineddata` and the core wasm all return 200 from
+`filemelo.com` with correct types. OCR no longer reaches a CDN — verified by
+recognition, not reachability: the bundled engine reads "FILEMELO OCR 2026"
+from a rendered page at 93% confidence with no network.
+
+**Identifiers settled.** `com.filemelo.app` on both platforms
+(`pdfFire-app` #10), chosen after checking that nothing was registered
+anywhere. `expo prebuild` no longer invents `com.thethaitourism.filemelo`.
+Reasoning and the namespace reservations are in `pdfFire-app`
+`docs/app-identifiers.md`.
+
+**History reconciled.** `docs/history-reconciliation.md` indexes the owner's
+export — which turned out to be this session's own transcript, recovering the
+FM-001…FM-013 ledger. All thirteen are closed. The consequential one: FM-011
+and FM-012 mean **this repository already performs genuine AES-256 decryption
+and RC4/AES-128 encryption**, so mobile's missing security tools are a porting
+problem, not a research one.
+
+### Blocked on something external
+
+- **iOS device install** — the build reaches code signing and stops at
+  "No profiles for 'com.filemelo.app' were found" (xcodebuild 65). No Apple ID
+  is signed in to Xcode, so automatic signing cannot register the App ID, and
+  the iPhone is in none of the installed profiles. Needs a sign-in on team
+  `SU7HQP4GZA` or a portal registration of the App ID plus UDID
+  `00008150-001579C21A84401C`.
+- **Selling anything** — billing core, webhook and entitlement logic are built
+  and tested, but there is no checkout, no accounts and no feature gating.
+  Dodo approval unblocks one link of four.
+
+### Next, in order of value
+
+1. Port the website's real encryption, decryption and redaction to mobile.
+   The implementations exist here; this is adaptation, not research.
+2. Accounts, checkout and entitlement enforcement, so Pro can be sold.
+3. Desktop installers and release metadata; Safari and Firefox Android.
+
+### Operational notes worth keeping
+
+- `expo run:ios --device` wants the **hardware UDID**, not the CoreDevice id
+  `devicectl` prints.
+- A debugging port can be taken by another session's browser. Check it is free
+  and refuse to attach to any target that is not your own app — see the
+  incident recorded in `history-reconciliation.md`.
+- Deploys are manual and always were: CI gates quality, `npm run deploy`
+  publishes. A merge is not a deployment.
+
+
 ## Where the work is
 
 Rebuilt from live GitHub state and git ancestry. Every version of this section
