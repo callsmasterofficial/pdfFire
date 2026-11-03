@@ -6,6 +6,12 @@ import {
   OcrPageResult,
   OcrDocumentResult,
 } from "./ocr-types";
+/**
+ * Where the OCR engine's own files live. Root-relative so it resolves both on
+ * the website and inside the desktop shell, which serves the same export over
+ * its own scheme.
+ */
+const OCR_ASSET_ROOT = "/tesseract";
 
 export type OcrProgressCallback = (progress: OcrProgress) => void;
 
@@ -33,6 +39,15 @@ export async function performOcrOnPdf(
   onProgress?.({ status: `Initializing ${language} OCR engine`, progress: 0.1 });
 
   const worker = await createWorker(language, 1, {
+    // Serve the engine from our own origin. Left unset, tesseract.js fetches
+    // its core and language data from a CDN at first use, which made "100%
+    // offline" untrue and fails outright in the desktop shell, where external
+    // requests are blocked by policy.
+    workerPath: `${OCR_ASSET_ROOT}/worker.min.js`,
+    corePath: OCR_ASSET_ROOT,
+    langPath: `${OCR_ASSET_ROOT}/lang`,
+    // The bundled traineddata is stored uncompressed.
+    gzip: false,
     logger: (m) => {
       if (m.status === "recognizing text" && typeof m.progress === "number") {
         onProgress?.({
