@@ -202,16 +202,25 @@ problem, not a research one.
   the iPhone is in none of the installed profiles. Needs a sign-in on team
   `SU7HQP4GZA` or a portal registration of the App ID plus UDID
   `00008150-001579C21A84401C`.
-- **Selling anything** — billing core, webhook and entitlement logic are built
-  and tested, but there is no checkout, no accounts and no feature gating.
-  Dodo approval unblocks one link of four.
+- **Selling anything** — still blocked, but on less than it was. Accounts,
+  sign-in and sessions are live, and entitlements resolve from stored
+  subscription state through to the UI (5 Nov). What is missing is the
+  checkout itself: no product exists to buy, so `isPurchasable()` is false for
+  every paid plan, and Dodo approval is what unblocks that. Feature gating is
+  *partial* — the per-document size cap reads the plan; `ocrLanguagePacks`,
+  `savedPresets` and `batchQueueSize` are advertised on `/pricing` and still
+  unenforced.
 
 ### Next, in order of value
 
-1. Port the website's real encryption, decryption and redaction to mobile.
-   The implementations exist here; this is adaptation, not research.
-2. Accounts, checkout and entitlement enforcement, so Pro can be sold.
-3. Desktop installers and release metadata; Safari and Firefox Android.
+1. ~~Port the website's real encryption and decryption to mobile.~~ Done
+   (`pdfFire-app` #11, #12), verified on real Hermes. **Redaction is not** —
+   it is still a black box drawn over text that remains in the file.
+2. ~~Accounts and entitlement enforcement.~~ Partly done (#35, #37). Remaining:
+   the three unenforced limits above, an upgrade path, and Teams, which is
+   schema and resolution logic with no screen.
+3. Checkout, once a product exists to buy.
+4. Desktop installers and release metadata; Safari and Firefox Android.
 
 ### Operational notes worth keeping
 
