@@ -15,7 +15,7 @@ Written 2026-10-31.
 | Webhook receiver | written, tested against synthetic deliveries (`functions/api/billing/webhook.ts`) |
 | Entitlement resolution | written, tested (`src/lib/billing/server/entitlement.ts`) |
 | D1 database | **created** 5 Nov: `filemelo-accounts`, id `872342c4-53e6-4381-a9dc-7aa12f9f0d90` |
-| Sign-in, sessions | built and verified against D1, **not deployed** (`docs/accounts-2026-11-05.md`) |
+| Sign-in, sessions | **live** on filemelo.com, verified end to end (`docs/accounts-2026-11-05.md`) |
 | Dodo products | **do not exist** |
 | API key, webhook secret | **do not exist** |
 | Checkout | not reachable; `isPurchasable()` is false for every paid plan |
