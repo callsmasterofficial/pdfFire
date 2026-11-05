@@ -2,7 +2,108 @@
 
 Resume point for the FileMelo work. Update this after each verified milestone.
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-05.
+
+
+## Checkpoint — 5 November 2026
+
+### Landed
+
+**Mobile Unlock removes real passwords.** `pdfFire-app` #12 merged to main at
+`3fff308`. The website's security handler is copied across — seven files, only
+the import paths differ — rather than reimplemented. Unlock's password field
+was being collected and discarded; it is now passed through. The Protect field
+was prefilled with `password123`, harmless while Protect drew a banner and a
+real hazard once it encrypts, so the default is empty.
+
+**The cross-repository drift check is effective, not a skip.** It previously
+ran in CI where no website checkout existed, so it skipped and reported
+success — a green tick that verified nothing. CI now checks out the website
+(it is public, so the default token suffices) at `main`, deliberately not at
+the ported commit, which would make the comparison tautological.
+`--require-source` makes an unreachable source a failure. The manifest also
+records each local copy's own hash, so an edit made here is caught even with
+no website available. All four paths were exercised, not just the passing one.
+
+Verified in the CI log rather than inferred from a green tick:
+`crypto-sync: 7 ported files match their recorded hashes and rebuild from
+pdfFire at .../.website-for-crypto-check`, and `Tests 30 passed (30)` across
+4 files. The `npm test` gate is on main.
+
+**The crypto runs on real Hermes.** Galaxy Z Flip 5 (SM-F731U, Android 13,
+arm64-v8a), Hermes 260318099.0.5, 6 of 6 checks passed, package
+`com.filemelo.app`. `subtleCryptoPresent=false` is the line that matters: the
+whole compatibility layer rests on Hermes having no WebCrypto, taken from
+documentation until now and measured on the shipping engine here.
+
+First device costs (debug build, so an upper bound): encrypt 2,907 ms for 3
+pages, decrypt 965 ms, reject a wrong password 1,579 ms. The rejection is slow
+because key derivation happens before the password is known to be wrong, so
+the UI needs progress rather than appearing stalled. Details in
+`pdfFire-app/docs/hermes-device-crypto-2026-11-05.md`.
+
+### Open PRs
+
+- **`pdfFire` #30 — the five missing OCR languages.** The picker offered six
+  and only English was committed, so every other choice failed at the moment
+  of use. All five come from tessdata_fast, matching the English pack
+  byte-for-byte in provenance; 9.4 MB total. Verified by recognising text, not
+  by a 200: spa 95%, fra 94%, deu 95%, chi_sim 86%, jpn 92%, every expected
+  term recovered. Recorded sizes were wrong by up to 4x (Chinese "~10 MB" is
+  2.4 MB) and now carry exact bytes and a hash. Two tests make the original
+  state unreachable.
+
+- **`pdfFire` #31 — the CJK subsetting defect.** Evidence and a reproduction;
+  no behaviour change. See below.
+
+### Known broken, deliberately not patched over
+
+**CJK PDFs are visually wrong.** The CJK pack is the only CFF-outline font we
+ship, and `subset: true` produces an embedded program viewers cannot use:
+MuPDF draws nothing, CoreGraphics draws `! " #` (its fallback mapping glyph
+indices 1, 2, 3 to ASCII). Text extraction still returns the right characters,
+which is why every test passed — they all assert on extracted text.
+
+A TrueType Noto Sans SC gives correct glyph shapes but keeps only one of six
+glyphs, so the font swap is the right direction and not yet correct. Swapping
+now would trade one broken rendering for another. This is the next piece of
+work on the font pipeline. `docs/cjk-subset-defect-2026-11-05.md` and
+`scripts/reproduce-cjk-subset-defect.mjs`.
+
+### Verified state of the world
+
+- Live site returns 200. `/tesseract/lang/eng.traineddata` serves exactly
+  4,113,088 bytes, matching the committed file. `jpn.traineddata` 404s, which
+  is the #30 gap showing in production.
+- Archive `FileMelo-ClaudeCode-FULL-20261102-210332.zip` hashes to
+  `7e6a95f4e3322fe6092e83784ac504807c8c9f755d47f0c29484354b5707b851`, matching
+  the brief. Only one copy is on disk; no `(1).zip` alongside it.
+- iPhone 17 Pro Max is paired and available (`061B21AD-B08B-5260-A640-82E9350B91B0`).
+  The build still needs a FileMelo provisioning profile — an account action,
+  and not a blocker for Android, which is why Android ran first.
+
+### Next
+
+1. Fix CJK subsetting; it is the only shipped feature currently producing
+   wrong output.
+2. Merge #30 and deploy, so the five languages are actually reachable.
+3. Mobile Unicode and shaping — still unaddressed.
+4. Redaction, forms, comparison and extraction remain relabelled, not
+   implemented, on mobile.
+5. Competitor pricing, then the paid chain: auth, checkout, entitlements,
+   Teams.
+6. Safari on Apple platforms and Firefox Android.
+
+### Lessons that cost time today
+
+- `&` inside a backgrounded command detaches it: the harness tracks the
+  wrapper, which returns instantly and looks like a finished build.
+- A harness bug is as likely as a product bug. Three verdicts were wrong
+  because of the harness, not the code: PyMuPDF's `insert_text` mapped CJK
+  glyphs incorrectly, and a stream walker skipped every other stream because
+  `at = end + 1` re-matches inside `endstream`. **Look at the artifact before
+  trusting a measurement of it** — counting dark pixels said the CJK page had
+  ink; looking at it showed the wrong characters.
 
 
 ## Checkpoint — 3 November 2026
