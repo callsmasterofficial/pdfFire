@@ -60,13 +60,20 @@ describe("Phase 7 Operations (OCR & Advanced Conversions)", () => {
     expect(outputDoc.getPageCount()).toBe(1);
   });
 
-  it("OCR Languages: provides language pack configs with valid codes and size estimates", () => {
+  it("OCR Languages: every offered language has a real, sized pack", () => {
     expect(OCR_LANGUAGES.length).toBeGreaterThanOrEqual(5);
 
     const eng = OCR_LANGUAGES.find((l) => l.code === "eng");
     expect(eng).toBeDefined();
     expect(eng?.name).toBe("English");
-    expect(eng?.sizeEstimate).toContain("MB");
+
+    // This used to assert the estimate string contained "MB", which is how
+    // "~10 MB" survived next to a 2.4 MB file. Assert the number instead; the
+    // files themselves are checked in ocr-language-assets.test.ts.
+    for (const lang of OCR_LANGUAGES) {
+      expect(lang.bytes).toBeGreaterThan(500_000);
+      expect(lang.sha256).toMatch(/^[0-9a-f]{12}$/);
+    }
 
     const jpn = OCR_LANGUAGES.find((l) => l.code === "jpn");
     expect(jpn).toBeDefined();
