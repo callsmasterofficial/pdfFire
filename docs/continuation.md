@@ -158,7 +158,9 @@ Checked directly on 2026-10-31, not carried over from an earlier session:
   HTTP 200. The apex serves `<title>FileMelo — Private PDF Tools</title>` with
   `rel="canonical" href="https://filemelo.com"`. `/tool/merge`, `/tool/redact`,
   `/about`, `/sitemap.xml`, `/robots.txt` and
-  `/fonts/NotoSansSC-Regular.otf` each return 200.
+  `/fonts/NotoSansSC-Regular.otf` each return 200. (That OTF was replaced on
+  5 November by `NotoSansSC-Regular.ttf`; the OTF could not be subsetted, so
+  CJK PDFs rendered as `! " #`. See `cjk-subset-defect-2026-11-05.md`.)
 - Hosting is Cloudflare Pages, project `filemelo`, production branch `main`,
   deployed from `main` at `224f853` as a static export of `out/` (467 files,
   23 MB). Both custom domains are attached to the project; the apex shows
