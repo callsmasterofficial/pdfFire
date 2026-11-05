@@ -31,7 +31,13 @@ const eslintConfig = defineConfig([
   },
   {
     // desktop/web is the site's export copied in by sync-web.
-    ignores: ["desktop/web/**", "desktop/node_modules/**", "desktop/dist/**"],
+    ignores: [
+      "desktop/web/**",
+      "desktop/node_modules/**",
+      "desktop/dist/**",
+      // Wrangler's local state and the function bundles it generates.
+      ".wrangler/**",
+    ],
   },
 ]);
 

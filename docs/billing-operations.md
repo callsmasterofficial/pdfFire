@@ -11,10 +11,11 @@ Written 2026-10-31.
 | --- | --- |
 | Plan catalogue and limits | implemented, tested (`src/lib/billing/`) |
 | `/pricing` comparison page | live, and says purchase is not open |
-| Account / organization / seat schema | written, not deployed (`migrations/0001_accounts.sql`) |
+| Account / organization / seat schema | **applied** to `filemelo-accounts` on 5 Nov (`migrations/0001_accounts.sql`) |
 | Webhook receiver | written, tested against synthetic deliveries (`functions/api/billing/webhook.ts`) |
 | Entitlement resolution | written, tested (`src/lib/billing/server/entitlement.ts`) |
-| D1 database | **not created** |
+| D1 database | **created** 5 Nov: `filemelo-accounts`, id `872342c4-53e6-4381-a9dc-7aa12f9f0d90` |
+| Sign-in, sessions | built and verified against D1, **not deployed** (`docs/accounts-2026-11-05.md`) |
 | Dodo products | **do not exist** |
 | API key, webhook secret | **do not exist** |
 | Checkout | not reachable; `isPurchasable()` is false for every paid plan |
@@ -35,24 +36,13 @@ creating products, issuing an API key, and registering a webhook endpoint.
 
 ## Turning it on
 
-### 1. Create the database
+### 1. Create the database — done on 5 November
+
+The database exists, the binding is in `wrangler.toml`, and both migrations are
+applied remotely. Kept here for reference:
 
 ```bash
 npx wrangler d1 create filemelo-accounts
-```
-
-Add the returned id to `wrangler.toml`:
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "filemelo-accounts"
-database_id = "<id from the command above>"
-```
-
-Then apply the schema:
-
-```bash
 npx wrangler d1 migrations apply filemelo-accounts --remote
 ```
 

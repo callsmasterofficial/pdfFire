@@ -13,3 +13,14 @@
 name = "filemelo"
 compatibility_date = "2026-10-31"
 pages_build_output_dir = "out"
+
+# The account and billing control plane. Document content never reaches it:
+# it holds who someone is, what they bought, and what they may therefore do.
+#
+# The binding is DB, not the name wrangler suggests, because that is what
+# `functions/api/billing/webhook.ts` and the auth endpoints expect.
+[[d1_databases]]
+binding = "DB"
+database_name = "filemelo-accounts"
+database_id = "872342c4-53e6-4381-a9dc-7aa12f9f0d90"
+migrations_dir = "migrations"
