@@ -57,6 +57,41 @@ in" after a successful registration, which looked like a broken cookie. It was
 the registration rate limit added earlier the same day — `signup:127.0.0.1`
 had reached five. The limit was working; the test was the thing at fault.
 
+## Live
+
+Deployed 5 November, deployment `80c6e013`. `/account` was `404` before and is
+`200` now, and renders the form through the site's own header, theme and
+footer.
+
+Against `filemelo.com`:
+
+| | plan | maxFileSizeMb | batch | reason |
+|---|---|---|---|---|
+| anonymous | free | 100 | 20 | not signed in |
+| new account | free | 100 | 20 | no active subscription |
+
+The two reasons differ, which is the part worth noticing: "no active
+subscription" is only reachable by looking the account up in D1, so the live
+endpoint really is resolving from stored state rather than returning a
+constant.
+
+**The paid path was not proved live.** Inserting a synthetic Pro subscription
+into the production database was refused as a change to shared data, which is
+the right call — writing fake billing rows into production to make a
+demonstration work is how real billing state gets corrupted. The Pro
+resolution is proved against a real D1 with the same schema and the same code
+locally, and the live site is shown to read from the database; what is *not*
+shown is the two together. That gap closes the first time a real subscription
+exists.
+
+The verification account was deleted afterwards; the live tables are back to
+zero rows across accounts, credentials, sessions, subscriptions and attempts.
+
+The rest of the site was checked rather than assumed: `/`, `/tool/merge`,
+`/pricing`, `/about` and `/tool/ocr` all 200; the Japanese OCR pack and the
+fixed CJK font still serve their exact sizes (2,471,260 and 10,611,296 bytes);
+the billing webhook still returns 503 for its missing secret.
+
 ## What is still not done
 
 - **`ocrLanguagePacks`, `savedPresets` and `batchQueueSize` are advertised on
