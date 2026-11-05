@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Wrangler local state and build temporaries (local D1, bundled functions)
+.wrangler/
