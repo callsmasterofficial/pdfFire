@@ -56,6 +56,26 @@ the UI needs progress rather than appearing stalled. Details in
 - **`pdfFire` #33 — CJK PDFs rendered as `! " #`.** See below. #31, which
   only recorded the defect, was closed: two of its conclusions were wrong.
 
+- **`pdfFire-app` #13 — Unicode text on mobile.** The app could write Latin-1
+  and nothing else; of eleven scripts measured beforehand, one worked, and
+  Watermark and Signature took typed text with no check at all. Three modules
+  are copied from this repository and held by the ported-file gate, which now
+  walks every `src/**/PORTED.json` — 10 files rather than 7. Six packs, 11 MB,
+  bundled rather than fetched so any script works offline.
+
+  Verified on real Hermes, not inferred from Node: Galaxy Z Flip 5, **11 of 11
+  scripts**, 2,650 ms in total. Arabic (104 ms) and Devanagari (145 ms) prove
+  fontkit's generator-based shapers run under Hermes with the regenerator
+  runtime; the 10.6 MB CJK pack reads and subsets in under half a second and a
+  Chinese line comes out at 2.8 KB. Plain Latin still embeds nothing, 857 bytes.
+
+  Two failures only the device could find, both after every Node test passed:
+  Metro refuses to bundle a `node:` import even behind an unreachable runtime
+  check (the app would not start at all), and `readAsStringAsync` is deprecated
+  in SDK 58 and throws — the rest of that app imports
+  `expo-file-system/legacy` and this did not. Details in
+  `pdfFire-app/docs/mobile-unicode-2026-11-05.md`.
+
 ### Fixed: CJK PDFs rendered as `! " #`
 
 Every CJK document carried an embedded font viewers could not use — MuPDF drew
@@ -115,20 +135,32 @@ new one. Full account in `docs/cjk-subset-defect-2026-11-05.md`.
 
 ### Next
 
-1. Mobile Unicode and shaping — still unaddressed. The website's font packs
-   are now known-good; mobile has no equivalent.
-2. Redaction, forms, comparison and extraction remain relabelled, not
+1. Redaction, forms, comparison and extraction remain relabelled, not
    implemented, on mobile.
-3. Competitor pricing, then the paid chain: auth, checkout, entitlements,
+2. Competitor pricing, then the paid chain: auth, checkout, entitlements,
    Teams.
-4. Safari on Apple platforms and Firefox Android.
-5. iOS provisioning profile, which is the only thing blocking device testing
+3. Safari on Apple platforms and Firefox Android.
+4. iOS provisioning profile, which is the only thing blocking device testing
    on the paired iPhone.
+
+Left over from the mobile Unicode work, small but real:
+
+- The release APK has not been measured. A debug build serves assets from
+  Metro, so it did not grow; the 11 MB lands in a release build.
+- Paragraph-level RTL layout is not implemented. Hebrew and Arabic shape and
+  order correctly within a run; a right-aligned Arabic block does not exist.
+- The mobile CI checks out this repository into `.website-for-crypto-check`.
+  That path predates the check covering the text pipeline as well, so the name
+  is now misleading. Worth renaming with the next change to that workflow
+  rather than spending a CI cycle on it alone.
 
 ### Lessons that cost time today
 
 - `&` inside a backgrounded command detaches it: the harness tracks the
   wrapper, which returns instantly and looks like a finished build.
+- Node tests cannot answer a bundler or a platform-API question. Both mobile
+  Unicode failures passed every Node test and appeared only on the device: one
+  stopped the app starting, the other failed 10 of 11 scripts.
 - A test that asserts on extracted text cannot see a broken rendering. The
   CJK defect shipped because every check read the text layer, which stays
   correct while the glyph outlines are destroyed.
