@@ -79,8 +79,8 @@ export const FONT_PACKS: Record<ScriptId, FontPack> = {
   cjk: {
     id: "cjk",
     label: "Chinese, Japanese and Korean",
-    file: "NotoSansSC-Regular.otf",
-    bytes: 8331336,
+    file: "NotoSansSC-Regular.ttf",
+    bytes: 10611296,
     extraction: "exact",
     licence: "SIL Open Font License 1.1",
   },
