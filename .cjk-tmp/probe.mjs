@@ -1,0 +1,12 @@
+import { writeFileSync, readFileSync } from "node:fs";
+import { PDFDocument, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+const OUT = process.argv[2], FONT = process.argv[3], TAG = process.argv[4];
+const doc = await PDFDocument.create();
+doc.registerFontkit(fontkit);
+const font = await doc.embedFont(readFileSync(FONT), { subset: true });
+const page = doc.addPage([520, 200]);
+page.drawText("中文识别测试", { x: 30, y: 100, size: 44, font, color: rgb(0,0,0) });
+const bytes = await doc.save();
+writeFileSync(`${OUT}/${TAG}.pdf`, bytes);
+console.log(`  ${TAG}: ${bytes.byteLength} bytes embedded+subset`);
