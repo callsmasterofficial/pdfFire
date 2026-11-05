@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { OCR_LANGUAGES, SupportedOcrLanguage } from "@/lib/ocr/ocr-types";
+import {
+  OCR_LANGUAGES,
+  SupportedOcrLanguage,
+  formatPackSize,
+} from "@/lib/ocr/ocr-types";
 import { Label } from "@/components/ui/label";
 
 interface OcrLanguagePickerProps {
@@ -39,7 +43,7 @@ export function OcrLanguagePicker({ selected, disabled, onSelect }: OcrLanguageP
             >
               <div className="text-xs font-semibold">{lang.name}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5 font-mono">
-                {lang.sizeEstimate}
+                {formatPackSize(lang.bytes)}
               </div>
             </button>
           );
