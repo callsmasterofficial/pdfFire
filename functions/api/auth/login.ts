@@ -11,13 +11,16 @@ import {
   BAD_CREDENTIALS,
   type Env,
   MAX_ATTEMPTS,
+  clearAttempts,
   createSession,
   emailKey,
   isAuthKey,
   json,
   looksLikeEmail,
+  recordAttempt,
   sessionCookie,
   SESSION_TTL_MS,
+  tooManyAttempts,
 } from "./_shared";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -35,16 +38,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const key = emailKey(body.email);
-  const now = Date.now();
-  const since = now - ATTEMPT_WINDOW_MS;
+  const subject = `login:${key}`;
 
-  const recent = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM login_attempts WHERE email_key = ?1 AND attempted_at > ?2`
-  )
-    .bind(key, since)
-    .first<{ n: number }>();
-
-  if ((recent?.n ?? 0) >= MAX_ATTEMPTS) {
+  if (await tooManyAttempts(env, subject, MAX_ATTEMPTS, ATTEMPT_WINDOW_MS)) {
     return json(
       { error: "Too many attempts. Wait fifteen minutes and try again." },
       429
@@ -67,12 +63,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       iterations: number;
     }>();
 
-  const recordFailure = () =>
-    env.DB.prepare(
-      `INSERT INTO login_attempts (email_key, attempted_at) VALUES (?1, ?2)`
-    )
-      .bind(key, now)
-      .run();
+  const recordFailure = () => recordAttempt(env, subject);
 
   if (!row) {
     await recordFailure();
@@ -87,7 +78,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   // A success clears the window, so one mistyped password does not count
   // against the next genuine sign-in.
-  await env.DB.prepare(`DELETE FROM login_attempts WHERE email_key = ?1`).bind(key).run();
+  await clearAttempts(env, subject);
 
   const token = await createSession(env, row.accountId);
   return json(

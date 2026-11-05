@@ -16,13 +16,18 @@ import {
 } from "../../../src/lib/auth/password";
 import {
   type Env,
+  MAX_SIGNUPS,
+  SIGNUP_WINDOW_MS,
+  clientAddress,
   createSession,
   emailKey,
   isAuthKey,
   json,
   looksLikeEmail,
+  recordAttempt,
   sessionCookie,
   SESSION_TTL_MS,
+  tooManyAttempts,
 } from "./_shared";
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -47,6 +52,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (clientIterations < CLIENT_ITERATIONS) {
     return json({ error: "Credentials were not derived to the required cost." }, 400);
   }
+
+  // Limited per address: the client-side derivation costs an attacker
+  // nothing, because they write their own client.
+  const signupSubject = `signup:${clientAddress(request)}`;
+  if (await tooManyAttempts(env, signupSubject, MAX_SIGNUPS, SIGNUP_WINDOW_MS)) {
+    return json(
+      { error: "Too many accounts created from here. Try again later." },
+      429
+    );
+  }
+  await recordAttempt(env, signupSubject);
 
   const key = emailKey(body.email);
   const now = Date.now();

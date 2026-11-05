@@ -17,9 +17,59 @@ export const SESSION_COOKIE = "fm_session";
 /** Thirty days. Long enough to be usable, short enough to expire. */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** Five failures in fifteen minutes, per address. */
+/** Five failed sign-ins in fifteen minutes, per address. */
 export const MAX_ATTEMPTS = 5;
 export const ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+
+/**
+ * Registrations allowed from one address in an hour.
+ *
+ * The client-side derivation does not limit this: an attacker writes their own
+ * client and sends a well-formed auth key without doing the work. Without a
+ * limit, a public registration endpoint is an invitation to fill the table.
+ */
+export const MAX_SIGNUPS = 5;
+export const SIGNUP_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Counts recent attempts against a subject and records this one.
+ *
+ * `subject` is prefixed — `login:<email>` or `signup:<ip>` — so the two cannot
+ * exhaust each other's budget.
+ */
+export async function tooManyAttempts(
+  env: Env,
+  subject: string,
+  limit: number,
+  windowMs: number
+): Promise<boolean> {
+  const row = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM auth_attempts WHERE subject = ?1 AND attempted_at > ?2`
+  )
+    .bind(subject, Date.now() - windowMs)
+    .first<{ n: number }>();
+  return (row?.n ?? 0) >= limit;
+}
+
+export function recordAttempt(env: Env, subject: string): Promise<unknown> {
+  return env.DB.prepare(
+    `INSERT INTO auth_attempts (subject, attempted_at) VALUES (?1, ?2)`
+  )
+    .bind(subject, Date.now())
+    .run();
+}
+
+export function clearAttempts(env: Env, subject: string): Promise<unknown> {
+  return env.DB.prepare(`DELETE FROM auth_attempts WHERE subject = ?1`).bind(subject).run();
+}
+
+/**
+ * The caller's address as Cloudflare sees it. `CF-Connecting-IP` is set by the
+ * edge and cannot be spoofed by the client, unlike `X-Forwarded-For`.
+ */
+export function clientAddress(request: Request): string {
+  return request.headers.get("CF-Connecting-IP") ?? "unknown";
+}
 
 export function json(body: unknown, status = 200, headers: HeadersInit = {}): Response {
   return new Response(JSON.stringify(body), {
