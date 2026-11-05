@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { PwaProvider } from "@/components/pwa/pwa-provider";
+import { SessionProvider } from "@/components/account/session-provider";
 import { SITE_CONFIG, getSiteUrl, getCanonicalUrl } from "@/lib/seo/site-config";
 
 const geistSans = Geist({
@@ -113,7 +114,9 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background text-foreground"
       >
         <PwaProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <SessionProvider>{children}</SessionProvider>
+          </ThemeProvider>
         </PwaProvider>
       </body>
     </html>

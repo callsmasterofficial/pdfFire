@@ -6,11 +6,28 @@
  * rather than at the edge.
  */
 import { CLIENT_ITERATIONS, deriveAuthKey } from "./password";
+import type { Entitlements } from "../billing/entitlements";
+import type { PlanId } from "../billing/plans";
 
 export interface Account {
   id: string;
   email: string;
   emailVerified: boolean;
+}
+
+/**
+ * What the session endpoint answers. `entitlements` is resolved on the server
+ * from stored subscription state — the client has the same table, but uses it
+ * to decide what to *offer*, never what has been paid for.
+ */
+export interface SessionState {
+  account: Account | null;
+  plan: PlanId;
+  entitlements: Entitlements;
+  /** Why this plan, in words a support reply can quote. */
+  reason: string;
+  seats: number;
+  expiresAt: number | null;
 }
 
 export class AuthError extends Error {
@@ -60,11 +77,10 @@ export async function logout(): Promise<void> {
   await post("/api/auth/logout", {});
 }
 
-export async function currentAccount(): Promise<Account | null> {
+export async function fetchSession(): Promise<SessionState> {
   const response = await fetch("/api/auth/session", { credentials: "same-origin" });
-  if (!response.ok) return null;
-  const data = (await response.json()) as { account: Account | null };
-  return data.account;
+  if (!response.ok) throw new AuthError("Could not read the session.", response.status);
+  return (await response.json()) as SessionState;
 }
 
 /**
