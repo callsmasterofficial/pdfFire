@@ -42,7 +42,7 @@ because key derivation happens before the password is known to be wrong, so
 the UI needs progress rather than appearing stalled. Details in
 `pdfFire-app/docs/hermes-device-crypto-2026-11-05.md`.
 
-### Open PRs
+### Also landed
 
 - **`pdfFire` #30 — the five missing OCR languages.** The picker offered six
   and only English was committed, so every other choice failed at the moment
@@ -53,28 +53,42 @@ the UI needs progress rather than appearing stalled. Details in
   2.4 MB) and now carry exact bytes and a hash. Two tests make the original
   state unreachable.
 
-- **`pdfFire` #31 — the CJK subsetting defect.** Evidence and a reproduction;
-  no behaviour change. See below.
+- **`pdfFire` #33 — CJK PDFs rendered as `! " #`.** See below. #31, which
+  only recorded the defect, was closed: two of its conclusions were wrong.
 
-### Known broken, deliberately not patched over
+### Fixed: CJK PDFs rendered as `! " #`
 
-**CJK PDFs are visually wrong.** The CJK pack is the only CFF-outline font we
-ship, and `subset: true` produces an embedded program viewers cannot use:
-MuPDF draws nothing, CoreGraphics draws `! " #` (its fallback mapping glyph
-indices 1, 2, 3 to ASCII). Text extraction still returns the right characters,
-which is why every test passed — they all assert on extracted text.
+Every CJK document carried an embedded font viewers could not use — MuPDF drew
+nothing, CoreGraphics drew `! " #`, its fallback mapping glyph indices 1, 2, 3
+onto ASCII. Two faults in `@pdf-lib/fontkit`, both answered by the shipped font
+rather than by our code:
 
-A TrueType Noto Sans SC gives correct glyph shapes but keeps only one of six
-glyphs, so the font swap is the right direction and not yet correct. Swapping
-now would trade one broken rendering for another. This is the next piece of
-work on the font pipeline. `docs/cjk-subset-defect-2026-11-05.md` and
-`scripts/reproduce-cjk-subset-defect.mjs`.
+- **CFF outlines cannot be subset at all.** What `encodeStream()` produces is
+  not a parseable font. Noto Sans SC was the only CFF font we shipped.
+- **Short-format `loca` truncates odd offsets.** Offsets are stored halved, so
+  a glyph with odd-length data leaves the next at an unrepresentable offset and
+  everything after it reads from the wrong place. 15,684 of 31,036 glyphs had
+  odd lengths — about half, which is why about half of any CJK document was
+  destroyed.
+
+`scripts/prepare-cjk-font.py` builds the pack with TrueType outlines and every
+glyph padded to an even length, byte-reproducibly. Both engines now render
+correctly; subsetted output is 4,571 bytes for three lines. Larger on disk
+(10.6 MB vs 8.3 MB) and ~900 KB *smaller* gzipped, which is what users
+download.
+
+Nothing caught it because the ToUnicode CMap is written separately from the
+outlines, so extraction kept returning the right characters and every test
+asserted on extracted text. `font-subset-integrity.test.ts` decodes outlines
+instead, and was confirmed to fail on the old font before being trusted on the
+new one. Full account in `docs/cjk-subset-defect-2026-11-05.md`.
 
 ### Verified state of the world
 
-- Live site returns 200. `/tesseract/lang/eng.traineddata` serves exactly
-  4,113,088 bytes, matching the committed file. `jpn.traineddata` 404s, which
-  is the #30 gap showing in production.
+- Live site returns 200. Checked before this deploy:
+  `/tesseract/lang/eng.traineddata` served exactly 4,113,088 bytes, matching
+  the committed file, and `jpn.traineddata` 404'd — the #30 gap showing in
+  production. Post-deploy verification is recorded below.
 - Archive `FileMelo-ClaudeCode-FULL-20261102-210332.zip` hashes to
   `7e6a95f4e3322fe6092e83784ac504807c8c9f755d47f0c29484354b5707b851`, matching
   the brief. Only one copy is on disk; no `(1).zip` alongside it.
@@ -84,20 +98,23 @@ work on the font pipeline. `docs/cjk-subset-defect-2026-11-05.md` and
 
 ### Next
 
-1. Fix CJK subsetting; it is the only shipped feature currently producing
-   wrong output.
-2. Merge #30 and deploy, so the five languages are actually reachable.
-3. Mobile Unicode and shaping — still unaddressed.
-4. Redaction, forms, comparison and extraction remain relabelled, not
+1. Mobile Unicode and shaping — still unaddressed. The website's font packs
+   are now known-good; mobile has no equivalent.
+2. Redaction, forms, comparison and extraction remain relabelled, not
    implemented, on mobile.
-5. Competitor pricing, then the paid chain: auth, checkout, entitlements,
+3. Competitor pricing, then the paid chain: auth, checkout, entitlements,
    Teams.
-6. Safari on Apple platforms and Firefox Android.
+4. Safari on Apple platforms and Firefox Android.
+5. iOS provisioning profile, which is the only thing blocking device testing
+   on the paired iPhone.
 
 ### Lessons that cost time today
 
 - `&` inside a backgrounded command detaches it: the harness tracks the
   wrapper, which returns instantly and looks like a finished build.
+- A test that asserts on extracted text cannot see a broken rendering. The
+  CJK defect shipped because every check read the text layer, which stays
+  correct while the glyph outlines are destroyed.
 - A harness bug is as likely as a product bug. Three verdicts were wrong
   because of the harness, not the code: PyMuPDF's `insert_text` mapped CJK
   glyphs incorrectly, and a stream walker skipped every other stream because
