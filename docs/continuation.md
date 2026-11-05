@@ -85,10 +85,27 @@ new one. Full account in `docs/cjk-subset-defect-2026-11-05.md`.
 
 ### Verified state of the world
 
-- Live site returns 200. Checked before this deploy:
-  `/tesseract/lang/eng.traineddata` served exactly 4,113,088 bytes, matching
-  the committed file, and `jpn.traineddata` 404'd — the #30 gap showing in
-  production. Post-deploy verification is recorded below.
+- **Deployed 5 November**, `npm run deploy` from `main` at `f9ed3fa`,
+  deployment `51d5d66a`, 229 of 485 files changed. Verified by byte size
+  against the committed files rather than by status code:
+
+  | asset | bytes | |
+  |---|---|---|
+  | `eng.traineddata` | 4,113,088 | matches |
+  | `spa.traineddata` | 2,294,433 | matches |
+  | `fra.traineddata` | 1,130,365 | matches |
+  | `deu.traineddata` | 1,525,436 | matches |
+  | `chi_sim.traineddata` | 2,469,156 | matches |
+  | `jpn.traineddata` | 2,471,260 | matches |
+  | `NotoSansSC-Regular.ttf` | 10,611,296 | matches |
+
+  The live font was downloaded and re-checked, not just sized: TrueType
+  outlines, 31,036 glyphs, **zero odd offsets**. The fixed font is what users
+  get.
+
+  `NotoSansSC-Regular.otf` briefly still answered 200 after the deploy. That
+  was an edge-cache entry with a four-hour TTL — a cache-busted request and the
+  deployment URL both return 404, and nothing references it any more.
 - Archive `FileMelo-ClaudeCode-FULL-20261102-210332.zip` hashes to
   `7e6a95f4e3322fe6092e83784ac504807c8c9f755d47f0c29484354b5707b851`, matching
   the brief. Only one copy is on disk; no `(1).zip` alongside it.
