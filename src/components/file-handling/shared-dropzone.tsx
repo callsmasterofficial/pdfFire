@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { validatePdfFile } from "@/lib/pdf/validator";
 import { ValidationOptions } from "@/types/pdf";
 import { openDocumentsNative } from "@/lib/desktop/bridge";
+import { useSession } from "@/components/account/session-provider";
+import { getPlan } from "@/lib/billing/plans";
 
 interface SharedDropzoneProps {
   onFileSelect: (file: File) => void;
@@ -25,12 +27,32 @@ export function SharedDropzone({
   const [isDragging, setIsDragging] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { plan, entitlements } = useSession();
+
+  // The size cap used to be a fixed 100 MB, which is the Free limit, so a Pro
+  // subscriber was held to the free allowance they had paid to leave behind.
+  // The plan decides it now. A caller that asks for something smaller — a tool
+  // with its own reason — still wins.
+  const planCapBytes =
+    entitlements.maxFileSizeMb === null
+      ? Number.POSITIVE_INFINITY
+      : entitlements.maxFileSizeMb * 1024 * 1024;
+  const effectiveOptions: ValidationOptions = {
+    ...options,
+    maxSizeBytes: Math.min(options?.maxSizeBytes ?? Number.POSITIVE_INFINITY, planCapBytes),
+  };
 
   const processFile = async (file: File) => {
     setErrorMsg(null);
-    const result = await validatePdfFile(file, options);
+    const result = await validatePdfFile(file, effectiveOptions);
     if (!result.valid) {
-      setErrorMsg(result.error || "Invalid file.");
+      const overPlanCap = file.size > planCapBytes;
+      setErrorMsg(
+        overPlanCap
+          ? `${result.error ?? "File is too large."} ${getPlan(plan).name} allows ` +
+            `${entitlements.maxFileSizeMb} MB per document.`
+          : result.error || "Invalid file."
+      );
       return;
     }
     onFileSelect(file);
